@@ -486,11 +486,11 @@ Deletes parameters from request.
 sub delete {
     my $this = shift;
     foreach my $p (@_) {
-        next unless exists $this->{param}{$p};
-        if ( my $upload = $this->{uploads}{ $this->param($p) } ) {
+        if ( my $upload = $this->{uploads}{ $p } ) {
             $upload->finish;
-            CORE::delete $this->{uploads}{ $this->param($p) };
+            CORE::delete $this->{uploads}{ $p };
         }
+        next unless exists $this->{param}{$p};
         CORE::delete $this->{param}{$p};
         @{ $this->{param_list} } = grep { $_ ne $p } @{ $this->{param_list} };
     }
