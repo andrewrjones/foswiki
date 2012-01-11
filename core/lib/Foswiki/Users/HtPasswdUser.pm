@@ -22,6 +22,46 @@ use Assert;
 use Error qw( :try );
 use Fcntl qw( :DEFAULT :flock );
 
+our ( $PaswordData, $PasswordTimestamp );
+my ( $LocalCache, $LocalTimestamp );
+
+sub PasswordData {
+    shift;    # Ignore calling class/object
+    if ( $Foswiki::cfg{Htpasswd}{GlobalCache} ) {
+        $HtPasswdUser::PasswordData = shift if @_;
+        return $HtPasswdUser::PasswordData;
+    }
+    else {
+        $LocalCache = shift if @_;
+        return $LocalCache;
+    }
+}
+
+sub PasswordTimestamp {
+    shift;    # Ignore calling class/object
+    if ( $Foswiki::cfg{Htpasswd}{GlobalCache} ) {
+        $HtPasswdUser::PasswordTimestamp = shift if @_;
+        return $HtPasswdUser::PasswordTimestamp;
+    }
+    else {
+        $LocalTimestamp = shift if @_;
+        return $LocalTimestamp;
+    }
+}
+
+# Used in unit tests to reset the cache.  Also used to clear the cache if the
+# Password file has been modified externally.
+sub ClearCache {
+    if ( $Foswiki::cfg{Htpasswd}{GlobalCache} ) {
+        $HtPasswdUser::PasswordData      = ();
+        $HtPasswdUser::PasswordTimestamp = 0;
+    }
+    else {
+        $LocalCache     = ();
+        $LocalTimestamp = 0;
+    }
+}
+
 # Set TRACE to 1 to enable detailed trace of password activity
 use constant TRACE => 0;
 
@@ -104,7 +144,8 @@ Break circular references.
 sub finish {
     my $this = shift;
     $this->SUPER::finish();
-    undef $this->{passworddata};
+    undef $LocalCache;
+    undef $LocalTimestamp;
 }
 
 =begin TML
@@ -175,15 +216,15 @@ sub _readPasswd {
     my ( $this, $lockShared ) = @_;
 
     if (   $Foswiki::cfg{Htpasswd}{DetectModification}
-        && defined( $this->{passworddata} )
+        && $this->PasswordData()
         && -e $Foswiki::cfg{Htpasswd}{FileName} )
     {
         my $fileTime = ( stat( $Foswiki::cfg{Htpasswd}{FileName} ) )[9];
-        delete $this->{passworddata}
-          if ( $fileTime > $this->{passwordtimestamp} );
+        $this->ClearCache()
+          if ( $fileTime > $this->PasswordTimestamp() );
     }
 
-    return $this->{passworddata} if ( defined( $this->{passworddata} ) );
+    return $this->PasswordData() if ( $this->PasswordData() );
 
     my $data = {};
     if ( !-e $Foswiki::cfg{Htpasswd}{FileName} ) {
@@ -192,9 +233,10 @@ sub _readPasswd {
 
     $lockShared |= 0;
     my $lockHandle = _lockPasswdFile(LOCK_SH) if $lockShared;
-    $this->{passwordtimestamp} =
-      ( stat( $Foswiki::cfg{Htpasswd}{FileName} ) )[9];
-    print STDERR "Loading Passwords, timestamp $this->{passwordtimestamp} \n"
+    $this->PasswordTimestamp(
+        ( stat( $Foswiki::cfg{Htpasswd}{FileName} ) )[9] );
+    print STDERR "Loading Passwords, timestamp "
+      . $this->PasswordTimestamp() . " \n"
       if (TRACE);
     my $IN_FILE;
 
@@ -297,7 +339,7 @@ sub _readPasswd {
     close($IN_FILE);
     _unlockPasswdFile($lockHandle) if $lockShared;
 
-    $this->{passworddata} = $data;
+    $this->PasswordData($data);
     return $data;
 }
 
@@ -539,6 +581,11 @@ sub setPassword {
 "setPassword login $login pass $db->{$login}->{pass} enc $db->{$login}->{enc} realm $db->{$login}->{realm} emails $db->{$login}->{emails}\n"
           if (TRACE);
         _savePasswd($db);
+
+        # Reset the cache timestamp
+        $this->PasswordData($db);
+        $this->PasswordTimestamp(
+            ( stat( $Foswiki::cfg{Htpasswd}{FileName} ) )[9] );
     }
     catch Error::Simple with {
         my $e = shift;

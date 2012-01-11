@@ -467,6 +467,12 @@ $Foswiki::cfg{Htpasswd}{FileName} = '$Foswiki::cfg{DataDir}/.htpasswd';
 $Foswiki::cfg{Htpasswd}{LockFileName} = '$Foswiki::cfg{WorkingDir}/htpasswd.lock';
 
 # **BOOLEAN EXPERT**
+# Enable this option on systems using <tt>FastCGI, FCGID, or Mod_Perl</tt> when the <tt>.htpasswd</tt> file
+# is larger than 1000 entries.  It will cause the <tt>HtPasswdUser</tt> module to globally
+# cache the password file, reading it only once on initization.
+$Foswiki::cfg{Htpasswd}{GlobalCache} = $FALSE;
+
+# **BOOLEAN EXPERT**
 # Enable this option if the .htpasswd file can be updated either external to Foswiki
 # or by another Foswiki instance.  When enabled, Foswiki will verify the timestamp of
 # the file and will invalidate the cache if the file has been changed. This is only useful
