@@ -456,6 +456,12 @@ sub psgi_finalize {
     my $status = $this->status;
     $status =~ s/[^\d]//g;
     
+    my $headers = $this->{headers};
+    # must not contain a Status key
+    # https://metacpan.org/module/PSGI#Headers
+    #'Status'         => '200 OK',
+    delete $headers->{'Status'};
+    
     return [
         $status,
         +[
@@ -469,7 +475,7 @@ sub psgi_finalize {
                     ( $k => $v )
                 } $this->getHeader($_);
  
-            } keys %{ $this->{headers} }
+            } keys %{ $headers }
         ],
         [ $this->{body} ],
     ];

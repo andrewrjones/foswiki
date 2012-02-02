@@ -353,8 +353,11 @@ sub test_psgi_finalize {
             200,
             +[
                 'Content-Length' => 5,
-                'Status'         => '200 OK',
-                'Content-Type'   => 'text/plain; charset=iso-8859-1',
+
+                # must not contain a Status key
+                # https://metacpan.org/module/PSGI#Headers
+                #'Status'         => '200 OK',
+                'Content-Type' => 'text/plain; charset=iso-8859-1',
             ],
             ['hello']
         ],
