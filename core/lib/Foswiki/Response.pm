@@ -440,6 +440,41 @@ sub outputHasStarted {
     return $this->{outputHasStarted};
 }
 
+=begin TML
+
+---++ ObjectMethod psgi_finalize
+
+Returns the status code, headers, and body of this response as a PSGI response array reference.
+
+=cut
+
+sub psgi_finalize {
+    my $this = shift;
+    
+    # PSGI specifies that the HTTP status code is an integer and must be greater than or equal to 100
+    # See https://metacpan.org/module/PSGI#Status
+    my $status = $this->status;
+    $status =~ s/[^\d]//g;
+    
+    return [
+        $status,
+        +[
+            map {
+                my $k = $_;
+                map {
+                    my $v = $_;
+                    $v =~ s/\015\012[\040|\011]+/chr(32)/ge; # replace LWS with a single SP
+                    $v =~ s/\015|\012//g; # remove CR and LF since the char is invalid here
+ 
+                    ( $k => $v )
+                } $this->getHeader($_);
+ 
+            } keys %{ $this->{headers} }
+        ],
+        [ $this->{body} ],
+    ];
+}
+
 1;
 __END__
 Foswiki - The Free and Open Source Wiki, http://foswiki.org/

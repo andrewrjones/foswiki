@@ -335,4 +335,32 @@ sub test_isRedirectSafe {
     return;
 }
 
+sub test_psgi_finalize {
+    my $this = shift;
+    my $res  = Foswiki::Response->new();
+
+    $res->status(200);
+    $res->body('hello');
+    $this->assert_deep_equals( [ 200, +[ 'Content-Length' => 5 ], ['hello'] ],
+        $res->psgi_finalize, 'wrong status and body from psgi_finalize' );
+
+    $res->header(
+        -type   => 'text/plain',
+        -status => '200 OK',
+    );
+    $this->assert_deep_equals(
+        [
+            200,
+            +[
+                'Content-Length' => 5,
+                'Status'         => '200 OK',
+                'Content-Type'   => 'text/plain; charset=iso-8859-1',
+            ],
+            ['hello']
+        ],
+        $res->psgi_finalize,
+        'wrong headers from psgi_finalize'
+    );
+}
+
 1;
