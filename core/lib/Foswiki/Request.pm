@@ -121,9 +121,9 @@ sub new_psgi {
     };
 
     bless $this, $class;
-    
-    $this->_prepareQueryParameters($env->{QUERY_STRING});
-    
+ 
+    $this->_prepareQueryParameters( $env->{QUERY_STRING} );
+ 
     return $this;
 }
 
