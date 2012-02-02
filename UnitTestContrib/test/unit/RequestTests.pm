@@ -120,61 +120,62 @@ EOF
 
 sub test_new_psgi {
     my $this = shift;
-    
+
     my $env = {
-          'psgi.multiprocess' => '',
-          'SCRIPT_NAME' => '',
-          'SERVER_NAME' => 0,
-          'HTTP_ACCEPT_ENCODING' => 'gzip,deflate,sdch',
-          'HTTP_CONNECTION' => 'keep-alive',
-          'PATH_INFO' => '/bin/view',
-          'HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'REQUEST_METHOD' => 'GET',
-          'psgi.multithread' => '',
-          'HTTP_ACCEPT_CHARSET' => 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
-          'HTTP_USER_AGENT' => 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.7 (KHTML, like Gecko) Chrome/16.0.91
+        'psgi.multiprocess'    => '',
+        'SCRIPT_NAME'          => '',
+        'SERVER_NAME'          => 0,
+        'HTTP_ACCEPT_ENCODING' => 'gzip,deflate,sdch',
+        'HTTP_CONNECTION'      => 'keep-alive',
+        'PATH_INFO'            => '/bin/view',
+        'HTTP_ACCEPT' =>
+          'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'REQUEST_METHOD'      => 'GET',
+        'psgi.multithread'    => '',
+        'HTTP_ACCEPT_CHARSET' => 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
+        'HTTP_USER_AGENT' =>
+'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.7 (KHTML, like Gecko) Chrome/16.0.91
 2.75 Safari/535.7',
-          'QUERY_STRING' => 'foo=bar',
-          'SERVER_PORT' => 5000,
-          'HTTP_CACHE_CONTROL' => 'max-age=0',
-          'psgix.input.buffered' => 1,
-          'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.8',
-          'REMOTE_ADDR' => '127.0.0.1',
-          'SERVER_PROTOCOL' => 'HTTP/1.1',
-          'psgi.streaming' => 1,
-          'psgi.errors' => *::STDERR,
-          'REQUEST_URI' => '/bin/view?foo=bar',
-          'psgi.version' => [
-                              1,
-                              1
-                            ],
-          'psgi.nonblocking' => '',
-          'psgix.io' => bless( \*Symbol::GEN7, 'IO::Socket::INET' ),
-          'psgi.url_scheme' => 'http',
-          'psgi.run_once' => '',
-          'HTTP_HOST' => 'localhost:5000',
-          #'psgi.input' => \*{'HTTP::Server::PSGI::$input'} # FIXME
-        };
-    
+        'QUERY_STRING'         => 'foo=bar',
+        'SERVER_PORT'          => 5000,
+        'HTTP_CACHE_CONTROL'   => 'max-age=0',
+        'psgix.input.buffered' => 1,
+        'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.8',
+        'REMOTE_ADDR'          => '127.0.0.1',
+        'SERVER_PROTOCOL'      => 'HTTP/1.1',
+        'psgi.streaming'       => 1,
+        'psgi.errors'          => *::STDERR,
+        'REQUEST_URI'          => '/bin/view?foo=bar',
+        'psgi.version'         => [ 1, 1 ],
+        'psgi.nonblocking'     => '',
+        'psgix.io'             => bless( \*Symbol::GEN7, 'IO::Socket::INET' ),
+        'psgi.url_scheme'      => 'http',
+        'psgi.run_once'        => '',
+        'HTTP_HOST'            => 'localhost:5000',
+
+        #'psgi.input' => \*{'HTTP::Server::PSGI::$input'} # FIXME
+    };
+
     my $req = Foswiki::Request->new_psgi($env);
-    
+
     $this->assert_str_equals( '', $req->action, '$req->action() not empty' );
     $this->assert_str_equals( '/bin/view', $req->pathInfo,
         '$req->pathInfo() not /bin/view' );
     $this->assert_str_equals( '127.0.0.1', $req->remoteAddress,
         '$req->remoteAddress() not correct' );
     $this->assert_str_equals( '', $req->uri, '$req->uri() not empty' );
-    $this->assert_str_equals( 'GET', $req->method,     '$req->method() not correct' );
+    $this->assert_str_equals( 'GET', $req->method,
+        '$req->method() not correct' );
     $this->assert_null( $req->remoteUser, '$req->remoteUser() not null' );
-    $this->assert_equals( '5000', $req->serverPort, '$req->serverPort() not correct' );
-    $this->assert_equals( 'foo=bar', $req->query_string,
-        'Wrong query string' );
+    $this->assert_equals( '5000', $req->serverPort,
+        '$req->serverPort() not correct' );
+    $this->assert_equals( 'foo=bar', $req->query_string, 'Wrong query string' );
     my @result = $req->param('foo');
     $this->assert_deep_equals( ['bar'], \@result,
         'wrong value from queryParam()' );
     $this->assert_str_equals( 'http', $req->protocol, 'Wrong protocol' );
     $this->assert_num_equals( 0, $req->secure, 'Wrong secure flag' );
-    
+
     # test secure & protocol
     $env->{'psgi.url_scheme'} = 'https';
     $req = Foswiki::Request->new_psgi($env);
@@ -184,7 +185,7 @@ sub test_new_psgi {
 
 sub test__prepareQueryParameters {
     my $this = shift;
-    
+
     my $req = Foswiki::Request->new();
     $req->_prepareQueryParameters("foo=bar");
     my @result = $req->param('foo');
@@ -206,16 +207,16 @@ sub test__prepareQueryParameters {
     @result = $req->param('bar');
     $this->assert_deep_equals( ['baz'], \@result,
         'wrong value from queryParam()' );
-        
+
     $req->_prepareQueryParameters("foo=bar;foo=baz");
     @result = $req->param('foo');
-    $this->assert_deep_equals( ['bar', 'baz'], \@result,
-        'wrong value from queryParam()' );
+    $this->assert_deep_equals( [ 'bar', 'baz' ],
+        \@result, 'wrong value from queryParam()' );
 
     $req->_prepareQueryParameters("foo=bar&foo=baz");
     @result = $req->param('foo');
-    $this->assert_deep_equals( ['bar', 'baz'], \@result,
-        'wrong value from queryParam()' );
+    $this->assert_deep_equals( [ 'bar', 'baz' ],
+        \@result, 'wrong value from queryParam()' );
 }
 
 sub test_action {
