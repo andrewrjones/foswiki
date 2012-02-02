@@ -47,7 +47,14 @@ This is the entry point for PSGI. To get a server running, just do:
 
 If your doing development, the following will recompile on each request:
   plackup -L Shotgun foswiki.psg
-  
+
+NEW PLAN
+--------
+- Keep our own grown Request and Response, but make them work with PSGI
+  - Request needs to be created from env
+  - Response needs to return array
+
+
 TODO
 ----
 - Get tests passing. Current progress at http://ci.arjones.co.uk/waterfall?show=foswiki-psgi

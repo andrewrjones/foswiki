@@ -91,6 +91,69 @@ sub new {
 
 =begin TML
 
+---++ ClassMethod new_psgi($env)
+
+Constructs a Foswiki::Request object from a PSGI environment hash.
+
+=cut
+
+sub new_psgi {
+    my ( $proto, $env ) = @_;
+
+    my $this;
+
+    my $class = ref($proto) || $proto;
+
+    $this = {
+        action         => '',
+        cookies        => {},
+        headers        => {},
+        method         => $env->{REQUEST_METHOD},
+        param          => {},
+        param_list     => [],
+        path_info      => $env->{PATH_INFO} || '',
+        remote_address => $env->{REMOTE_ADDR},
+        remote_user    => undef,
+        secure         => $env->{'psgi.url_scheme'} eq 'https' ? 1 : 0,
+        server_port    => $env->{SERVER_PORT},
+        uploads        => {},
+        uri            => '',
+    };
+
+    bless $this, $class;
+    
+    $this->_prepareQueryParameters($env->{QUERY_STRING});
+    
+    return $this;
+}
+
+# This method populates $req as it should if given $queryString parameter
+sub _prepareQueryParameters {
+    my ( $this, $queryString ) = @_;
+    my @pairs = split /[&;]/, $queryString;
+    my ( $param, $value, %params, @plist );
+    foreach my $pair (@pairs) {
+        ( $param, $value ) = split( '=', $pair, 2 );
+
+        # url decode
+        if ( defined $value ) {
+            $value =~ tr/+/ /;
+            $value =~ s/%([0-9A-F]{2})/chr(hex($1))/gei;
+        }
+        if ( defined $param ) {
+            $param =~ tr/+/ /;
+            $param =~ s/%([0-9A-F]{2})/chr(hex($1))/gei;
+            push @{ $params{$param} }, $value;
+            push @plist, $param;
+        }
+    }
+    foreach my $param (@plist) {
+        $this->queryParam( $param, $params{$param} );
+    }
+}
+
+=begin TML
+
 ---++ ObjectMethod action([$action]) -> $action
 
 
