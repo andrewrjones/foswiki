@@ -9,6 +9,7 @@ data/System/BaseSkinAttachNewTemplate.txt 0644
 data/System/BaseSkinAttachtablesTemplate.txt 0644
 data/System/BaseSkinAttachTemplate.txt 0644
 data/System/BaseSkinEditTemplate.txt 0644
+data/System/BaseSkinEditFormTemplate.txt 0644
 data/System/BaseSkinFormtablesTemplate.txt 0644
 data/System/BaseSkinFoswikiTemplate.txt 0644
 data/System/BaseSkinLoginTemplate.txt 0644

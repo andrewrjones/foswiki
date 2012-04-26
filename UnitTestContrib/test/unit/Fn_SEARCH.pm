@@ -785,6 +785,60 @@ EXPECT
     return;
 }
 
+sub test_headingoffset {
+    my ( $this, $query, $web ) = @_;
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'TestHINC' );
+    $topicObject->text(<<HERE);
+---+ H4
+<ho off="1">
+---+ H5
+<h1>H2</h1>
+<ho off="+2">
+---+ H6
+<h1>H6</h1>
+<ho off="-3">
+---+ H4
+HERE
+    $topicObject->save();
+    $topicObject->finish();
+    my $result = $this->{test_topicObject}->expandMacros(<<HERE);
+%SEARCH{"---+" web="$this->{test_web}" topic="TestHINC" format="\$text" headingoffset="3"}%
+###
+%SEARCH{"---+" multiple="on" web="$this->{test_web}" topic="TestHINC" format="\$text" headingoffset="3"}%
+HERE
+
+    $this->assert_str_equals( <<EXPECT, $result );
+<div class="foswikiSearchResultsHeader"><span>Searched: <b><noautolink>---+</noautolink></b></span><span id="foswikiNumberOfResultsContainer"></span></div>
+<ho off="3">
+---+ H4
+<ho off="1">
+---+ H5
+<h1>H2</h1>
+<ho off="+2">
+---+ H6
+<h1>H6</h1>
+<ho off="-3">
+---+ H4
+
+<ho off="-3"/>
+<div class="foswikiSearchResultCount">Number of topics: <span>1</span></div>
+###
+<div class="foswikiSearchResultsHeader"><span>Searched: <b><noautolink>---+</noautolink></b></span><span id="foswikiNumberOfResultsContainer"></span></div>
+---+ H4
+<ho off="1">
+---+ H5
+<h1>H2</h1>
+<ho off="+2">
+---+ H6
+<h1>H6</h1>
+<ho off="-3">
+---+ H4
+
+<div class="foswikiSearchResultCount">Number of topics: <span>1</span></div>
+EXPECT
+}
+
 sub verify_regex_match {
     my $this = shift;
 
@@ -2141,7 +2195,7 @@ sub _getTopicList {
     #    };
 
     $this->assert_str_equals( 'ARRAY', ref($expected) );
-    my $webObject = Foswiki::Meta->new( $this->{session}, $web );
+    my $webObject = $this->getWebObject($web);
 
     # Run the search on topics in this web
     my $search = $this->{session}->search();
@@ -3319,9 +3373,7 @@ EXPECT
 sub test_groupby_none_using_subwebs {
     my $this = shift;
 
-    my $webObject =
-      Foswiki::Meta->new( $this->{session}, "$this->{test_web}/A" );
-    $webObject->populateNewWeb();
+    my $webObject = $this->populateNewWeb("$this->{test_web}/A");
     $webObject->finish();
     my ($topicObject) =
       Foswiki::Func::readTopic( "$this->{test_web}/A", 'TheTopic' );
@@ -3332,8 +3384,7 @@ CRUD
     $topicObject->save( forcedate => 1000 );
     $topicObject->finish();
 
-    $webObject = Foswiki::Meta->new( $this->{session}, "$this->{test_web}/B" );
-    $webObject->populateNewWeb();
+    $webObject = $this->populateNewWeb("$this->{test_web}/B");
     $webObject->finish();
     ($topicObject) =
       Foswiki::Func::readTopic( "$this->{test_web}/B", 'TheTopic' );
@@ -3344,8 +3395,7 @@ CRUD
     $topicObject->save( forcedate => 100 );
     $topicObject->finish();
 
-    $webObject = Foswiki::Meta->new( $this->{session}, "$this->{test_web}/C" );
-    $webObject->populateNewWeb();
+    $webObject = $this->populateNewWeb("$this->{test_web}/C");
     $webObject->finish();
     ($topicObject) =
       Foswiki::Func::readTopic( "$this->{test_web}/C", 'TheTopic' );
@@ -3538,19 +3588,19 @@ Searched: <noautolink>BLEEGLE</noautolink>Results from <nop>$this->{test_web} we
 
 <a href="">OkATopic</a>
 <nop>BLEEGLE dontmatchme.blah
-NEW - <a href="">DATE - TIME</a> by WikiGuest
+NEW - <a href="">DATE - TIME</a> by !WikiGuest
 
 <a href="">OkBTopic</a>
 <nop>BLEEGLE dont.matchmeblah
-NEW - <a href="">DATE - TIME</a> by WikiGuest
+NEW - <a href="">DATE - TIME</a> by !WikiGuest
 
 <a href="">OkTopic</a>
 <nop>BLEEGLE blah/matchme.blah
-NEW - <a href="">DATE - TIME</a> by WikiGuest
+NEW - <a href="">DATE - TIME</a> by !WikiGuest
 
 <a href="">TestTopicSEARCH</a>
 <nop>BLEEGLE
-NEW - <a href="">DATE - TIME</a> by WikiGuest
+NEW - <a href="">DATE - TIME</a> by !WikiGuest
 
 Number of topics: 4
 CRUD
@@ -5332,7 +5382,7 @@ footer: \$web=$this->{test_web}", $result
   nonoise="on"
   format="   1 $topic"
   pager="on"
-  pagesize="10"
+  pagesize="4"
   pagerformat="pagerformat: $dollarweb=$web"
 }%'
     );
@@ -5342,7 +5392,6 @@ footer: \$web=$this->{test_web}", $result
    1 OkBTopic
    1 OkTopic
    1 TestTopicSEARCH
-   1 WebPreferences
 pagerformat: \$web=$this->{test_web}", $result
     );
 
@@ -5750,7 +5799,7 @@ TOPICTEXT
 <div class="foswikiSearchResult"><div class="foswikiTopRow">
 <a href="/~sven/core/bin/view/$this->{test_web}/Item10491"><b>Item10491</b></a>
 <div class="foswikiSummary"><b>&hellip;</b> it can be created From <nop>IRC<nop>: <em><nop>SomeString</em>.txt So hopefully this topic  <b>&hellip;</b>  hits don't get corrupted. <em><nop>SomeString</em>? " txt<nop>: <nop>SomeString? And  <b>&hellip;</b> ?tab=searchadvanced search=<em><nop>SomeString</em> scope=all order=topic type= <b>&hellip;</b> </div></div>
-<div class="foswikiBottomRow"><span class="foswikiSRRev"><span class="foswikiNew">NEW</span> - <a href="/~sven/core/bin/rdiff/$this->{test_web}/Item10491" rel='nofollow'>16 Mar 2011 - 04:34</a></span> <span class="foswikiSRAuthor">by WikiGuest </span></div>
+<div class="foswikiBottomRow"><span class="foswikiSRRev"><span class="foswikiNew">NEW</span> - <a href="/~sven/core/bin/rdiff/$this->{test_web}/Item10491" rel='nofollow'>16 Mar 2011 - 04:34</a></span> <span class="foswikiSRAuthor">by !WikiGuest </span></div>
 </div>
 <div class="foswikiSearchResultCount">Number of topics: <span>1</span></div>
 RESULT
@@ -5958,5 +6007,70 @@ HERE
 
     return $result;
 }
+
+sub test_pager_details_Item10350_one {
+    my $this = shift;
+
+    my $search = <<'HERE';
+%SEARCH{
+    "web"
+    type="text"
+    web="System"
+    topic="WebHome,WebChanges,WebIndex,WebPreferences"
+    scope="text"
+    nonoise="on"
+    format="$web.$topic"
+    pager="on"
+}%
+HERE
+    my $result =
+      $this->{test_topicObject}
+      ->expandMacros( $search );
+
+    # Should get the default search order (or an error message, perhaps?)
+    $this->assert_str_equals(<<'THERE', $result );
+System.WebChanges
+System.WebHome
+System.WebIndex
+System.WebPreferences
+THERE
+
+    return;
+}
+
+sub test_pager_details_Item10350_two {
+    my $this = shift;
+
+    my $search = <<'HERE';
+%SEARCH{
+    "web"
+    type="text"
+    web="System"
+    topic="WebHome,WebChanges,WebIndex,WebPreferences"
+    scope="text"
+    nonoise="on"
+    format="$web.$topic"
+    showpage="1"
+    pagesize="5"
+    footer="FOOT($ntopics,$nhits)"
+    pager="on"
+}%
+HERE
+    my $result =
+      $this->{test_topicObject}
+      ->expandMacros( $search );
+
+    # Should get the default search order (or an error message, perhaps?)
+    $this->assert_str_equals(<<'THERE', $result );
+System.WebChanges
+System.WebHome
+System.WebIndex
+System.WebPreferences
+FOOT(4,4)
+THERE
+
+    return;
+}
+
 
 1;

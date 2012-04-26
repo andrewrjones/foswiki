@@ -7,13 +7,8 @@
 	width: auto;
 	max-width: 1180px;
 	margin: 0 auto;
-	.fw_section_padding();
 	padding-left: 20px;
 	padding-right: 20px;
-}
-.foswikiBar .foswikiContainer,
-.foswikiBar.foswikiContainer {
-	.fw_tool_padding_vertical_only();
 }
 
 .foswikiSection {
@@ -32,10 +27,6 @@
 	margin: 0;
 	.box-shadow(none);
 	background: none;
-	
-	.foswikiSection {
-		.fw_tool_padding_vertical_only();
-	}	
 	
 	form {
 		float: none;
@@ -183,10 +174,6 @@
 	z-index: 2; /* for foldout menus */
 	border: none;
 
-	.foswikiContainer {
-		.fw_tool_padding_vertical_only();
-	}
-	
 	.foswikiNavigation > li,
 	.foswikiNavigationSecondary > li {
 		> a {
@@ -214,10 +201,6 @@
 	z-index: 1;
 	.border-radius(0);
 
-	.foswikiContainer {
-		.fw_tool_padding_vertical_only();
-	}
-	
 	.foswikiTopicActionButtons {
 		float: right;
 		
@@ -361,8 +344,9 @@ form .foswikiFormStep.foswikiClearfix {
 
 	margin-bottom: @baseline;
 	padding: 0;
-	border-collapse: separate; // Done so we can round those corners!
-	*border-collapse: collapse; /* IE7, collapse table to remove spacing */
+//	border-collapse: separate; // Done so we can round those corners!
+//	*border-collapse: collapse; /* IE7, collapse table to remove spacing */
+	border-collapse: collapse; /* Don't need to round corners */
 	border-style: solid;
 	border-width: 1px;
 	th, td {
@@ -393,9 +377,9 @@ form .foswikiFormStep.foswikiClearfix {
 .foswikiSeparator {}
 .foswikiTopicInfo {}
 
-a.foswikiDisplaySpatious,
-a.foswikiDisplayAverage,
-a.foswikiDisplayMaxscreen {
+a.foswikiDisplayRoomy,
+a.foswikiDisplayCosy,
+a.foswikiDisplayTight {
 	img {
 		display: none;
 		padding-left: 1em;
@@ -498,7 +482,6 @@ a.foswikiDisplayMaxscreen {
 .foswikiSearchResults {
 
 	.foswikiSearchResult {
-		.fw_tool_padding_vertical_only();
 		position: relative;
 		border-style: none none solid none;
 		border-width: 1px;
@@ -751,6 +734,10 @@ td {
 		}
 	}
 	
+	.foswikiEditForm {
+		margin: 0;
+	}
+	
 	.foswikiEditControls {		
 		input {
 			margin: 0 @fw_button_spacing 0 0;
@@ -769,6 +756,30 @@ td {
 	.foswikiHasWysiwyg .foswikiEditTextarea {
 		border-style: none solid;
 		border-width: 1px;
+	}
+}
+
+.foswikiFormTable {
+	input[type='text'],
+	input[type='password'],
+	textarea {
+		.span12();
+	}
+	td,
+	th {
+		padding: 0 0 .5em .5em;
+		vertical-align: top;
+	}
+	th {
+		.span4();
+		padding-top: 4px; /* add same padding as form fields */
+	}
+	td {
+		.span12();
+	}
+	th.foswikiFormTableHRow {
+		text-align: right;
+		.span16();
 	}
 }
 

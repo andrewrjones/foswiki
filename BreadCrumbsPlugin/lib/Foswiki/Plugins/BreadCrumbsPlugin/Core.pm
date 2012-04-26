@@ -1,6 +1,6 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
-# Copyright (C) 2006-2008 Michael Daum http://michaeldaumconsulting.com
+# Copyright (C) 2006-2012 Michael Daum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -70,7 +70,10 @@ sub recordTrail {
 sub renderBreadCrumbs {
   my ($session, $params, $currentTopic, $currentWeb) = @_;
 
-  #writeDebug("called renderBreadCrumbs($currentWeb, $currentTopic)");
+  writeDebug("called renderBreadCrumbs($currentWeb, $currentTopic)");
+
+  # return an empty string if the current location is unknown
+  return '' if $currentWeb eq 'Unknown' && $currentTopic eq 'Unknown';
 
   # get parameters
   my $webTopic = $params->{_DEFAULT} || "$currentWeb.$currentTopic";
@@ -316,6 +319,13 @@ sub getTopicTitle {
   my $topicTitle;
 
   my ($meta, $text) = Foswiki::Func::readTopic($theWeb, $theTopic);
+
+  if ($Foswiki::cfg{SecureTopicTitles}) {
+    my $wikiName = Foswiki::Func::getWikiName();
+    return $theTopic
+      unless Foswiki::Func::checkAccessPermission('VIEW', $wikiName, $text, $theTopic, $theWeb, $meta);
+  }
+
   my $field = $meta->get('FIELD', 'TopicTitle');
   if ($field) {
     $topicTitle = $field->{value};

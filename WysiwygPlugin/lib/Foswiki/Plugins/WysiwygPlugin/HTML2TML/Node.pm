@@ -547,11 +547,14 @@ sub generate {
         return ( $flags, $text ) if defined $text;
     }
 
-    # No translation, so we need the text of the children
-    ( $flags, $text ) = $this->_flatten($options);
+    unless ( $this->{tag} ) {
 
-    # just return the text if there is no tag name
-    return ( $flags, $text ) unless $this->{tag};
+        # No translation, so we need the text of the children
+        ( $flags, $text ) = $this->_flatten($options);
+
+        # just return the text if there is no tag name
+        return ( $flags, $text );
+    }
 
     return $this->_defaultTag($options);
 }
@@ -684,16 +687,19 @@ sub _convertIndent {
     my ( $this, $options ) = @_;
     my $indent = $WC::TAB;
 
-    my ($f, $t) = $this->_handleP($options);
-    if ($t =~ /^$WC::WS_NOTAB*($WC::TAB+):(.*)$/) {
-	return "$WC::CHECKn$1:$2";
+    my ( $f, $t ) = $this->_handleP($options);
+    return $t unless Foswiki::Func::getContext->{SUPPORTS_PARA_INDENT};
+
+    if ( $t =~ /^$WC::WS_NOTAB*($WC::TAB+):(.*)$/ ) {
+        return "$WC::CHECKn$1:$2";
     }
+
     # Zoom up through the tree and see how many layers of indent we have
     my $p = $this;
-    while ($p = $p->{parent}) {
-	if ($p->{tag} eq 'div' && $p->hasClass('foswikiIndent')) {
-	    $indent .= $WC::TAB;
-	}
+    while ( $p = $p->{parent} ) {
+        if ( $p->{tag} eq 'div' && $p->hasClass('foswikiIndent') ) {
+            $indent .= $WC::TAB;
+        }
     }
     $t =~ s/^$WC::WS*//s;
     $t =~ s/$WC::WS*$//s;
@@ -805,6 +811,8 @@ sub _convertList {
 
 sub _isConvertableIndent {
     my ( $this, $options ) = @_;
+
+    return 0 unless Foswiki::Func::getContext->{SUPPORTS_PARA_INDENT};
 
     return 0 if ( $this->_isProtectedByAttrs() );
 
@@ -942,7 +950,7 @@ sub _isConvertableTableRow {
             $kid->_removePWrapper();
             $kid->_moveClassToSpan('WYSIWYG_TT');
             $kid->_moveClassToSpan('WYSIWYG_COLOR');
-            ( $flags, $text ) = $kid->_flatten($options);
+            ( $flags, $text ) = $kid->_flatten( $options | $WC::IN_TABLE );
             $text = _TDtrim($text);
             $text = "*$text*" if length($text);
         }
@@ -950,7 +958,7 @@ sub _isConvertableTableRow {
             $kid->_removePWrapper();
             $kid->_moveClassToSpan('WYSIWYG_TT');
             $kid->_moveClassToSpan('WYSIWYG_COLOR');
-            ( $flags, $text ) = $kid->_flatten($options);
+            ( $flags, $text ) = $kid->_flatten( $options | $WC::IN_TABLE );
             $text = _TDtrim($text);
         }
         elsif ( !$kid->{tag} ) {
@@ -1123,7 +1131,9 @@ sub _deduceAlignment {
 sub _H {
     my ( $this, $options, $depth ) = @_;
     my ( $flags, $contents ) = $this->_flatten($options);
-    return ( 0, undef ) if ( $flags & $WC::BLOCK_TML );
+    return ( 0, undef )
+      if ( ( $flags & $WC::BLOCK_TML )
+        || ( $flags & $WC::IN_TABLE ) );
     my $notoc = '';
     if ( $this->hasClass('notoc') ) {
         $notoc = '!!';
@@ -1155,7 +1165,7 @@ sub _emphasis {
     # whitespace
     $contents =~ s/&nbsp;/$WC::NBSP/go;
     $contents =~ s/&#160;/$WC::NBSP/go;
-    $contents =~ /^($WC::WS)(.*?)($WC::WS)$/;
+    $contents =~ /^($WC::WS)(.*?)($WC::WS)$/s;
     my ( $pre, $post ) = ( $1, $3 );
     $contents = $2;
     return ( 0, undef ) if ( $contents =~ /^</ || $contents =~ />$/ );
@@ -1399,6 +1409,13 @@ sub _handleA {
         if ( $text eq $href ) {
             return ( 0, $WC::CHECKw . '[' . $nop . '[' . $href . ']]' );
         }
+
+        # we must quote square brackets in [[...][...]] notation
+        $text =~ s/[[]/&#91;/g;
+        $text =~ s/[]]/&#93;/g;
+        $href =~ s/[[]/%5B/g;
+        $href =~ s/[]]/%5D/g;
+
         return ( 0,
             $WC::CHECKw . '[' . $nop . '[' . $href . '][' . $text . ']]' );
     }
@@ -1470,7 +1487,6 @@ sub _handleCODE { return _emphasis( @_, '=' ); }
 sub _handleCOL      { return _flatten(@_); }
 sub _handleCOLGROUP { return _flatten(@_); }
 sub _handleDD       { return _flatten(@_); }
-sub _handleDEL      { return _flatten(@_); }
 sub _handleDFN      { return _flatten(@_); }
 
 # DIR
@@ -1481,7 +1497,7 @@ sub _handleDIV {
     if ( ( $options & $WC::NO_BLOCK_TML )
         || !$this->_isConvertableIndent( $options | $WC::NO_BLOCK_TML ) )
     {
-        return $this->_handleP( $options );
+        return $this->_handleP($options);
     }
     return ( $WC::BLOCK_TML, $this->_convertIndent($options) );
 }
@@ -1677,8 +1693,7 @@ sub _handlePRE {
     }
     unless ( $options & $WC::NO_BLOCK_TML ) {
         my ( $flags, $text ) =
-          $this->_flatten(
-            $options | $WC::NO_BLOCK_TML | $WC::BR2NL | $WC::KEEP_WS );
+          $this->_flatten( $options | $WC::NO_TML | $WC::BR2NL | $WC::KEEP_WS );
         my $p = _htmlParams( $this->{attrs}, $options );
         return ( $WC::BLOCK_TML, "<$tag$p>$text</$tag>" );
     }

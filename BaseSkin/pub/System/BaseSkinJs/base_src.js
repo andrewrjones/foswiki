@@ -97,35 +97,44 @@ foswiki.base = (function ($) {
 		Manage display 'views' - spatious, average and maximise.
 		*/
 		manageDisplaySettings: function() { 
-			var setDisplay = function(classname) {
-				var viewClass = 'view-' + classname;
-				$('body').removeClass('view-foswikiDisplaySpatious').removeClass('view-foswikiDisplayAverage').removeClass('view-foswikiDisplayMaxscreen');
+			
+			var setDisplay,
+				parseMode;
+				
+			setDisplay = function(viewClass) {
+				$('body').removeClass('foswikiViewDisplayRoomy').removeClass('foswikiViewDisplayCosy').removeClass('foswikiViewDisplayTight');
 				$('body').addClass(viewClass);
-				if (foswiki.Pref) {
-					foswiki.Pref.setPref('skinDisplay', classname);
-				}
 			};
-			$('a.foswikiDisplaySpatious,a.foswikiDisplayAverage,a.foswikiDisplayMaxscreen').livequery('click', function (e) {
-				var $this = $(this);
-				switch ($(this).attr('class')) {
-					case 'foswikiDisplaySpatious':
-						setDisplay('foswikiDisplaySpatious');
+			
+			parseMode = function(mode) {
+				if (!mode) {
+					return;
+				}
+				switch (mode) {
+					case 'foswikiDisplayRoomy':
+						setDisplay('foswikiViewDisplayRoomy');
 						break;
-					case 'foswikiDisplayAverage':
-						setDisplay('foswikiDisplayAverage');
+					case 'foswikiDisplayCosy':
+						setDisplay('foswikiViewDisplayCosy');
 						break;
-					case 'foswikiDisplayMaxscreen':
-						setDisplay('foswikiDisplayMaxscreen');
+					case 'foswikiDisplayTight':
+						setDisplay('foswikiViewDisplayTight');
 						break;
 				}
+			};	
+			$('a.foswikiDisplayRoomy,a.foswikiDisplayCosy,a.foswikiDisplayTight').livequery('click', function (e) {
+				var $this = $(this),
+					mode = $this.attr('class');
+				
 				e.preventDefault();
+				parseMode(mode);
+				if (foswiki.Pref && mode) {
+					foswiki.Pref.setPref('skinDisplay', mode);
+				}
 			});
 			
 			if (foswiki.Pref) {
-				var pref = foswiki.Pref.getPref('skinDisplay');
-				if (pref) {
-					setDisplay(pref);
-				}
+				parseMode(foswiki.Pref.getPref('skinDisplay'));
 			}
 		},
 		
@@ -145,8 +154,8 @@ jQuery(document).ready(function ($) {
 
 	foswiki.base.removeYellowFromInputs();
 	foswiki.base.manageDisplaySettings();
-	foswiki.base.handleLocalScroll();
 	foswiki.base.handleSticky();
+	foswiki.base.handleLocalScroll();
 	
 	// add focus to elements with class foswikiFocus
 	$('input.foswikiFocus').livequery(function () {

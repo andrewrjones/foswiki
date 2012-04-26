@@ -18,7 +18,7 @@ use Foswiki::Plugins::FormPlugin::Validate::BackendValidator;
 use Foswiki::Plugins::FormPlugin::Validate::ValidationInstruction;
 
 our $VERSION          = '$Rev$';
-our $RELEASE          = '2.3.1';
+our $RELEASE          = '2.4.0';
 our $SHORTDESCRIPTION = 'Lets you create simple and advanced HTML forms';
 
 # Name of this Plugin, only used in this module
@@ -70,7 +70,10 @@ sub _initTopicVariables {
     $doneHeader     = 0;
     $tabIndex       = 1;
     $renderFormDone = 0;
-    $redirecting = 0;
+    $redirecting    = 0;
+    undef $formData;
+    undef $submittedFormData;
+    undef $template;
     
     my $query = Foswiki::Func::getCgiQuery()
       ; # instead of  Foswiki::Func::getRequestObject() to be compatible with older versions
@@ -118,9 +121,6 @@ sub _readConstantsFromTemplate {
     $Foswiki::Plugins::FormPlugin::Constants::TEMPLATE_INLINE_VALIDATION_REQUIRES_DEFAULT
       = Foswiki::Func::expandTemplate(
         'formplugin:javascript:inlinevalidation:requires:default');
-    $Foswiki::Plugins::FormPlugin::Constants::TEMPLATE_REDIRECT_WARNING
-      = Foswiki::Func::expandTemplate(
-        'formplugin:message:redirect_warning');
 }
 
 =pod
@@ -322,7 +322,6 @@ sub _formElement {
             && $submittedFormName
             && $submittedFormName eq $formName )
         {
-            print "HERE\n";
 
             # fields already populated: do nothing
             $fieldData = $submittedFormData->{names}->{$name};
@@ -445,20 +444,19 @@ sub _redirectToActionUrl {
     my $query = Foswiki::Func::getCgiQuery()
       ; # instead of  Foswiki::Func::getRequestObject() to be compatible with older versions
 
-    # use web and topic values
-    my $topic = $formData->{options}->{topic};
-    my $web   = $formData->{options}->{web};
-
+    # use substituted values, if available
     _substituteFieldTokens( $query, $formData );
+    my $topic      = $query->param('topic')      || $formData->{options}->{topic};
+    my $web        = $query->param('web')        || $formData->{options}->{web};
+    my $restAction = $query->param('restAction') || $formData->{options}->{restAction};
 
     if ( defined $formData->{options}->{action}
         && $formData->{options}->{action} eq 'rest' )
     {
         $query->param( -name => 'topic', -value => "$web\.$topic" )
-          if defined $topic;
+          if defined $topic && defined $web;
         $query->param( -name => 'web', -value => $web ) if defined $web;
-        $query->path_info( '/' . $formData->{options}->{restAction} )
-          if defined $formData->{options}->{restAction};
+        $query->path_info( "/$restAction" ) if defined $restAction;
     }
     else {
         $query->param( -name => 'topic', -value => $topic ) if defined $topic;
@@ -478,8 +476,7 @@ sub _redirectToActionUrl {
     $redirecting = 1;
     Foswiki::Func::redirectCgiQuery( undef, $url, 1 );
 
-    print "Status: 307\nLocation: $url\n\n";
-	_sessionClearForm($formData->{options}->{name});
+    _sessionClearForm($formData->{options}->{name});
 
     return '';
 }

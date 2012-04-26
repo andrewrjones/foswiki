@@ -278,7 +278,7 @@ sub do_test {
     my ( $this, $expected, $actual, $noHtml ) = @_;
     my $session = $this->{session};
 
-    $this->{test_topicObject}->expandMacros($actual);
+    $actual = $this->{test_topicObject}->expandMacros($actual);
     $actual = $this->{test_topicObject}->renderTML($actual);
     if ($noHtml) {
         $this->assert_equals( $expected, $actual );
@@ -286,6 +286,23 @@ sub do_test {
     else {
         $this->assert_html_equals( $expected, $actual );
     }
+}
+
+# Formatting and WikiWord in Input Field
+sub test_escapedWikwordFormfield {
+    my $this     = shift;
+
+    $this->expect_failure( with_dep => 'Foswiki,<,1.2' );
+    $this->annotate("Formatting in input field should not be rendered: Item11480");
+ 
+    my $expected = <<EXPECTED;
+<input type="text" value="!WikiWord !WikiWord !WikiWord *bold* __boldItalic__ " />
+EXPECTED
+
+    my $actual = <<ACTUAL;
+<input type="text" value="!WikiWord !WikiWord !WikiWord *bold* __boldItalic__ " />
+ACTUAL
+    $this->do_test( $expected, $actual );
 }
 
 # current topic WikiWord
@@ -310,6 +327,28 @@ EXPECTED
 
     my $actual = <<ACTUAL;
 $Foswiki::cfg{HomeTopicName}
+ACTUAL
+    $this->do_test( $expected, $actual );
+}
+
+# Item11671
+sub test_Item11671 {
+    my $this = shift;
+    my $expected = <<EXPECTED;
+Create A New Wiki Word
+Year 2012 A New Year
+A 100 Bottle Test
+Finishing A 100
+Test 100 A
+SOS Titanic
+EXPECTED
+    my $actual = <<ACTUAL;
+%SPACEOUT{"CreateANewWikiWord"}%
+%SPACEOUT{"Year2012ANewYear"}%
+%SPACEOUT{"A100BottleTest"}%
+%SPACEOUT{"FinishingA100"}%
+%SPACEOUT{"Test100A"}%
+%SPACEOUT{"SOSTitanic"}%
 ACTUAL
     $this->do_test( $expected, $actual );
 }
@@ -1031,7 +1070,7 @@ sub test_USInHeader {
     $Foswiki::cfg{RequireCompatibleAnchors} = 0;
 
     my $expected = <<EXPECTED;
-<nop><h3><a name="Test_with_link_in_header:_Underscore_topic"></a>Test with link in header: Underscore_topic</h3>
+<nop><h3 id="Test_with_link_in_header:_Underscore_topic">Test with link in header: Underscore_topic</h3>
 EXPECTED
 
     my $actual = <<ACTUAL;
@@ -1742,7 +1781,6 @@ sub _check_rendered_linktext {
     my $addrObj;
     my $part;
 
-    require Foswiki::Address;
     require HTML::Entities;
     print "[[$linktext]]\n\t$html\n" if TRACE;
     $this->assert( $html !~ $editpathregex,
@@ -1764,18 +1802,11 @@ sub _check_rendered_linktext {
     else {
         $expectedAddress = "$this->{test_web}.$this->{test_topic}";
     }
-    $addrObj = Foswiki::Address->new(
-        string => $address,
-        web    => $this->{test_web},
-        topic  => $this->{test_topic},
-        isA    => 'topic'
-    );
-    $expectedAddrObj = Foswiki::Address->new(
-        string => $expectedAddress,
-        web    => $this->{test_web},
-        topic  => $this->{test_topic},
-        isA    => 'topic'
-    );
+    my ( $actualWeb, $actualTopic ) =
+      Foswiki::Func::normalizeWebTopicName( $this->{test_web}, $address );
+    my ( $expectedWeb, $expectedTopic ) =
+      Foswiki::Func::normalizeWebTopicName( $this->{test_web},
+        $expectedAddress );
     print "\tfrag: "
       . ( defined $fragment ? $fragment : 'undef' )
       . ",\tquery: "
@@ -1783,8 +1814,8 @@ sub _check_rendered_linktext {
       . ",\taddr: "
       . ( defined $address ? $address : 'undef' ) . "\n"
       if TRACE;
-    $this->assert_str_equals( $expectedAddrObj->stringify(),
-        $addrObj->stringify(), "address mismatch checking [[$linktext]]" );
+    $this->assert_str_equals( "$expectedWeb.$expectedTopic",
+        "$actualWeb.$actualTopic", "address mismatch checking [[$linktext]]" );
     $this->assert_deep_equals( $expected->{query}, $query,
         "query mismatch checking [[$linktext]]" );
     $this->assert_deep_equals( $expected->{fragment}, $fragment,
@@ -1799,7 +1830,6 @@ sub _check_rendered_linktext {
 sub test_sanity_link_tests {
     my $this = shift;
 
-    $this->expect_failure('TODO: fix Item11366 ampersand escaping in squabs');
     $this->_create_link_test_fixtures();
     while ( my ( $linktext, $expected ) = each %link_tests ) {
 
@@ -1815,7 +1845,9 @@ sub test_sanity_link_tests {
 sub test_ampersand_querystring {
     my ($this) = shift;
 
-    $this->expect_failure('TODO: fix Item11366 ampersand escaping in squabs');
+    $this->expect_failure( 'Test does\'t cater to ShortURL configurations',
+        using => 'ShortURLs' );
+
     $this->_check_rendered_linktext(
         "$this->{test_topic}?q=r&s=t",
         {

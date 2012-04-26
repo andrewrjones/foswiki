@@ -76,16 +76,16 @@ sub new {
 
 Convert a block of TML text into HTML.
 Options:
-   * getViewUrl is a reference to a method:<br>
+   * getViewUrl is a reference to a method:<br/>
      getViewUrl($web,$topic) -> $url (where $topic may include an anchor)
-   * expandVarsInURL is a reference to a static method:<br>
-     expandVarsInURL($url, \%options) -> $url<br>
+   * expandVarsInURL is a reference to a static method:<br/>
+     expandVarsInURL($url, \%options) -> $url<br/>
      that expands selected variables in URLs so that, for example,
      <img> tags appear as pictures in the wysiwyg editor.
    * xmltag is a reference to a hash. The keys are names of XML-like
      tags. The values are references to a function to determine if the
-     content of the tag must be protected:<br>
-     fn($markup) -> $bool<br>
+     content of the tag must be protected:<br/>
+     fn($markup) -> $bool<br/>
      The $markup appears between the <tag></tag> delimiters.
      The functions may modify the markup.
    * dieOnError makes convert throw an exception if a conversion fails.
@@ -129,6 +129,14 @@ WARNING
             $this->{protectExistingTags}->{$tag} = 1;
         }
 
+        my $tagBlocksToProtect =
+          Foswiki::Func::getPreferencesValue('WYSIWYGPLUGIN_PROTECT_TAG_BLOCKS')
+          || 'script,style';
+        foreach my $tag ( split /[,\s]+/, $tagBlocksToProtect ) {
+            next unless $tag =~ /^\w+$/;
+            $this->{protectExistingTagBlocks}->{$tag} = 1;
+        }
+
         # Convert TML to HTML for wysiwyg editing
 
         $content =~ s/[$TT0$TT1$TT2]/?/go;
@@ -166,6 +174,7 @@ WARNING
 
 sub _liftOut {
     my ( $this, $text, $type ) = @_;
+
     my %options;
     if ( $type and $type =~ /^(?:PROTECTED|STICKY|VERBATIM)$/ ) {
         $options{protect} = 1;
@@ -386,8 +395,18 @@ sub _getRenderedVersion {
     # Remove PRE to prevent TML interpretation of text inside it
     $text = $this->_liftOutBlocks( $text, 'pre', {} );
 
+    # protect some automatic sticky tags.
+    foreach my $stickyTag ( keys %{ $this->{protectExistingTagBlocks} } ) {
+        $text =~ s/(<(?i:$stickyTag)[^>]*>.*?<\/(?i:$stickyTag)>)/
+          $this->_liftOut($1, 'PROTECTED')/geis;
+    }
+
     # Protect comments
     $text =~ s/(<!--.*?-->)/$this->_liftOut($1, 'PROTECTED')/ges;
+
+    # Protect anchors
+    $text =~
+s/^($Foswiki::regex{anchorRegex})/$this->_liftOut("\n$1", 'PROTECTED')/gems;
 
     # Handle inline IMG tags specially
     $text =~ s/(<img [^>]*>)/$this->_takeOutIMGTag($1)/gei;
@@ -401,15 +420,19 @@ s/<([A-Za-z]+[^>]*?)((?:\s+\/)?)>/"<" . $this->_appendClassToTag($1, 'TMLhtml') 
     $text =~ s#%($colourMatch)%(.*?)%ENDCOLOR%#
       _getNamedColour($1, $2)#oge;
 
+    # Handle [[][]] links by letting the WYSIWYG handle them as standard links
+    $text =~ s/\[\[([^]]*)\]\[([^]]*)\]\]/$this->_liftOutSquab($1,$2)/ge;
+
+    # let WYSIWYG-editable A tags untouched for the editor
+    $text =~
+s/(\<a(\s+(href|target|title|class)=("(?:[^"\\]++|\\.)*+"|'(?:[^'\\]++|\\.)*+'|\S+))+\s*\>.*?\<\/a\s*\>)/$this->_liftOutGeneral($1, { tag => 'NONE', protect => 0, tmltag => 0 } )/gei;
+
     # Convert Foswiki tags to spans outside protected text
     $text = $this->_processTags($text);
 
     # protect some HTML tags.
     $text =~ s/(<\/?(?!(?i:$PALATABLE_HTML)\b)[A-Z]+(\s[^>]*)?>)/
       $this->_liftOut($1, 'PROTECTED')/gei;
-
-# SMELL: This was just done, about 25 lines above! Commenting out to see what breaks...
-#$text =~ s/\\\n//gs;    # Join lines ending in '\'
 
     # Blockquoted email (indented with '> ')
     # Could be used to provide different colours for different numbers of '>'
@@ -512,13 +535,39 @@ s/((^|(?<=[-*\s(]))$Foswiki::regex{linkProtocolPattern}:[^\s<>"]+[^\s*.,!?;:)<])
     # line-oriented stuff.
     my $inList      = 0;    # True when within a list type
     my $inTable     = 0;    # True when within a table type
+    my $inHTMLTable = 0;    # True when within a native HTML table
     my %table       = ();
     my $inParagraph = 0;    # True when within a P
     my $inDiv       = 0;    # True when within a foswikiTableAndMacros div
     my @result      = ();
+    my $spi = Foswiki::Func::getContext->{SUPPORTS_PARA_INDENT};
 
     foreach my $line ( split( /\n/, $text ) ) {
         my $tableEnded = 0;
+
+        if ($inHTMLTable) {
+            if ( $line =~ m/<\/table>/i ) {
+                $inHTMLTable = 0;
+                $this->_addListItem( \@result, '', '', '' ) if $inList;
+                $inList = 0;
+                push( @result, $line );
+                next;
+            }
+            elsif ( !$line || $line =~ m/^\s*$/ ) {
+                push( @result, '</p>' ) if ($inParagraph);
+                push( @result, '<p></p>' );
+                $inParagraph = 0;
+                next;
+            }
+        }
+
+        if ( $line =~ m/<table/i ) {
+            $inHTMLTable = 1;
+            if ($inParagraph) {
+                push( @result, '</p>' );
+                $inParagraph = 0;
+            }
+        }
 
         # Table: | cell | cell |
         # allow trailing white space after the last |
@@ -572,13 +621,19 @@ s/((^|(?<=[-*\s(]))$Foswiki::regex{linkProtocolPattern}:[^\s<>"]+[^\s*.,!?;:)<])
             push( @result, '</p>' ) if $inParagraph;
             $inParagraph = 0;
 
-            $line = '<p' . $class . '>';
+            if ($inHTMLTable) {
+                $line = '<p' . $class . '></p>';
+                $this->_addListItem( \@result, '', '', '', '' ) if $inList;
+                $inList = 0;
+            }
+            else {
+                $line = '<p' . $class . '>';
 
-            $this->_addListItem( \@result, '', '', '', '' ) if $inList;
-            $inList = 0;
+                $this->_addListItem( \@result, '', '', '', '' ) if $inList;
+                $inList = 0;
 
-            $inParagraph = 1;
-
+                $inParagraph = 1;
+            }
         }
         elsif ( $line =~
             s/^((\t|   )+)\$\s(([^:]+|:[^\s]+)+?):\s/<dt> $3 <\/dt><dd> /o )
@@ -613,12 +668,15 @@ s/((^|(?<=[-*\s(]))$Foswiki::regex{linkProtocolPattern}:[^\s<>"]+[^\s*.,!?;:)<])
             $line =~ s/^(<li>)\s*$/$1&nbsp;/;
 
         }
-	elsif ( $line =~ s/^((\t|   )+): /<div class='foswikiIndent'> /o ) {
+        elsif ($spi
+            && $line =~ s/^((\t|   )+): /<div class='foswikiIndent'> /o )
+        {
 
-	    # Indent pseudo-list
-	    $this->_addListItem( \@result, '', 'div', 'class="foswikiIndent"', $1 );
-	    $inList = 1;
-	}
+            # Indent pseudo-list
+            $this->_addListItem( \@result, '', 'div', 'class="foswikiIndent"',
+                $1 );
+            $inList = 1;
+        }
         elsif ( $line =~ m/^((\t|   )+)([1AaIi]\.|\d+\.?) ?/ ) {
 
             # Numbered list
@@ -675,7 +733,7 @@ s/((^|(?<=[-*\s(]))$Foswiki::regex{linkProtocolPattern}:[^\s<>"]+[^\s*.,!?;:)<])
             # Other line
             $this->_addListItem( \@result, '', '', '' ) if $inList;
             $inList = 0;
-            if (    $inParagraph
+            if (    ( $inParagraph or $inHTMLTable )
                 and @result
                 and $result[-1] !~ /<p(?: class='[^']+')?>$/ )
             {
@@ -697,12 +755,16 @@ s/((^|(?<=[-*\s(]))$Foswiki::regex{linkProtocolPattern}:[^\s<>"]+[^\s*.,!?;:)<])
                   if length($whitespace);
             }
             unless ( $inParagraph or $inDiv ) {
-                push( @result, '<p>' );
-                $inParagraph = 1;
+                unless ($inHTMLTable) {
+                    push( @result, '<p>' );
+                    $inParagraph = 1;
+                }
             }
             $line =~ s/(\s\s+)/$this->_hideWhitespace($1)/ge;
-            $result[-1] .= $line;
-            $line = '';
+            if ( defined $result[-1] ) {
+                $result[-1] .= $line;
+                $line = '';
+            }
         }
 
         push( @result, $line ) if length($line) > 0;
@@ -727,24 +789,12 @@ s/((^|(?<=[-*\s(]))$Foswiki::regex{linkProtocolPattern}:[^\s<>"]+[^\s*.,!?;:)<])
     $text =~ s#^(\s*<p>\s*</p>)+##s;
     $text =~ s#(<p>\s*</p>\s*)+$##s;
 
-    $text =~ s(${WC::STARTWW}==([^\s]+?|[^\s].*?[^\s])==$WC::ENDWW)
-      (CGI::b(CGI::span({class => 'WYSIWYG_TT'}, $1)))gem;
-    $text =~ s(${WC::STARTWW}__([^\s]+?|[^\s].*?[^\s])__$WC::ENDWW)
-      (CGI::b(CGI::i($1)))gem;
-    $text =~ s(${WC::STARTWW}\*([^\s]+?|[^\s].*?[^\s])\*$WC::ENDWW)
-      (CGI::b($1))gem;
+    _handleMarkup($text);
 
-    $text =~ s(${WC::STARTWW}\_([^\s]+?|[^\s].*?[^\s])\_$WC::ENDWW)
-      (CGI::i($1))gem;
-    $text =~ s(${WC::STARTWW}\=([^\s]+?|[^\s].*?[^\s])\=$WC::ENDWW)
-      (CGI::span({class => 'WYSIWYG_TT'}, $1))gem;
-
-    # Handle [[][]] and [[]] links
+    # Handle [[]] links
+    $text =~ s/(\[\[[^\]]*\]\])/$this->_liftOut($1, 'LINK')/ge;
 
     # We do _not_ support [[http://link text]] syntax
-
-    # [[][]]
-    $text =~ s/(\[\[[^\]]*\](\[[^\]]*\])?\])/$this->_liftOut($1, 'LINK')/ge;
 
     $text =~
 s/$WC::STARTWW(($Foswiki::regex{webNameRegex}\.)?$Foswiki::regex{wikiWordRegex}($Foswiki::regex{anchorRegex})?)/$this->_liftOut($1, 'LINK')/geom;
@@ -763,7 +813,40 @@ s/$WC::STARTWW(($Foswiki::regex{webNameRegex}\.)?$Foswiki::regex{wikiWordRegex}(
         $text = '<p class="foswikiDeleteMe">&nbsp;</p>' . $text;
     }
 
+    #print STDERR "DEBUG\n$text\n";
     return $text;
+}
+
+sub _liftOutSquab {
+    my $this = shift;
+    my $url  = shift;
+    my $text = shift;
+
+    # Handle colour tags specially (hack, hack, hackity-HACK!)
+    my $colourMatch = join( '|', grep( /^[A-Z]/, @WC::TML_COLOURS ) );
+    $text =~ s#%($colourMatch)%(.*?)%ENDCOLOR%#
+      _getNamedColour($1, $2)#oge;
+    _handleMarkup($text);
+
+    return $this->_liftOutGeneral( "<a href=\"$url\">$text<\/a>",
+        { tag => 'NONE', protect => 0, tmltag => 0 } );
+
+}
+
+sub _handleMarkup {
+
+    $_[0] =~ s(${WC::STARTWW}==([^\s]+?|[^\s].*?[^\s])==$WC::ENDWW)
+      (CGI::b(CGI::span({class => 'WYSIWYG_TT'}, $1)))gem;
+    $_[0] =~ s(${WC::STARTWW}__([^\s]+?|[^\s].*?[^\s])__$WC::ENDWW)
+      (CGI::b(CGI::i($1)))gem;
+    $_[0] =~ s(${WC::STARTWW}\*([^\s]+?|[^\s].*?[^\s])\*$WC::ENDWW)
+      (CGI::b($1))gem;
+
+    $_[0] =~ s(${WC::STARTWW}\_([^\s]+?|[^\s].*?[^\s])\_$WC::ENDWW)
+      (CGI::i($1))gem;
+    $_[0] =~ s(${WC::STARTWW}\=([^\s]+?|[^\s].*?[^\s])\=$WC::ENDWW)
+      (CGI::span({class => 'WYSIWYG_TT'}, $1))gem;
+
 }
 
 sub _encodeHr {
@@ -823,9 +906,8 @@ sub _processTableRow {
     $row =~ s/^(\s*)\|//;    # Remove leading junk
     my $pre = $1;
 
-    $row =~
-      s/(\|\|+)/'colspan'.$Foswiki::TranslationToken.length($1)."\|"/geo
-      ;                         # calc COLSPAN
+    $row =~ s/(\|\|+)/'colspan'.$Foswiki::TranslationToken.length($1)."\|"/geo
+      ;                      # calc COLSPAN
     my $colCount = 0;
     my @cols     = ();
     my $span     = 0;
@@ -1017,7 +1099,8 @@ sub _getNamedColour {
     if (
         defined $epr
         && (   $epr =~ /color=["'](#?\w+)['"]/
-            || $epr =~ /color\s*:\s*(#?\w+)/ )
+            || $epr =~ /color\s*:\s*(#?\w+)/
+            || $epr =~ /class=["']foswiki(${name})FG['"]/i )
       )
     {
         return "<span class='WYSIWYG_COLOR' style='color:$1'>$t</span>";
@@ -1237,8 +1320,8 @@ sub _addListItem {
         my $firstTime = 1;
         while ( $size < $depth ) {
             push( @{ $this->{LIST} }, { type => $type, element => $element } );
-            push( @$result, "<$element" . ($opts ? " $opts" : "") .">" )
-		unless ($firstTime);
+            push( @$result, "<$element" . ( $opts ? " $opts" : "" ) . ">" )
+              unless ($firstTime);
             push( @$result, "<$type>" ) if $type;
             $firstTime = 0;
             $size++;
@@ -1259,13 +1342,12 @@ sub _addListItem {
     if ($size) {
         my $oldt = $this->{LIST}->[ $size - 1 ];
         if ( $oldt->{type} ne $type ) {
-	    my $r = '';
- 	    $r .= "</$oldt->{type}>" if $oldt->{type};
-	    $r .= "<$type>" if $type;
+            my $r = '';
+            $r .= "</$oldt->{type}>" if $oldt->{type};
+            $r .= "<$type>" if $type;
             push( @$result, $r );
             pop( @{ $this->{LIST} } );
-            push( @{ $this->{LIST} }, {
-                type => $type, element => $element } );
+            push( @{ $this->{LIST} }, { type => $type, element => $element } );
         }
     }
 }

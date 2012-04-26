@@ -343,6 +343,7 @@ sub url {
     my $queryString = $this->queryString();
     $url .= '?' . $queryString if $query && $queryString;
     $url = '' unless defined $url;
+
     return $url;
 }
 
@@ -633,7 +634,7 @@ sub header {
 
 ---++ ObjectMethod save( $fh )
 
-Saves object state to filehandle. Object may be loaded latter
+Saves object state to filehandle. Object may be loaded later
 passing $fh to new constructor or by calling load().
 
 =cut
@@ -642,10 +643,9 @@ sub save {
     my ( $this, $fh ) = @_;
     local ( $\, $, ) = ( '', '' );
     foreach my $name ( $this->param ) {
-        my $key = Foswiki::urlEncode($name);
         foreach my $value ( $this->param($name) ) {
             $value = '' unless defined $value;
-            print $fh Foswiki::urlEncode($key), '=',
+            print $fh Foswiki::urlEncode($name), '=',
               Foswiki::urlEncode($value), "\n";
         }
     }
