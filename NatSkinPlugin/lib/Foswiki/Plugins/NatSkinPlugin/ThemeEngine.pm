@@ -458,7 +458,7 @@ sub run {
     Foswiki::Func::setPreferencesValue('FOSWIKI_STYLE_URL', '%PUBURLPATH%/%SYSTEMWEB%/NatSkin/BaseStyle.css');
     Foswiki::Func::setPreferencesValue('FOSWIKI_COLORS_URL', '%NATSTYLEURL%');
 
-    Foswiki::Func::addToZone('script', 'NATSKIN::JS', <<'HERE', 'NATSKIN, NATSKIN::OPTS, JQUERYPLUGIN::FOSWIKI, JQUERYPLUGIN::SUPERFISH, JQUERYPLUGIN::UI');
+    Foswiki::Func::addToZone('script', 'NATSKIN::JS', <<'HERE', 'NATSKIN, NATSKIN::PREFERENCES, JQUERYPLUGIN::FOSWIKI, JQUERYPLUGIN::SUPERFISH, JQUERYPLUGIN::UI');
 <script src="%PUBURLPATH%/%SYSTEMWEB%/NatSkin/natskin.js"></script>
 HERE
 

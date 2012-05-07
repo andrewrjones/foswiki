@@ -32,6 +32,7 @@ use warnings;
 my $TT0 = chr(0);
 my $TT1 = chr(1);
 my $TT2 = chr(2);
+my $TT3 = chr(3);    # Temporarily hides noautolink %macros at various points
 
 # HTML elements that are palatable to editors. Other HTML tags will be
 # rendered in 'protected' regions to prevent the WYSIWYG editor mussing
@@ -227,8 +228,9 @@ sub _dropBack {
 sub _dropIn {
     my ( $this, $n, $protecting ) = @_;
     my $thing = $this->{refs}->[$n];
+    my $text  = $thing->{text};
 
-    my $text = $thing->{text};
+    #print STDERR "DROPPING IN $text\n";
 
     # Drop back recursively
     $text = $this->_dropBack( $text, $protecting || $thing->{protect} );
@@ -256,6 +258,8 @@ sub _dropIn {
     _addClass( $thing->{params}->{class}, $thing->{class} ) if $thing->{class};
 
     no strict 'refs';
+
+    #print STDERR "RETURNED ",&$method( $thing->{params}, $text );
     return &$method( $thing->{params}, $text );
     use strict 'refs';
 }
@@ -291,18 +295,19 @@ sub _processTags {
             if ( $token eq '%' && $stackTop =~ /}$/ ) {
                 while ( scalar(@stack)
                     && $stackTop !~
-                    /^\n?%($Foswiki::regex{tagNameRegex}){.*}$/os )
+                    /^\n?%(?:~~ )?($Foswiki::regex{tagNameRegex}){.*}$/os )
                 {
                     $stackTop = pop(@stack) . $stackTop;
                 }
             }
             if (   $token eq '%'
                 && $stackTop =~
-                m/^(\n?)%($Foswiki::regex{tagNameRegex})({.*})?$/os )
+                m/^(\n?)%(~~ )?($Foswiki::regex{tagNameRegex})({.*})?$/os )
             {
-                my $nl = $1;
-                my $tag = $2 . ( $3 || '' );
-                $tag = "$nl%$tag%";
+                my $nl   = $1;
+                my $glue = $2 || '';
+                my $tag  = $3 . ( $4 || '' );
+                $tag = "$nl%$glue$tag%";
 
               # The commented out lines disable PROTECTED for %SIMPLE% vars. See
               # Bugs: Item4828 for the sort of problem this would help to avert.
@@ -420,19 +425,32 @@ s/<([A-Za-z]+[^>]*?)((?:\s+\/)?)>/"<" . $this->_appendClassToTag($1, 'TMLhtml') 
     $text =~ s#%($colourMatch)%(.*?)%ENDCOLOR%#
       _getNamedColour($1, $2)#oge;
 
-    # Handle [[][]] links by letting the WYSIWYG handle them as standard links
-    $text =~ s/\[\[([^]]*)\]\[([^]]*)\]\]/$this->_liftOutSquab($1,$2)/ge;
-
     # let WYSIWYG-editable A tags untouched for the editor
     $text =~
 s/(\<a(\s+(href|target|title|class)=("(?:[^"\\]++|\\.)*+"|'(?:[^'\\]++|\\.)*+'|\S+))+\s*\>.*?\<\/a\s*\>)/$this->_liftOutGeneral($1, { tag => 'NONE', protect => 0, tmltag => 0 } )/gei;
 
+    $text =~
+      s/\[\[([^]]*)\]\[([^]]*)\]\]/$this->_protectMacrosInSquab($1,$2)/ge;
+    $text =~ s/\[\[([^\]]*)\]\]/$this->_protectMacrosInSquab($1)/ge;
+
     # Convert Foswiki tags to spans outside protected text
     $text = $this->_processTags($text);
 
-    # protect some HTML tags.
-    $text =~ s/(<\/?(?!(?i:$PALATABLE_HTML)\b)[A-Z]+(\s[^>]*)?>)/
+    # Unprotect the macros.
+    $text =~ s/$TT3/%/g;
+
+    # Handle [[][]] links by letting the WYSIWYG handle them as standard links
+    $text =~ s/\[\[([^]]*)\]\[([^]]*)\]\]/$this->_liftOutSquab($1,$2)/ge;
+
+    # Handle [[]] links
+    $text =~ s/\[\[([^\]]*)\]\]/$this->_liftOutSquab($1,$1,'TMLlink')/ge;
+
+    # protect some HTML tags, excluding noautolink.
+    $text =~ s/(<\/?(?!(?i:$PALATABLE_HTML|NOAUTOLINK)\b)[A-Z]+(\s[^>]*)?>)/
       $this->_liftOut($1, 'PROTECTED')/gei;
+
+    # hide NOAUTOLINK
+    $text =~ s/<(\/?noautolink)>/$TT3$1$TT3/gi;
 
     # Blockquoted email (indented with '> ')
     # Could be used to provide different colours for different numbers of '>'
@@ -745,6 +763,7 @@ s/((^|(?<=[-*\s(]))$Foswiki::regex{linkProtocolPattern}:[^\s<>"]+[^\s*.,!?;:)<])
                     and $this->{refs}->[$1]->{text} =~ /^\n?%/ )
                 {
 
+                    #print STDERR "------- NEWLINE IS ALREADY PROTECTED\n";
                     # The newline is already protected
                     $whitespace = "";
                 }
@@ -756,6 +775,8 @@ s/((^|(?<=[-*\s(]))$Foswiki::regex{linkProtocolPattern}:[^\s<>"]+[^\s*.,!?;:)<])
             }
             unless ( $inParagraph or $inDiv ) {
                 unless ($inHTMLTable) {
+
+                    #print STDERR "pushed <p>\n";
                     push( @result, '<p>' );
                     $inParagraph = 1;
                 }
@@ -785,19 +806,33 @@ s/((^|(?<=[-*\s(]))$Foswiki::regex{linkProtocolPattern}:[^\s<>"]+[^\s*.,!?;:)<])
 
     $text = join( "\n", @result );
 
+    #print STDERR "BEFORE DROPINS \n[",$text,"]\n";
+
     # Trim any extra Ps from the top and bottom.
     $text =~ s#^(\s*<p>\s*</p>)+##s;
     $text =~ s#(<p>\s*</p>\s*)+$##s;
 
     _handleMarkup($text);
 
-    # Handle [[]] links
-    $text =~ s/(\[\[[^\]]*\]\])/$this->_liftOut($1, 'LINK')/ge;
+    # restore NOAUTOLINK
+    $text =~ s/$TT3(\/?noautolink)$TT3/<$1>/gi;
 
-    # We do _not_ support [[http://link text]] syntax
+    unless (
+        Foswiki::isTrue( Foswiki::Func::getPreferencesValue('NOAUTOLINK') ) )
+    {
+        my $removed = {};
+        $text = Foswiki::takeOutBlocks( $text, 'noautolink', $removed );
 
-    $text =~
-s/$WC::STARTWW(($Foswiki::regex{webNameRegex}\.)?$Foswiki::regex{wikiWordRegex}($Foswiki::regex{anchorRegex})?)/$this->_liftOut($1, 'LINK')/geom;
+# Need to also include protected white-space marker as part of start wikiword delim
+        my $startww = qr/$WC::STARTWW|(?<=$TT2)/;
+        $text =~
+s/$startww(($Foswiki::regex{webNameRegex}\.)?$Foswiki::regex{wikiWordRegex}($Foswiki::regex{anchorRegex})?)/$this->_liftOutSquab($1,$1)/geom;
+        Foswiki::putBackBlocks( \$text, $removed, 'noautolink' );
+    }
+
+    # protect NOAUTOLINK.
+    $text =~ s/(<\/?(?i:noautolink\b)(\s[^>]*)?>)/
+      $this->_liftOut($1, 'PROTECTED')/gei;
 
     $text =~ s/(<nop>)/$this->_liftOut($1, 'PROTECTED')/ge;
 
@@ -818,19 +853,45 @@ s/$WC::STARTWW(($Foswiki::regex{webNameRegex}\.)?$Foswiki::regex{wikiWordRegex}(
 }
 
 sub _liftOutSquab {
-    my $this = shift;
-    my $url  = shift;
-    my $text = shift;
+    my $this  = shift;
+    my $url   = shift;
+    my $text  = shift;
+    my $class = shift || '';
 
-    # Handle colour tags specially (hack, hack, hackity-HACK!)
+    # Treat as old style link if embedded spaces in the url
+    return $this->_liftOut( '[[' . $url . ']]', 'LINK' )
+      if ( $class eq 'TMLlink' && $url =~ m/\s/ );
+
+    # Handle colour tags specially (hack, hack, hackity-HACK!
     my $colourMatch = join( '|', grep( /^[A-Z]/, @WC::TML_COLOURS ) );
     $text =~ s#%($colourMatch)%(.*?)%ENDCOLOR%#
       _getNamedColour($1, $2)#oge;
     _handleMarkup($text);
 
-    return $this->_liftOutGeneral( "<a href=\"$url\">$text<\/a>",
-        { tag => 'NONE', protect => 0, tmltag => 0 } );
+    if ($class) {
+        $class = " class='$class'";
+    }
 
+    return $this->_liftOutGeneral(
+        "<a$class href=\"$url\">$text<\/a>",
+        { tag => 'NONE', protect => 0, tmltag => 0 }
+    );
+
+}
+
+sub _protectMacrosInSquab {
+    my $this = shift;
+    my $url  = shift;
+    my $text = shift;
+
+    $url =~ s/%/$TT3/g;
+
+    if ($text) {
+        return "[[$url][$text]]";
+    }
+    else {
+        return "[[$url]]";
+    }
 }
 
 sub _handleMarkup {
@@ -868,7 +929,7 @@ sub _hideWhitespace {
     $whitespace =~ s/( +)/'s' . length($1)/ge;
 
     return $this->_liftOutGeneral(
-        " ",
+        "&nbsp;",
         {
             tag    => 'span',
             class  => "WYSIWYG_HIDDENWHITESPACE",

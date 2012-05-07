@@ -28,7 +28,8 @@ our $RELEASE = '0.1.0';
 
 # Short description of this plugin
 # One line description, is shown in the %SYSTEMWEB%.TextFormattingRules topic:
-our $SHORTDESCRIPTION = 'A plugin to enable browsing of a filesystem hierarchy.';
+our $SHORTDESCRIPTION =
+  'A plugin to enable browsing of a filesystem hierarchy.';
 
 # You must set $NO_PREFS_IN_TOPIC to 0 if you want your plugin to use
 # preferences set in the plugin topic. This is required for compatibility
@@ -71,7 +72,8 @@ sub initPlugin {
 
     # Always provide a default in case the setting is not defined in
     # LocalSite.cfg.
-    $serverroot = $Foswiki::cfg{Plugins}{FSBrowserPlugin}{ServerRoot} || '/var/www';
+    $serverroot = $Foswiki::cfg{Plugins}{FSBrowserPlugin}{ServerRoot}
+      || '/var/www';
 
     $pubroot = $serverroot . $Foswiki::cfg{PubUrlPath};
 
@@ -88,7 +90,8 @@ sub initPlugin {
 
 sub _FSBROWSER {
 
-    my($session, $params, $topic, $web, $topicObject) = @_;
+    my ( $session, $params, $topic, $web, $topicObject ) = @_;
+
     # $session  - a reference to the Foswiki session object
     #             (you probably won't need it, but documented in Foswiki.pm)
     # $params=  - a reference to a Foswiki::Attrs object containing
@@ -103,28 +106,29 @@ sub _FSBROWSER {
     # Return: the result of processing the macro. This will replace the
     # macro call in the final text.
 
-    if (defined $params->{_DEFAULT}) {
+    if ( defined $params->{_DEFAULT} ) {
         $browseroot = $params->{_DEFAULT};
     }
 
-    if ($browseroot =~ m|\.\./|) {
-        return "!FSBrowserPlugin error: Relative paths not permitted in path specification."
+    if ( $browseroot =~ m|\.\./| ) {
+        return
+"!FSBrowserPlugin error: Relative paths not permitted in path specification.";
     }
 
     $browseroot = $pubroot . $browseroot;
 
-    if (defined $params->{maxdepth}) {
+    if ( defined $params->{maxdepth} ) {
         $maxdepth = $params->{maxdepth};
     }
 
-    find({wanted => \&wanted, untaint => 1}, ($browseroot));
+    find( { wanted => \&wanted, untaint => 1 }, ($browseroot) );
 
     my $currentdepth;
     my $name;
 
-    foreach my $filepath (sort keys { uc($a) cmp uc($b) } %fshash) {
+    foreach my $filepath ( sort keys { uc($a) cmp uc($b) } %fshash ) {
         $currentdepth = $fshash{$filepath}{depth};
-        $name = $fshash{$filepath}{name};
+        $name         = $fshash{$filepath}{name};
         $fstree = $fstree . '   ' x $currentdepth . "* [[$filepath][$name]]\n";
     }
 
@@ -143,21 +147,21 @@ sub wanted {
     # $_ is the current filename within that directory.
     # $File::Find::name is the complete pathname to the file.
 
-    $filepath = $File::Find::name;
+    $filepath     = $File::Find::name;
     $locationpath = $File::Find::name;
-    $filepath =~ s/$serverroot(.*)/$1/;
+    $filepath     =~ s/$serverroot(.*)/$1/;
     $locationpath =~ s/$pubroot(.*)/$1/;
 
-    while ($locationpath =~ m|/|g) { $currentdepth++; }
+    while ( $locationpath =~ m|/|g ) { $currentdepth++; }
 
-    if (defined $maxdepth) {
-        if ($currentdepth > $maxdepth) {
+    if ( defined $maxdepth ) {
+        if ( $currentdepth > $maxdepth ) {
             return;
         }
     }
 
     # Don't display '.' or 'hidden' dot-files.
-    unless ($_ =~ '^\.') {
+    unless ( $_ =~ '^\.' ) {
 
         $name = $File::Find::name;
         $name =~ s|.*/(.*)$|$1|;

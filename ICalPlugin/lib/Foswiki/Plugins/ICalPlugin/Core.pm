@@ -20,6 +20,8 @@ use warnings;
 
 use Foswiki::Func ();
 use Foswiki::Sandbox ();
+use Foswiki::Form ();
+use Foswiki::Plugins ();
 use Foswiki::Plugins::ICalPlugin::DataICal ();
 use DateTime::Duration ();
 use DateTime::Format::ICal ();
@@ -132,7 +134,7 @@ sub FORMATICAL {
     $theSort = 'off';
   }
   unless ($theSort eq 'off') {
-    @events = sort {$a->{$sortCrit} <=> $b->{$sortCrit}} @events;
+    @events = sort {($a->{$sortCrit}||0) <=> ($b->{$sortCrit}||0)} @events;
   }
 
   writeDebug("### generated ".scalar(@events)." events");
@@ -265,7 +267,14 @@ sub parseTime {
     $time = "$1-$2-$3T$4:$5:$6$7";
   }
 
-  return Foswiki::Time::parseTime($time);
+  my $result = Foswiki::Time::parseTime($time);
+  
+  unless (defined $result) {
+    Foswiki::Func::writeWarning("ICalPlugin::Core - cant parse time '$time'");
+    $result = 0;
+  }
+
+  return $result;
 }
 
 ###############################################################################
@@ -461,7 +470,10 @@ sub afterSaveHandler {
   my @events = ();
   my $event = $this->getEventFromDataForm($meta);
   push @events, $event if defined $event;
-  push @events, $this->getEventsFromMetaData($meta);
+
+  if (Foswiki::Func::getContext()->{MetaDataPluginEnabled}) {
+    push @events, $this->getEventsFromMetaData($meta);
+  }
 
   if (@events) {
     try {
@@ -562,6 +574,7 @@ sub getCalendarAttachment {
 
   unless ($this->{calendarWeb}) {
     my $calendar = Foswiki::Func::getPreferencesValue('ICALPLUGIN_CALENDAR') || $Foswiki::cfg{ICalPlugin}{DefaultCalendar};
+    $calendar = Foswiki::Func::expandCommonVariables($calendar) if $calendar =~ /%[A-Z]+{.+?}%/;
 
     #throw Error::Simple("ICALPLUGIN_CALENDAR not defined") unless $calendar;
     return unless $calendar;
@@ -650,11 +663,38 @@ sub getEventsFromMetaData {
 
   my @events = ();
 
-  my $metaData = $Foswiki::Meta::aliases{"event"} || 'event';
-  $metaData =~ s/^META://;
+  # SMELL: there's no way to iterate over all known meta data keys
+  # so we have to break data encapsulation of Foswiki::Meta
+  while (my ($alias, $name) = each %Foswiki::Meta::aliases) {
+    $name =~ s/^META://;
+   
+    # SMELL: there's no way to access the meta data definition record for
+    # a given key
+    my $metaDataDef = $Foswiki::Meta::VALIDATE{$name};
+    next unless $metaDataDef;
 
-  foreach my $record ($meta->find($metaData)) {
-    push @events, $this->getEventFromMetaData($web, $topic, $record);
+    # SMELL: there's a form attribute stored into the record by MetaDataPlugin,
+    # that's not standard, yet we need it now to read the TopicType formfield
+    my $formWebTopic = $metaDataDef->{form};
+    next unless $formWebTopic;
+
+    # now, we've found a meta data definition that has got a DataForm associated with it
+    my ($formWeb, $formTopic) = Foswiki::Func::normalizeWebTopicName($web, $formWebTopic);
+    next unless Foswiki::Func::topicExists($formWeb, $formTopic);
+
+    # now check the TopicType for "EventTopic"
+    my $form = new Foswiki::Form($Foswiki::Plugins::SESSION, $formWeb, $formTopic);
+
+    my $topicTypeField = $form->getField('TopicType');
+    next unless $topicTypeField;
+
+    my $topicType = $topicTypeField->{value};
+    next unless $topicType || $topicType !~ /\bEventTopic\b/;
+
+    # now we've found an EventTopic, we can extract the metadata for this key
+    foreach my $record ($meta->find($name)) {
+      push @events, $this->getEventFromMetaData($web, $topic, $record);
+    }
   }
 
   return @events;

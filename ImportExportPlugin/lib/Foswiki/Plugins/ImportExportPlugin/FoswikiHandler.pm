@@ -65,76 +65,102 @@ sub check {
         while ( $topicItr->hasNext() ) {
             my $topic = $topicItr->next();
             $topiccount{$web}++;
-#            next unless ( $count++ < 5 );
+
+            #            next unless ( $count++ < 5 );
             my ( $meta, $text ) = Foswiki::Func::readTopic( $web, $topic );
 
-                #filters can return 'skipweb','skip', text or 'nochange'
-                my %filterOutput = (
-				    result=>'nochange',
-				    web=>$web,
-				    topic=>$topic,
-				    type => 'topic',
-				    #filename => $files{$topic}{filename},
-				    text=>$text
-				    );
-                foreach my $filter ( @{ $this->{filters} } ) {
-                    %filterOutput =
-                      $filter->(%filterOutput);
-			         if ( $filterOutput{result} eq 'skipweb' ) {
-		                    #print STDERR "SKIPPING $filterOutput{web} web\n";
-		                    push(@output, "   * __SKIPPING__ $filterOutput{web} web");
-				            $web = '';
-                            last;
-                    }
-			         if ( $filterOutput{result} eq 'skip' ) {
-		                    #print STDERR "SKIPPING $filterOutput{web} , $filterOutput{topic}\n";
-		                    push(@output, "   * __SKIPPING__ $filterOutput{web} . $filterOutput{topic}");
-                            last;
-                    }
-		            if ( defined($filterOutput{links}) && ref($filterOutput{links}) eq 'ARRAY' ) {
-print STDERR "-- links: ".join(',', @{$filterOutput{links}})."\n";
-		                map { push( @{ $links{$_} }, $filterOutput{web} . '.' . $filterOutput{topic} ); }
-		                  @{$filterOutput{links}};
-		            }
+            #filters can return 'skipweb','skip', text or 'nochange'
+            my %filterOutput = (
+                result => 'nochange',
+                web    => $web,
+                topic  => $topic,
+                type   => 'topic',
+
+                #filename => $files{$topic}{filename},
+                text => $text
+            );
+            foreach my $filter ( @{ $this->{filters} } ) {
+                %filterOutput = $filter->(%filterOutput);
+                if ( $filterOutput{result} eq 'skipweb' ) {
+
+                    #print STDERR "SKIPPING $filterOutput{web} web\n";
+                    push( @output, "   * __SKIPPING__ $filterOutput{web} web" );
+                    $web = '';
+                    last;
                 }
-		    next if ( $filterOutput{result} eq 'skip' );
-		    last if ( $filterOutput{result} eq 'skipweb' );
-		    if ( $filterOutput{result} eq 'crash' ) {
-                push(@output, "   1 [[$filterOutput{web}.$filterOutput{topic}][$filterOutput{web}, $filterOutput{topic}]]: %RED%__CRASHES__%ENDCOLOR% ");
-                $crashes{"$filterOutput{web}.$filterOutput{topic}"} = $filterOutput{crash};
-		        next;
-		    }
+                if ( $filterOutput{result} eq 'skip' ) {
+
+           #print STDERR "SKIPPING $filterOutput{web} , $filterOutput{topic}\n";
+                    push( @output,
+"   * __SKIPPING__ $filterOutput{web} . $filterOutput{topic}"
+                    );
+                    last;
+                }
+                if ( defined( $filterOutput{links} )
+                    && ref( $filterOutput{links} ) eq 'ARRAY' )
+                {
+                    print STDERR "-- links: "
+                      . join( ',', @{ $filterOutput{links} } ) . "\n";
+                    map {
+                        push(
+                            @{ $links{$_} },
+                            $filterOutput{web} . '.' . $filterOutput{topic}
+                        );
+                    } @{ $filterOutput{links} };
+                }
+            }
+            next if ( $filterOutput{result} eq 'skip' );
+            last if ( $filterOutput{result} eq 'skipweb' );
+            if ( $filterOutput{result} eq 'crash' ) {
+                push( @output,
+"   1 [[$filterOutput{web}.$filterOutput{topic}][$filterOutput{web}, $filterOutput{topic}]]: %RED%__CRASHES__%ENDCOLOR% "
+                );
+                $crashes{"$filterOutput{web}.$filterOutput{topic}"} =
+                  $filterOutput{crash};
+                next;
+            }
 
             #list of links for each topic
-            if ($filterOutput{result} ne 'nochange') {
-                push(@output, "   1 [[$filterOutput{web}.$filterOutput{topic}][$filterOutput{web}, $filterOutput{topic}]]: $filterOutput{result}");
+            if ( $filterOutput{result} ne 'nochange' ) {
+                push( @output,
+"   1 [[$filterOutput{web}.$filterOutput{topic}][$filterOutput{web}, $filterOutput{topic}]]: $filterOutput{result}"
+                );
                 $brokenlink_topiccount++;
             }
 
         }
     }
 
-    push (@output, '---++ Summary of broken links and where they are used');
+    push( @output, '---++ Summary of broken links and where they are used' );
+
     #list of links and how often they are used in that web
-    my $linkCount = scalar(keys(%links));
-    push( @output, map { '   1 '. $_ . ' : ' . join(' , ', @{$links{$_}}) } sort(keys(%links)) );
-    
-    
+    my $linkCount = scalar( keys(%links) );
+    push( @output,
+        map { '   1 ' . $_ . ' : ' . join( ' , ', @{ $links{$_} } ) }
+        sort( keys(%links) ) );
+
     ####summary
-    push(@output, "\n<hr>\n");
-    push(@output, "number of broken links: $linkCount\n");
-    push(@output, "number of crashed topics: ".scalar(keys(%crashes)."\n"));
-    push(@output, "number of topics with broken links : $brokenlink_topiccount\n");
+    push( @output, "\n<hr>\n" );
+    push( @output, "number of broken links: $linkCount\n" );
+    push( @output,
+        "number of crashed topics: " . scalar( keys(%crashes) . "\n" ) );
+    push( @output,
+        "number of topics with broken links : $brokenlink_topiccount\n" );
     my $totaltopics = 0;
-    push(@output, map{$totaltopics +=$topiccount{$_};"topics in $_: ".$topiccount{$_}."\n"} keys(%topiccount));
-    push(@output, "number of topics checked: $totaltopics\n");
-    push(@output, "\n");
-    push(@output, "\n");
-    push(@output, "\n");
-    push(@output, "\n<hr>\n");
+    push(
+        @output,
+        map {
+            $totaltopics += $topiccount{$_};
+            "topics in $_: " . $topiccount{$_} . "\n"
+          } keys(%topiccount)
+    );
+    push( @output, "number of topics checked: $totaltopics\n" );
+    push( @output, "\n" );
+    push( @output, "\n" );
+    push( @output, "\n" );
+    push( @output, "\n<hr>\n" );
 
-
-    return join( "<br>\n", ( @output,  ) );
+    return join( "<br>\n", ( @output, ) );
 
 }
 

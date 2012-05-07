@@ -40,7 +40,7 @@ $VERSION = '$Rev$';
 $RELEASE = '1.2';
 
 $pluginName = 'LoginNameAliasesPlugin';    # Name of this Plugin
-our $SHORTDESCRIPTION = 'Modify or alias Login names to simplify User mapping';
+our $SHORTDESCRIPTION  = 'Modify or alias Login names to simplify User mapping';
 our $NO_PREFS_IN_TOPIC = 1;
 
 # =========================
@@ -167,9 +167,15 @@ sub initializeUserHandler {
 
         if ( $Foswiki::cfg{LoginNameAliasesPlugin}{'CHANGE_CASE'} eq 'upper' ) {
             $loginName = uc($loginName);
-        } elsif ( $Foswiki::cfg{LoginNameAliasesPlugin}{'CHANGE_CASE'} eq 'lower' ) {
+        }
+        elsif (
+            $Foswiki::cfg{LoginNameAliasesPlugin}{'CHANGE_CASE'} eq 'lower' )
+        {
             $loginName = lc($loginName);
-        } elsif ( $Foswiki::cfg{LoginNameAliasesPlugin}{'CHANGE_CASE'} eq 'uppercasefirst' ) {
+        }
+        elsif ( $Foswiki::cfg{LoginNameAliasesPlugin}{'CHANGE_CASE'} eq
+            'uppercasefirst' )
+        {
             $loginName = ucfirst($loginName);
         }
 

@@ -63,7 +63,12 @@ sub completePageHandler {
     $text =~ s/<!--.*?-->//g;
     $text =~ s/^\s*$//gms;
     $text =~ s/(<\/html>).*?$/$1/gs;
-    $text =~ s/<p><\/p>(?:\s*<p><\/p>)*/\n<p><\/p>\n/gs;
+    
+    # EXPERIMENTAIL: make at least some <p>s real paragraphs
+    if (1) {
+      $text =~ s/<p><\/p>\s*([^<>]+?)\s*(?=<p><\/p>)/<p class='p'>$1<\/p>\n\n/gs;
+    }
+    $text =~ s/\s*<\/p>(?:\s*<p><\/p>)*/<\/p>\n/gs; # remove useless <p>s
 
     # clean up %{<verbatim>}% ...%{</verbatim>}%
     $text =~ s/\%{(<pre[^>]*>)}&#37;\s*/$1/g;
@@ -129,7 +134,8 @@ sub optimizeJavaScript {
 
   # collect all javascript
   my @jsUrls = ();
-  my $excludePattern = '(?!.*'.$Foswiki::cfg{PageOptimizerPlugin}{ExcludeJavaScript}.')' 
+  my $excludePattern = '';
+  $excludePattern = '(?!.*'.$Foswiki::cfg{PageOptimizerPlugin}{ExcludeJavaScript}.')'
     if defined $Foswiki::cfg{PageOptimizerPlugin}{ExcludeJavaScript};
 
   while ($text =~ s/<script .*?src=["'](\/$excludePattern[^"']+)["'].*><\/script>/\0js\0/) {
@@ -237,10 +243,11 @@ sub _gatherCssUrls {
 
   # link tag
   if ($type eq 'link') {
-    my $excludePattern = $Foswiki::cfg{PageOptimizerPlugin}{ExcludeCss}
+    my $excludePattern;
+    $excludePattern = $Foswiki::cfg{PageOptimizerPlugin}{ExcludeCss}
       if defined $Foswiki::cfg{PageOptimizerPlugin}{ExcludeCss};
 
-    if ($data =~ /$excludePattern/) {
+    if (defined($excludePattern) && $data =~ /$excludePattern/) {
       return "<style media='all'>$data</style>";
     }
 

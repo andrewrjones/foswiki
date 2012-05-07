@@ -57,7 +57,7 @@
         $this.addClass("selected");
 
         if ($editAction.length) {
-          $editAction.trigger("click.uidialoglink");
+          $editAction.trigger("click");
           return false;
         }
       }

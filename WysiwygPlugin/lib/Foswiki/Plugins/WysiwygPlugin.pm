@@ -31,7 +31,7 @@ our $SHORTDESCRIPTION  = 'Translator framework for WYSIWYG editors';
 our $NO_PREFS_IN_TOPIC = 1;
 our $VERSION           = '$Rev$';
 
-our $RELEASE = '1.1.5';
+our $RELEASE = '1.1.6';
 
 our %xmltag;
 
@@ -121,7 +121,7 @@ sub wysiwygEditingDisabledForThisContent {
         $exclusions = Foswiki::Func::getPreferencesValue('WYSIWYG_EXCLUDE')
           || '';
     }
-    
+
     # Check for explicit exclusions before generic, non-configurable
     # purely content-related reasons for exclusion
     if ($exclusions) {

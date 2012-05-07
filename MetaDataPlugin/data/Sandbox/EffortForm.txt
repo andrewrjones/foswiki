@@ -5,7 +5,7 @@
 This is part of the TimeTracker app
 
 | *Name:*| *Type:* | *Size:* | *Values:* | *Description:* | *Attributes:* |
-| Date | date | 10 | %GMTIME% |  | |
+| Date | date | 10 | %GMTIME{"$day $month $year"}% |  | |
 | From | text | 6 | | | |
 | To | text | 6 | | | |
 | Description | text | 80 | | | |

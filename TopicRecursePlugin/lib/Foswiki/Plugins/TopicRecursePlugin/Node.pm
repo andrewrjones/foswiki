@@ -58,7 +58,7 @@ sub new {
 $this->{superNode}->{webtopic} now has child \@depth,siblingindex,nodeindex=$this->{depth},$this->{siblingindex},$this->{nodeindex}:\t$this->{webtopic}
 HERE
     if ( $this->{isRoot} ) {
-        ASSERT( $this->{query} ) if DEBUG;
+        ASSERT( $this->{query} )             if DEBUG;
         ASSERT( defined $this->{queryArgs} ) if DEBUG;
         ASSERT( defined $this->{nodecount} ) if DEBUG;
         ASSERT(
@@ -66,12 +66,12 @@ HERE
         );
     }
     else {
-        ASSERT( not defined $this->{query} ) if DEBUG;
+        ASSERT( not defined $this->{query} )     if DEBUG;
         ASSERT( not defined $this->{queryArgs} ) if DEBUG;
         ASSERT( not defined $this->{nodecount} ) if DEBUG;
-        ASSERT( $this->{depth} > 0 ) if DEBUG;
-        ASSERT( defined $this->{nodeindex} ) if DEBUG;
-        ASSERT( defined $this->{siblingindex} ) if DEBUG;
+        ASSERT( $this->{depth} > 0 )             if DEBUG;
+        ASSERT( defined $this->{nodeindex} )     if DEBUG;
+        ASSERT( defined $this->{siblingindex} )  if DEBUG;
     }
     ASSERT( not defined $this->{childnodes} ) if DEBUG;
     $this->{childNodes} = [];
@@ -197,8 +197,9 @@ sub next {
             depth        => $this->{depth} + 1
         );
         push( @{ $this->{childNodes} }, $nextNode );
-        ASSERT( ( $this->{childCursor} + 1 ) ==
-              scalar( @{ $this->{childNodes} } ) ) if DEBUG;
+        ASSERT(
+            ( $this->{childCursor} + 1 ) == scalar( @{ $this->{childNodes} } ) )
+          if DEBUG;
     }
     else {
 

@@ -460,7 +460,6 @@ sub renderMetaData {
       $line =~ s/\$type\b/$fieldType/g;
       $line =~ s/\$size\b/$fieldSize/g;
       $line =~ s/\$attrs\b/$fieldAttrs/g;
-      $line =~ s/\$(orig)?value\b/$fieldValue/g;
       $line =~ s/\$default\b/$fieldDefault/g;
       $line =~ s/\$(tooltip|description)\b/$fieldDescription/g;
       $line =~ s/\$title\b/$fieldTitle/g;
@@ -468,6 +467,7 @@ sub renderMetaData {
 
       $title = $fieldValue if $fieldName =~ /^(Topic)?Title/i;
 
+      $row =~ s/\$orig$fieldName/$fieldValue/g;
       $row =~ s/\$$fieldName/$line/g;
 
       # cleanup

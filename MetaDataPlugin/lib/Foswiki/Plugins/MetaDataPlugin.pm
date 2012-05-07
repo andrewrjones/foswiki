@@ -24,7 +24,7 @@ use Foswiki::Contrib::JsonRpcContrib ();
 use Foswiki::Plugins::MetaDataPlugin::Core();
 
 our $VERSION = '$Rev$';
-our $RELEASE = '1.02';
+our $RELEASE = '1.10';
 our $SHORTDESCRIPTION = 'Bring custom meta data to wiki apps';
 our $NO_PREFS_IN_TOPIC = 1;
 our $core;

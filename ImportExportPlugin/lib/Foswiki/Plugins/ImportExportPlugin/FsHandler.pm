@@ -47,10 +47,11 @@ sub import {
 
     my $fspath =
       Foswiki::Sandbox::untaintUnchecked( $this->{cgi}->{param}->{fspath}[0] );
-    my $importFrom = Foswiki::Sandbox::untaintUnchecked(
-        $this->{cgi}->{param}->{importFrom}[0] || 'wiki' );
-print STDERR "   1 $fspath\n";
-print STDERR "   2 $importFrom\n";
+    my $importFrom =
+      Foswiki::Sandbox::untaintUnchecked( $this->{cgi}->{param}->{importFrom}[0]
+          || 'wiki' );
+    print STDERR "   1 $fspath\n";
+    print STDERR "   2 $importFrom\n";
     my @output = ("import $importFrom from $fspath\n<hr>\n");
 
     if ( $importFrom eq 'wiki' ) {
@@ -76,7 +77,7 @@ print STDERR "   2 $importFrom\n";
             print STDERR "$web \n";
 
             #see if it exists - skip/merge
-	    my $destinationWebExists = -e $Foswiki::cfg{DataDir} . '/' . $web;
+            my $destinationWebExists = -e $Foswiki::cfg{DataDir} . '/' . $web;
 
             #foreach topic, copy via filters
             %files = ();
@@ -88,19 +89,19 @@ print STDERR "   2 $importFrom\n";
                 },
                 $data . "/$web"
             );
-            if (-e $pub . "/$web" ) {
-            File::Find::find(
-                {
-                    wanted   => sub { findAttachments($web) },
-                    untaint  => 1,
-                    no_chdir => 0
-                },
-                $pub . "/$web"
-            );
-	    }
+            if ( -e $pub . "/$web" ) {
+                File::Find::find(
+                    {
+                        wanted   => sub { findAttachments($web) },
+                        untaint  => 1,
+                        no_chdir => 0
+                    },
+                    $pub . "/$web"
+                );
+            }
 
             foreach my $topic ( sort keys(%files) ) {
-		print STDERR "   * $topic\n";
+                print STDERR "   * $topic\n";
                 my $text;
                 if ( $files{$topic}{type} eq 'topic' ) {
                     $text =
@@ -110,39 +111,42 @@ print STDERR "   2 $importFrom\n";
 
                 #filters can return 'skipweb','skip', text or 'nochange'
                 my %filterOutput = (
-				    result=>'nochange',
-				    web=>$web,
-				    topic=>$files{$topic}{topic},
-				    type => $files{$topic}{type},
-				    filename => $files{$topic}{filename},
-				    text=>$text
-				    );
+                    result   => 'nochange',
+                    web      => $web,
+                    topic    => $files{$topic}{topic},
+                    type     => $files{$topic}{type},
+                    filename => $files{$topic}{filename},
+                    text     => $text
+                );
                 foreach my $filter ( @{ $this->{filters} } ) {
-                    %filterOutput =
-                      $filter->(%filterOutput);
-			         if ( $filterOutput{result} eq 'skipweb' ) {
-		                    print STDERR "SKIPPING $filterOutput{web} web\n";
-		                    push(@output, "   * __SKIPPING__ $filterOutput{web} web");
-				            $web = '';
-                            last;
+                    %filterOutput = $filter->(%filterOutput);
+                    if ( $filterOutput{result} eq 'skipweb' ) {
+                        print STDERR "SKIPPING $filterOutput{web} web\n";
+                        push( @output,
+                            "   * __SKIPPING__ $filterOutput{web} web" );
+                        $web = '';
+                        last;
                     }
-			         if ( $filterOutput{result} eq 'skip' ) {
-		                    #print STDERR "SKIPPING $filterOutput{web} , $filterOutput{topic}\n";
-		                    push(@output, "   * __SKIPPING__ $filterOutput{web} . $filterOutput{topic}");
-                            last;
+                    if ( $filterOutput{result} eq 'skip' ) {
+
+           #print STDERR "SKIPPING $filterOutput{web} , $filterOutput{topic}\n";
+                        push( @output,
+"   * __SKIPPING__ $filterOutput{web} . $filterOutput{topic}"
+                        );
+                        last;
                     }
                 }
-		next if ( $filterOutput{result} eq 'skip' );
-		last if ( $filterOutput{result} eq 'skipweb' );
-		if ( $destinationWebExists ) {
-    
-		    #maybe stop - can't really - for eg, importing into Main
-		}
-		else {
-		    print STDERR "===== creating $web";
-		    Foswiki::Func::createWeb( $web, '_default' );
-		    $destinationWebExists = 1;
-		}
+                next if ( $filterOutput{result} eq 'skip' );
+                last if ( $filterOutput{result} eq 'skipweb' );
+                if ($destinationWebExists) {
+
+                    #maybe stop - can't really - for eg, importing into Main
+                }
+                else {
+                    print STDERR "===== creating $web";
+                    Foswiki::Func::createWeb( $web, '_default' );
+                    $destinationWebExists = 1;
+                }
 
 #TODO: for eg, could grab _default version of WebHome if its just the twiki million rev release version
 #TODO: if its a topic re-name, we need to use Func::moveTopic after everything is finished. else things get busted
@@ -156,7 +160,9 @@ print STDERR "   2 $importFrom\n";
                       . $filterOutput{web} . '/'
                       . $filterOutput{topic} . '.'
                       . $files{$topic}{ext};
-                    push(@output, "   * !$web . !$topic => $filterOutput{web}.$filterOutput{topic}\n      * $filterOutput{result}");
+                    push( @output,
+"   * !$web . !$topic => $filterOutput{web}.$filterOutput{topic}\n      * $filterOutput{result}"
+                    );
                 }
                 else {
                     $destination =
@@ -168,10 +174,15 @@ print STDERR "   2 $importFrom\n";
                     mkdir(  $Foswiki::cfg{PubDir} . '/'
                           . $filterOutput{web} . '/'
                           . $filterOutput{topic} );
-                    push(@output, "   * !$web . !$topic (".$filterOutput{filename}.") => $filterOutput{web}.$filterOutput{topic}\n      * $filterOutput{result}");
+                    push( @output,
+                            "   * !$web . !$topic ("
+                          . $filterOutput{filename}
+                          . ") => $filterOutput{web}.$filterOutput{topic}\n      * $filterOutput{result}"
+                    );
                 }
-#print STDERR $files{$topic}{from} . ' -> ' . $destination."\n";
-#                push( @output, $files{$topic}{from} . ' -> ' . $destination );
+
+ #print STDERR $files{$topic}{from} . ' -> ' . $destination."\n";
+ #                push( @output, $files{$topic}{from} . ' -> ' . $destination );
 
                 copy( $files{$topic}{from}, $destination );
                 if ( -e $files{$topic}{from} . ',v' ) {
@@ -223,12 +234,12 @@ sub findfiles {
 sub findAttachments {
     if ( -f $File::Find::name && not( $_ =~ /(.*),v$/ ) ) {
 
-
-	my $file =  Foswiki::Sandbox::untaintUnchecked($_) ;
+        my $file = Foswiki::Sandbox::untaintUnchecked($_);
         $File::Find::dir =~ /\/([^\/]*)$/;
-	my $topic = $1;
-#print STDERR "found $topic / $file\n";
-        $files{ $1.'/'.$file } = {
+        my $topic = $1;
+
+        #print STDERR "found $topic / $file\n";
+        $files{ $1 . '/' . $file } = {
             from     => Foswiki::Sandbox::untaintUnchecked($File::Find::name),
             type     => 'attachment',
             topic    => $topic,

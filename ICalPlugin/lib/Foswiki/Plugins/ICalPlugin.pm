@@ -19,10 +19,9 @@ use strict;
 use warnings;
 
 use Foswiki::Func ();
-use Foswiki::Plugins::MetaDataPlugin ();
 
 our $VERSION = '$Rev$';
-our $RELEASE = '1.00';
+our $RELEASE = '1.11';
 our $SHORTDESCRIPTION = 'Access ical data in wikiapps';
 our $NO_PREFS_IN_TOPIC = 1;
 our $core;
@@ -33,18 +32,30 @@ our $baseWeb;
 sub initPlugin {
   ($baseTopic, $baseWeb) = @_;
 
-  Foswiki::Func::registerTagHandler('FORMATICAL', sub {
-    return getCore()->FORMATICAL(@_);
-  });
+  Foswiki::Func::registerTagHandler(
+    'FORMATICAL',
+    sub {
+      return getCore()->FORMATICAL(@_);
+    }
+  );
 
-  Foswiki::Plugins::MetaDataPlugin::registerDeleteHandler('EVENT', sub {
-    my ($web, $topic, $record) = @_;
+  # not sure whether the related context variable is already set during initPlugin
+  # so we use Foswiki::cfg
+  if ($Foswiki::cfg{Plugins}{MetaDataPlugin}{Enabled}) {
+    require Foswiki::Plugins::MetaDataPlugin;
 
-    my $core = getCore();
-    my $event = $core->getEventFromMetaData($web, $topic, $record);
+    Foswiki::Plugins::MetaDataPlugin::registerDeleteHandler(
+      'EVENT',
+      sub {
+        my ($web, $topic, $record) = @_;
 
-    return $core->updateCalendar(undef, [$event]);
-  });
+        my $core = getCore();
+        my $event = $core->getEventFromMetaData($web, $topic, $record);
+
+        return $core->updateCalendar(undef, [$event]);
+      }
+    );
+  }
 
   return 1;
 }

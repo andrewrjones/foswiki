@@ -16,9 +16,9 @@ use warnings;
 use Foswiki::Func    ();    # The plugins API
 use Foswiki::Plugins ();    # For the API version
 
-our $VERSION = '$Rev$';
-our $RELEASE = '0.0.8';
-our $SHORTDESCRIPTION = 'Import and export wiki data';
+our $VERSION           = '$Rev$';
+our $RELEASE           = '0.0.8';
+our $SHORTDESCRIPTION  = 'Import and export wiki data';
 our $NO_PREFS_IN_TOPIC = 1;
 
 our $checkingLinks = 0;
@@ -42,7 +42,7 @@ sub initPlugin {
     }
 
     #plugin enabled, but it does nothing unless you are admin
-    return 1 unless (Foswiki::Func::isAnAdmin());
+    return 1 unless ( Foswiki::Func::isAnAdmin() );
 
     # Example code of how to get a preference value, register a macro
     # handler and register a RESTHandler (remove code you do not need)
@@ -65,7 +65,7 @@ sub initPlugin {
     # Allow a sub to be called from the REST interface
     # using the provided alias
     Foswiki::Func::registerRESTHandler( 'import', \&doImport );
-    Foswiki::Func::registerRESTHandler( 'check', \&doCheck );
+    Foswiki::Func::registerRESTHandler( 'check',  \&doCheck );
 
     # Plugin correctly initialized
     return 1;
@@ -84,23 +84,29 @@ sub doCheck {
     my $query = $session->{request};
     my $filterlist =
       Foswiki::Sandbox::untaintUnchecked( $query->{param}->{filterlist}[0] );
-    my $webs =
-      Foswiki::Sandbox::untaintUnchecked( $query->{param}->{webs}[0] );
+    my $webs = Foswiki::Sandbox::untaintUnchecked( $query->{param}->{webs}[0] );
 
-   if (!defined($webs)) {
-	#presume a vague demad for docco
-	print "./rest /ImportExportPlugin/check filterlist=chklinks webs=System fromtype=foswiki\n";
-	exit;
-   }
+    if ( !defined($webs) ) {
 
-    my $output = "\n---++ ImportExportPlugin.check ".$webs."\n";
-    $output .= "./rest /ImportExportPlugin/check filterlist=$filterlist webs=$webs fromtype=foswiki\n";
+        #presume a vague demad for docco
+        print
+"./rest /ImportExportPlugin/check filterlist=chklinks webs=System fromtype=foswiki\n";
+        exit;
+    }
+
+    my $output = "\n---++ ImportExportPlugin.check " . $webs . "\n";
+    $output .=
+"./rest /ImportExportPlugin/check filterlist=$filterlist webs=$webs fromtype=foswiki\n";
 
     $webs =~ s/,/;/g;
 
-    $filterlist = 'selectwebs('.$webs.'), skiptopics(ImportExportPluginCheck.*Report), '.$filterlist;
+    $filterlist =
+        'selectwebs(' 
+      . $webs
+      . '), skiptopics(ImportExportPluginCheck.*Report), '
+      . $filterlist;
     my @filter_funcs = getFilterFuncs($filterlist);
-    
+
     my $type = lc(
         Foswiki::Sandbox::untaintUnchecked(
             $query->{param}->{fromtype}[0] || 'FS'
@@ -108,14 +114,25 @@ sub doCheck {
     );
 
     my $handler = getFromHandler( $type, $query, \@filter_funcs );
+
 #TODO: this will eventually be a multi-phase thing - show list of candidates to import, then doit
     $output .= $handler->check();
     $output .= "\n\n" . $handler->finish();
     $output .= "\n   * Set ALLOWTOPICVIEW=AdminGroup\n\n";
 
-    $output .= '\n\nreport output to '.'Sandbox.ImportExportPluginCheck'.Foswiki::Time::formatTime (time(), '$year$mo$day$hour$min').'Report'."\n\n";
-    Foswiki::Func::saveTopicText('Sandbox', 'ImportExportPluginCheck'.Foswiki::Time::formatTime (time(), '$year$mo$day$hour$min').'Report', $output);
-    
+    $output .=
+        '\n\nreport output to '
+      . 'Sandbox.ImportExportPluginCheck'
+      . Foswiki::Time::formatTime( time(), '$year$mo$day$hour$min' )
+      . 'Report' . "\n\n";
+    Foswiki::Func::saveTopicText(
+        'Sandbox',
+        'ImportExportPluginCheck'
+          . Foswiki::Time::formatTime( time(), '$year$mo$day$hour$min' )
+          . 'Report',
+        $output
+    );
+
     return $output;
 
 }
@@ -151,22 +168,23 @@ sub doImport {
     my $query = $session->{request};
     my $filterlist =
       Foswiki::Sandbox::untaintUnchecked( $query->{param}->{filterlist}[0] );
-    my $webs =
-      Foswiki::Sandbox::untaintUnchecked( $query->{param}->{webs}[0] );
+    my $webs = Foswiki::Sandbox::untaintUnchecked( $query->{param}->{webs}[0] );
     $webs =~ s/,/;/g;
     my $fspath =
       Foswiki::Sandbox::untaintUnchecked( $query->{param}->{fspath}[0] );
-   
-   if (!defined($webs)) {
-	#presume a vague demad for docco
-	print "./rest /ImportExportPlugin/import filterlist=twiki webs=Technology,Support fromtype=fs fspath=/home/sven/src/twiki_backup\n";
-	exit;
-   }
-    my $output = "\n---++ ImportExportPlugin.import ".$webs."\n";
-    $output .= "./rest /ImportExportPlugin/import filterlist=$filterlist webs=$webs fromtype=fs fspath=$fspath\n";
 
-   
-    $filterlist = 'selectwebs('.$webs.'), '.$filterlist;
+    if ( !defined($webs) ) {
+
+        #presume a vague demad for docco
+        print
+"./rest /ImportExportPlugin/import filterlist=twiki webs=Technology,Support fromtype=fs fspath=/home/sven/src/twiki_backup\n";
+        exit;
+    }
+    my $output = "\n---++ ImportExportPlugin.import " . $webs . "\n";
+    $output .=
+"./rest /ImportExportPlugin/import filterlist=$filterlist webs=$webs fromtype=fs fspath=$fspath\n";
+
+    $filterlist = 'selectwebs(' . $webs . '), ' . $filterlist;
 
     my @filter_funcs = getFilterFuncs($filterlist);
 
@@ -182,32 +200,42 @@ sub doImport {
     $output .= $handler->import();
     $output .= "\n\n" . $handler->finish();
     $output .= "\n   * Set ALLOWTOPICVIEW=AdminGroup\n\n";
-    
-    $output .= '\n\nreport output to '.'Sandbox.ImportExportPluginImport'.Foswiki::Time::formatTime (time(), '$year$mo$day$hour$min').'Report'."\n\n";
-    Foswiki::Func::saveTopicText('Sandbox', 'ImportExportPluginImport'.Foswiki::Time::formatTime (time(), '$year$mo$day$hour$min').'Report', $output);
 
-    
+    $output .=
+        '\n\nreport output to '
+      . 'Sandbox.ImportExportPluginImport'
+      . Foswiki::Time::formatTime( time(), '$year$mo$day$hour$min' )
+      . 'Report' . "\n\n";
+    Foswiki::Func::saveTopicText(
+        'Sandbox',
+        'ImportExportPluginImport'
+          . Foswiki::Time::formatTime( time(), '$year$mo$day$hour$min' )
+          . 'Report',
+        $output
+    );
+
     return $output;
 
 }
 
 sub getFilterFuncs {
     my $filterlist = shift;
-    
+
     my %filter_funcs;
 
     foreach my $filter ( split( /,\s*/, $filterlist ) ) {
 
         #parameters to filters: skip(Delete*) or similar
-        my ($f, $order) = getFilterFunc($filter);
+        my ( $f, $order ) = getFilterFunc($filter);
         if ( defined($f) ) {
             print STDERR "adding filter : $filter ($order)\n";
             $filter_funcs{$order} = $f;
-        } else {
+        }
+        else {
             print STDERR "SKIPPING filter : $filter\n";
         }
     }
-    return @filter_funcs{sort(keys(%filter_funcs))};
+    return @filter_funcs{ sort( keys(%filter_funcs) ) };
 }
 
 # filters are called with ($web, $topic, $text, $params) -> ($result, $web, $topic, $text)
@@ -225,15 +253,18 @@ sub getFilterFunc {
     eval "use Foswiki::Plugins::ImportExportPlugin::Filters";
     die "can't load Filters" if $@;
 
-    my $funcRef = $Foswiki::Plugins::ImportExportPlugin::Filters::switchboard{$filter};
-    return (undef, undef) unless (defined($funcRef));
+    my $funcRef =
+      $Foswiki::Plugins::ImportExportPlugin::Filters::switchboard{$filter};
+    return ( undef, undef ) unless ( defined($funcRef) );
     if ( defined($params) ) {
         my $originalFuncRef = $funcRef;
-        $funcRef = sub { 
-            $originalFuncRef->( @_, params=>$params ); 
+        $funcRef = sub {
+            $originalFuncRef->( @_, params => $params );
         };
     }
-    return ($funcRef,$Foswiki::Plugins::ImportExportPlugin::Filters::switchboard_order{$filter});
+    return ( $funcRef,
+        $Foswiki::Plugins::ImportExportPlugin::Filters::switchboard_order{
+            $filter} );
 }
 
 sub getFromHandler {
@@ -291,18 +322,19 @@ Return the new link text.
 =cut
 
 sub renderWikiWordHandler {
-    my( $linkText, $hasExplicitLinkLabel, $web, $topic ) = @_;
+    my ( $linkText, $hasExplicitLinkLabel, $web, $topic ) = @_;
     if ($checkingLinks) {
-        #print STDERR "--------   * $linkText -> =$web= . =$topic= :: ".($hasExplicitLinkLabel?1:0).":";
+
+#print STDERR "--------   * $linkText -> =$web= . =$topic= :: ".($hasExplicitLinkLabel?1:0).":";
 #        if ($hasExplicitLinkLabel) {
-            $wikiWordsRendered{"$web.$topic"}++;
-#        } else {
-#            $wikiWordsRendered{$linkText}++;
-#        }
+        $wikiWordsRendered{"$web.$topic"}++;
+
+        #        } else {
+        #            $wikiWordsRendered{$linkText}++;
+        #        }
     }
     return $linkText;
 }
-
 
 1;
 

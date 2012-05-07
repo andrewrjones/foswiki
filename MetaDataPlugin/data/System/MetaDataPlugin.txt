@@ -95,7 +95,6 @@ The =format= parameter may contain the following pseudo-variables:
    * =$mandatory=: placeholder to display the =mandatory= flag when a formfield is mandatory; the format of the mandatroy flag can be defined in the =mandatory= parameter
    * =$metadata=: key of the !MetaData used interally
    * =$name=: the original fieldname
-   * =$origvalue=: current value of the formfield; for =+value= formfields this is the original _unmapped_ value of the formfield
    * =$origvalues=: list of all allowed values; for =+value= formfields this is the original _unmapped_ value of the formfield
    * =$size=: size parameter of the formfield as given in the !DataForm definition
    * =$title=: the fieldtitle derived from the fieldname and remapped as specified in the =map= parameter
@@ -103,6 +102,7 @@ The =format= parameter may contain the following pseudo-variables:
    * =$value=: current value of the formfield; for =+value= formfields this is the _mapped_ value use =$origvalue= to get the original one
    * =$values=: list of all allowed values for the formfield as defined in the !DataForm definition
    * =$&lt;field_name>=: value of the given field
+   * =$orig&lt;field_name>=: original value of the formfield as stored in; for =+value= formfields this is the original _unmapped_ value of the formfield
 
 ---+++ =%<nop>NEWMETADATA{...}%=
 
@@ -152,12 +152,12 @@ To illustrate the use of !MetaData, an example wiki application is shipped with 
 working efforts and compute resulting earnings based on standard rates and taxes. The application allows to create new !TimeTracker topics which
 have a database of efforts recorded on that tracker.
 
-   * %SANDBOXWEB%.TimeTracker: this is the starting point of the application; and defines the !DataForm for each !TimeTracker topic 
-   * %SANDBOXWEB%.EffortForm: this is a !DataForm definition for effort !MetaData
-   * %SANDBOXWEB%.TimeTrackerTemplate: this is a minimal template topic that basically makes sure the WEBMETADATA is set properly
+   * Sandbox.TimeTracker: this is the starting point of the application; and defines the !DataForm for each !TimeTracker topic 
+   * Sandbox.EffortForm: this is a !DataForm definition for effort !MetaData
+   * Sandbox.TimeTrackerTemplate: this is a minimal template topic that basically makes sure the WEBMETADATA is set properly
      (note: that this is _not_ recommended way to go in production environments; set the WEBMETADATA preference either in the !WebPreferences or !SitePreferences instead)
-   * %SANDBOXWEB%.TimeTrackerEditTemplate: this is the edit template to edit !TimeTracker topics
-   * %SANDBOXWEB%.TimeTrackerViewTemplate: this is the view template to view a !TimeTracker topic and all tracked efforts for it.
+   * Sandbox.TimeTrackerEditTemplate: this is the edit template to edit !TimeTracker topics
+   * Sandbox.TimeTrackerViewTemplate: this is the view template to view a !TimeTracker topic and all tracked efforts for it.
 
 %X% Note: to run this application, you'll need:
 
@@ -180,7 +180,10 @@ have a database of efforts recorded on that tracker.
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
-|  26 Apr 2012: | fixing table editor for firefox; adding dependency on Foswiki:Extensions/JsonRpcContrib |
+|  27 Apr 2012: | fixed access to the original value of +values formfields |
+|  26 Apr 2012: | fixing table editor for firefox; \
+                  adding dependency on Foswiki:Extensions/JsonRpcContrib; \
+                  fixed row click in table editor |
 |  25 Apr 2012: | initial release | 
 |  Dependencies: | %$DEPENDENCIES% |
 |  Home page: | Foswiki:Extensions/%TOPIC% |

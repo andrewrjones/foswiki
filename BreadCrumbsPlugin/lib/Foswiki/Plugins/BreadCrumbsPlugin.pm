@@ -25,18 +25,22 @@ our $doneInit = 0;
 ###############################################################################
 sub initPlugin {
 
-  Foswiki::Func::registerTagHandler('BREADCRUMBS', sub {
-    init();
-    return Foswiki::Plugins::BreadCrumbsPlugin::Core::renderBreadCrumbs(@_);
-  });
+  Foswiki::Func::registerTagHandler(
+    'BREADCRUMBS',
+    sub {
+      init();
+      return Foswiki::Plugins::BreadCrumbsPlugin::Core::renderBreadCrumbs(@_);
+    }
+  );
 
   my $doRecordTrail = Foswiki::Func::getPreferencesValue('BREADCRUMBSPLUGIN_RECORDTRAIL') || '';
-  $doRecordTrail = ($doRecordTrail eq 'on')?1:0;
+  $doRecordTrail = ($doRecordTrail eq 'on') ? 1 : 0;
 
   if ($doRecordTrail) {
     init();
     Foswiki::Plugins::BreadCrumbsPlugin::Core::recordTrail($_[1], $_[0]);
   } else {
+
     #print STDERR "not recording the click path trail\n";
   }
 
