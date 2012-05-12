@@ -36,6 +36,7 @@ use Assert;
 use Error    ();
 use IO::File ();
 use CGI::Util qw(rearrange);
+use URI::Escape ();
 
 =begin TML
 
@@ -123,7 +124,21 @@ sub new_psgi {
     bless $this, $class;
  
     $this->_prepareQueryParameters( $env->{QUERY_STRING} );
- 
+
+    # save cookies
+    my %cookies = ();
+    my @pairs = grep /=/, split "[;,] ?", $env->{'HTTP_COOKIE'};
+    for my $pair ( @pairs ) {
+        # trim leading trailing whitespace
+        $pair =~ s/^\s+//; $pair =~ s/\s+$//;
+
+        my ($name, $value) = map URI::Escape::uri_unescape($_), split( "=", $pair, 2 );
+
+        # Take the first one like CGI.pm or plack do
+        $cookies{$name} = $this->cookie( -name => $name, -value => $value ) unless exists $cookies{$name};
+    }
+    $this->cookies( \%cookies );
+
     return $this;
 }
 

@@ -138,6 +138,7 @@ sub test_new_psgi {
 2.75 Safari/535.7',
         'QUERY_STRING'         => 'foo=bar',
         'SERVER_PORT'          => 5000,
+        'HTTP_COOKIE' => 'c1=18ce5e2a7df1207e4877de3ca53da85a; c2=%7CTwistyPlugin_loginhelp%3D0',
         'HTTP_CACHE_CONTROL'   => 'max-age=0',
         'psgix.input.buffered' => 1,
         'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.8',
@@ -175,6 +176,16 @@ sub test_new_psgi {
         'wrong value from queryParam()' );
     $this->assert_str_equals( 'http', $req->protocol, 'Wrong protocol' );
     $this->assert_num_equals( 0, $req->secure, 'Wrong secure flag' );
+
+    # test cookies
+    my @cookies = $req->cookie();
+    $this->assert_deep_equals(
+        [qw(c1 c2)],
+        [ sort @cookies ],
+        'wrong returned cookie names'
+    );
+    $this->assert_equals( '18ce5e2a7df1207e4877de3ca53da85a', $req->cookie('c1'), 'wrong cookie value' );
+    $this->assert_equals( '|TwistyPlugin_loginhelp=0', $req->cookie('c2'), 'wrong cookie value' );
 
     # test secure & protocol
     $env->{'psgi.url_scheme'} = 'https';
