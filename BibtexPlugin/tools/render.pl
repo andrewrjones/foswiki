@@ -18,23 +18,14 @@ use strict;
 require "Foswiki.cfg";
 require "LocalSite.cfg";
 
-my $bibtoolPrg = $TWiki::cfg{Plugins}{BibtexPlugin}{bibtool}
-  || "/usr/bin/bibtool";
-my $bib2bibPrg = $TWiki::cfg{Plugins}{BibtexPlugin}{bib2bib}
-  || "/usr/bin/bib2bib";
-my $bibtex2htmlPrg = $TWiki::cfg{Plugins}{BibtexPlugin}{bibtex2html}
-  || "/usr/bin/bibtex2html";
-my $bibtexPrg = $TWiki::cfg{Plugins}{BibtexPlugin}{bibtex}
-  || "/usr/bin/bibtex";
-
-my $bibtoolPrg = $Foswiki::cfg{Plugins}{BibtexPlugin}{bibtool}
-  || "/usr/bin/bibtool";
-my $bib2bibPrg = $Foswiki::cfg{Plugins}{BibtexPlugin}{bib2bib}
-  || "/usr/bin/bib2bib";
-my $bibtex2htmlPrg = $Foswiki::cfg{Plugins}{BibtexPlugin}{bibtex2html}
-  || "/usr/bin/bibtex2html";
-my $bibtexPrg = $Foswiki::cfg{Plugins}{BibtexPlugin}{bibtex}
-  || "/usr/bin/bibtex";
+my $bibtoolPrg = $Foswiki::cfg{Plugins}{BibtexPlugin}{bibtool} || 
+    "/usr/bin/bibtool";
+my $bib2bibPrg = $Foswiki::cfg{Plugins}{BibtexPlugin}{bib2bib} || 
+    "/usr/bin/bib2bib";
+my $bibtex2htmlPrg = $Foswiki::cfg{Plugins}{BibtexPlugin}{bibtex2html} || 
+    "/usr/bin/bibtex2html";
+my $bibtexPrg = $Foswiki::cfg{Plugins}{BibtexPlugin}{bibtex} || 
+    "/usr/bin/bibtex";
 
 my $mode = shift(@ARGV);
 my $bibtoolRsc = shift(@ARGV);

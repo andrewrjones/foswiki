@@ -445,12 +445,13 @@ s/(\<a(\s+(href|target|title|class)=("(?:[^"\\]++|\\.)*+"|'(?:[^'\\]++|\\.)*+'|\
     # Handle [[]] links
     $text =~ s/\[\[([^\]]*)\]\]/$this->_liftOutSquab($1,$1,'TMLlink')/ge;
 
-    # protect some HTML tags, excluding noautolink.
-    $text =~ s/(<\/?(?!(?i:$PALATABLE_HTML|NOAUTOLINK)\b)[A-Z]+(\s[^>]*)?>)/
+    # protect some HTML tags, excluding noautolink and nop, handled later.
+    $text =~ s/(<\/?(?!(?i:$PALATABLE_HTML|NOAUTOLINK|NOP)\b)[A-Z]+(\s[^>]*)?>)/
       $this->_liftOut($1, 'PROTECTED')/gei;
 
-    # hide NOAUTOLINK
+    # hide NOAUTOLINK and NOP
     $text =~ s/<(\/?noautolink)>/$TT3$1$TT3/gi;
+    $text =~ s/<(nop)>/$TT3$1$TT3/gi;
 
     # Blockquoted email (indented with '> ')
     # Could be used to provide different colours for different numbers of '>'
@@ -823,7 +824,7 @@ s/((^|(?<=[-*\s(]))$Foswiki::regex{linkProtocolPattern}:[^\s<>"]+[^\s*.,!?;:)<])
         my $removed = {};
         $text = Foswiki::takeOutBlocks( $text, 'noautolink', $removed );
 
-# Need to also include protected white-space marker as part of start wikiword delim
+ # Need to also include protected content marker as part of start wikiword delim
         my $startww = qr/$WC::STARTWW|(?<=$TT2)/;
         $text =~
 s/$startww(($Foswiki::regex{webNameRegex}\.)?$Foswiki::regex{wikiWordRegex}($Foswiki::regex{anchorRegex})?)/$this->_liftOutSquab($1,$1)/geom;
@@ -834,6 +835,8 @@ s/$startww(($Foswiki::regex{webNameRegex}\.)?$Foswiki::regex{wikiWordRegex}($Fos
     $text =~ s/(<\/?(?i:noautolink\b)(\s[^>]*)?>)/
       $this->_liftOut($1, 'PROTECTED')/gei;
 
+    # Restore and protect NOP
+    $text =~ s/$TT3(nop)$TT3/<$1>/gi;
     $text =~ s/(<nop>)/$this->_liftOut($1, 'PROTECTED')/ge;
 
     # Substitute back in protected elements
@@ -857,6 +860,14 @@ sub _liftOutSquab {
     my $url   = shift;
     my $text  = shift;
     my $class = shift || '';
+
+    # Convert obsolete format link  [[http://blah.com link text]]
+    if (   $class eq 'TMLlink'
+        && $url =~ m/\s/
+        && $url =~ m/^$Foswiki::regex{linkProtocolPattern}:/ )
+    {
+        ( $url, $text ) = split( / /, $url, 2 );
+    }
 
     # Treat as old style link if embedded spaces in the url
     return $this->_liftOut( '[[' . $url . ']]', 'LINK' )

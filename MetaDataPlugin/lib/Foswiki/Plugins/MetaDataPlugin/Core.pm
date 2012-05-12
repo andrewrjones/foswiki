@@ -1,6 +1,6 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
-# MetaDataPlugin is Copyright (C) 2011 Michael Daum http://michaeldaumconsulting.com
+# MetaDataPlugin is Copyright (C) 2011-2012 Michael Daum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -21,6 +21,7 @@ use warnings;
 use Foswiki::Func ();
 use Foswiki::Meta ();
 use Foswiki::Form ();
+use Foswiki::Time ();
 use Foswiki::Form::Label ();
 use Error qw( :try );
 #use Data::Dumper();
@@ -35,7 +36,6 @@ sub writeDebug {
 ##############################################################################
 sub new {
   my ($class, $session) = @_;
-
 
   my $this = bless({
     baseWeb => $session->{webName},
@@ -72,11 +72,18 @@ sub NEWMETADATA {
   my ($this, $params) = @_;
 
   my $theMetaData = lc($params->{_DEFAULT} || $params->{meta} || '');
-  my $theTitle = $params->{title} || '';
+  my $theTitle = $params->{title};
   my $theFormat = $params->{format};
   my $theTemplate = $params->{template} || 'metadata::new';
+  my $theTopic = $params->{topic} || $this->{baseWeb}.'.'.$this->{baseTopic};
+
+  my ($web, $topic) = Foswiki::Func::normalizeWebTopicName($this->{baseWeb}, $theTopic);
+  $theTopic = "$web.$topic";
+
+  $theTitle = "New ".ucfirst($theMetaData) unless defined $theTitle;
 
   $theFormat = Foswiki::Func::expandTemplate($theTemplate) unless defined $theFormat;
+  $theFormat =~ s/%topic%/$theTopic/g;
   $theFormat =~ s/%meta%/$theMetaData/g;
   $theFormat =~ s/%title%/$theTitle/g;
   
@@ -130,12 +137,16 @@ sub renderMetaData {
   my $theMandatory = $params->{mandatory};
   my $theHiddenFormat = $params->{hiddenformat};
   my $theHideEmpty = Foswiki::Func::isTrue($params->{hideempty}, 0);
-  #my $theSort = Foswiki::Func::isTrue($params->{sort}, 0);
+  my $theSort = $params->{sort};
+  my $theReverse = Foswiki::Func::isTrue($params->{reverse});
   my $theAutolink = Foswiki::Func::isTrue($params->{autolink}, 1);
   my $theFieldFormat = $params->{fieldformat};
 
   $theMandatory = " <span class='foswikiAlert'>**</span> " unless defined $theMandatory;
   $theHiddenFormat = '<input type="hidden" name="$name" value="$value" />' unless defined $theHiddenFormat; 
+
+  $theSort = 'name' unless defined $theSort;
+  $theSort = '' if $theSort eq 'off';
 
   my $metaDataKey = uc($metaData);
   my $metaDataDef = $Foswiki::Meta::VALIDATE{$metaDataKey};
@@ -157,13 +168,11 @@ sub renderMetaData {
   #writeDebug("formWeb=$formWeb, formTopic=$formTopic");
 
   unless (Foswiki::Func::topicExists($formWeb, $formTopic)) {
-    print STDERR "error: form definition for $formWeb.$formTopic does not exist";
-    return inlineError("form definition for $formWeb.$formTopic does not exist");
+    return inlineError("form definition for <nop>$metaDataKey not found");
   }
   
   my $formDef = new Foswiki::Form($this->{session}, $formWeb, $formTopic);
   unless (defined $formDef) {
-    print STDERR "error: can't parse form definition at $formWeb.$formTopic";
     return inlineError("can't parse form definition at $formWeb.$formTopic");
   }
 
@@ -276,9 +285,13 @@ sub renderMetaData {
     push @metaDataRecords, $topicObj->find($metaDataKey);
   }
 
+  # sort and reverse
+  sortRecords(\@metaDataRecords, $theSort) if $theSort;
+  @metaDataRecords = reverse @metaDataRecords if $theReverse;
+
   # loop over all meta data records
   my $index = 1;
-  foreach my $record (sort {$a->{name} cmp $b->{name}} @metaDataRecords) {
+  foreach my $record (@metaDataRecords) {
     my $row = $theFormat;
     my $name = $record->{name};
     my $title = $name;
@@ -349,6 +362,11 @@ sub renderMetaData {
       } 
 
       my $fieldValue = $record->{$fieldName};
+
+      # try not to break foswiki tables
+      if ($theAction eq 'view') {
+        $fieldValue =~ s/\n/<br \/>/g;
+      }
 
       $fieldSize = $params->{$fieldName.'_size'} if defined $params->{$fieldName.'_size'};
       $fieldAttrs = $params->{$fieldName.'_attributes'} if defined $params->{$fieldName.'_attributes'};
@@ -464,11 +482,12 @@ sub renderMetaData {
       $line =~ s/\$(tooltip|description)\b/$fieldDescription/g;
       $line =~ s/\$title\b/$fieldTitle/g;
       $line =~ s/\$extra\b/$fieldExtra/g;
+      $line =~ s/\$origvalue\b/$fieldValue/g;
 
       $title = $fieldValue if $fieldName =~ /^(Topic)?Title/i;
 
-      $row =~ s/\$orig$fieldName/$fieldValue/g;
       $row =~ s/\$$fieldName/$line/g;
+      $row =~ s/\$orig$fieldName/$fieldValue/g;
 
       # cleanup
       $fieldClone->finish() if defined $fieldClone;
@@ -485,9 +504,11 @@ sub renderMetaData {
     $fieldDuplicateAction = ''; # TODO: disabled
 
     my $fieldActions = '<span class="metaDataActions">'.$fieldEditAction.$fieldDuplicateAction.$fieldDeleteAction.'</div>';
+    my $topic = $topicObj->getPath;
     $fieldActions =~ s/\%title\%/$title/g;
     $fieldActions =~ s/\%name\%/$name/g;
     $fieldActions =~ s/\%meta\%/$metaData/g;
+    $fieldActions =~ s/\%topic\%/$topic/g;
 
     $row =~ s/\$actions\b/$fieldActions/g;
     $row =~ s/\$index\b/$index/g;
@@ -704,6 +725,48 @@ sub jsonRpcDelete {
 sub inlineError {
   my $msg = shift;
   return "<span class='foswikiAlert'>$msg</span>";
+}
+
+##############################################################################
+sub sortRecords {
+  my ($records, $crit) = @_;
+
+  my $isNumeric = 1;
+  my $isDate = 1;
+  my %sortCrits = ();
+  foreach my $rec (@$records) {
+    my $item = $rec->{$crit};
+    next unless defined $item;
+
+    $item =~ s/\s*$//;
+    $item =~ s/^\s*//;
+
+    if ($isNumeric && $item !~ /^(\s*[+-]?\d+(\.?\d+)?\s*)$/) {
+      $isNumeric = 0;
+    }
+
+    if ($isDate && ! defined Foswiki::Time::parseTime($item)) {
+      $isDate = 0;
+    }
+
+    $sortCrits{$rec->{name}} = $item;
+  }
+
+  if ($isDate) {
+    # convert to epoch seconds if we sort per date
+    foreach my $item (keys %sortCrits) {
+      $sortCrits{$item} = Foswiki::Time::parseTime($sortCrits{$item});
+    }
+    $isNumeric = 1;
+  }
+
+  #print STDERR "crit=$crit, isNumeric=$isNumeric, isDate=$isDate\n";
+
+  if ($isNumeric) {
+    @{$records} = sort {($sortCrits{$a->{name}}||0) <=> ($sortCrits{$b->{name}}||0)} @$records;
+  } else {
+    @{$records} = sort {lc($sortCrits{$a->{name}}||'') cmp lc($sortCrits{$b->{name}}||'')} @$records;
+  }
 }
 
 1;

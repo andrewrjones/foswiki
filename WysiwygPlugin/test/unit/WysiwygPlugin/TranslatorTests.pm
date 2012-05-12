@@ -803,10 +803,20 @@ TML
     },
     {
         exec     => $TML2HTML | $ROUNDTRIP,
-        name     => 'noppedWikiword',
+        name     => 'escapedWikiword',
         html     => '<p>!SunOS</p>',
         tml      => '!SunOS',
         finaltml => '!SunOS',
+    },
+    {
+        exec => $TML2HTML | $ROUNDTRIP,
+        name => 'noppedWikiword',
+        html => <<HERE,
+<p><span class="WYSIWYG_PROTECTED">&#60;nop&#62;</span>SunOS
+</p>
+HERE
+        tml      => '<nop>SunOS',
+        finaltml => '<nop>SunOS',
     },
     {
         exec => $HTML2TML,
@@ -871,6 +881,20 @@ HERE
 HERE
         finaltml => <<'HERE',
 [[mailto:a@example.org?subject=Hi&body=Hi%21%0A%0ABye%21][hi]]
+HERE
+    },
+    {
+        exec => $ROUNDTRIP | $TML2HTML | $HTML2TML,
+        name => 'obsoleteSquabLink',
+        tml  => <<'HERE',
+[[https://example.com Link *text* here]]
+HERE
+        html => <<'HERE',
+<p><a class='TMLlink' href="https://example.com">Link <b>text</b> here</a>
+</p>
+HERE
+        finaltml => <<'HERE',
+[[https://example.com][Link *text* here]]
 HERE
     },
     {

@@ -1,6 +1,6 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
-# MetaDataPlugin is Copyright (C) 2011 Michael Daum http://michaeldaumconsulting.com
+# MetaDataPlugin is Copyright (C) 2011-2012 Michael Daum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -22,9 +22,10 @@ use Foswiki::Func ();
 use Foswiki::Plugins ();
 use Foswiki::Contrib::JsonRpcContrib ();
 use Foswiki::Plugins::MetaDataPlugin::Core();
+use Error qw( :try );
 
 our $VERSION = '$Rev$';
-our $RELEASE = '1.10';
+our $RELEASE = '1.40';
 our $SHORTDESCRIPTION = 'Bring custom meta data to wiki apps';
 our $NO_PREFS_IN_TOPIC = 1;
 our $core;
@@ -138,10 +139,22 @@ sub topicName2MetaData {
 ##############################################################################
 sub getMetaDataDefinition {
   my ($web, $topic) = @_;
-  
+
   return unless Foswiki::Func::topicExists($web, $topic);
 
-  my $formDef = new Foswiki::Form($Foswiki::Plugins::SESSION, $web, $topic);
+  my $formDef;
+
+  try {
+    $formDef = new Foswiki::Form($Foswiki::Plugins::SESSION, $web, $topic);
+  } catch Error::Simple with {
+
+    # just in case, cus when this fails it takes down more of foswiki
+    Foswiki::Func::writeWarning("MetaDataPlugin::getMetaDataDefinition() failed for $web.$topic:".shift);
+
+  } catch Foswiki::AccessControlException with {
+    # catch but simply bail out
+  };
+
   return unless defined $formDef;
 
   my @other = ();
