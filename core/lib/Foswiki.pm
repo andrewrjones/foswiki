@@ -49,6 +49,7 @@ use Monitor                  ();
 use CGI                      ();  # Always required to get html generation tags;
 use Digest::MD5              ();  # For passthru and validation
 use Foswiki::Configure::Load ();
+use Foswiki::Engine          ();
 
 require 5.005;                    # For regex objects and internationalisation
 
@@ -585,14 +586,7 @@ BEGIN {
     _getLibDir();
 
     # initialize the runtime engine
-    if ( !defined $Foswiki::cfg{Engine} ) {
-
-        # Caller did not define an engine; try and work it out (mainly for
-        # the benefit of pre-1.0 CGI scripts)
-        $Foswiki::cfg{Engine} = 'Foswiki::Engine::Legacy';
-    }
-    $engine = eval qq(use $Foswiki::cfg{Engine}; $Foswiki::cfg{Engine}->new);
-    die $@ if $@;
+    $engine = Foswiki::Engine->new;
 
     #Monitor::MARK('End of BEGIN block in Foswiki.pm');
 }
