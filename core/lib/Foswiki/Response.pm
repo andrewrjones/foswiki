@@ -459,7 +459,8 @@ sub psgi_finalize {
     
     # PSGI specifies that the HTTP status code is an integer and must be greater than or equal to 100
     # See https://metacpan.org/module/PSGI#Status
-    my $status = $this->status;
+    # SMELL: Should we be giving this a default of 200?
+    my $status = $this->status || 200;
     $status =~ s/[^\d]//g;
     
     my $headers = $this->{headers};

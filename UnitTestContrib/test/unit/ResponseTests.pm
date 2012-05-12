@@ -366,4 +366,13 @@ sub test_psgi_finalize {
     );
 }
 
+sub test_psgi_finalize_default_status {
+    my $this = shift;
+    my $res  = Foswiki::Response->new();
+
+    $res->body('hello');
+    $this->assert_deep_equals( [ 200, +[ 'Content-Length' => 5 ], ['hello'] ],
+        $res->psgi_finalize, 'wrong status and body from psgi_finalize' );
+}
+
 1;
