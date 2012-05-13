@@ -20,6 +20,7 @@ sub test_empty_new {
     my $this = shift;
     my $req  = new Foswiki::Request("");
 
+    $this->assert(! $req->is_psgi, '$req->is_psgi' );
     $this->assert_str_equals( '', $req->action, '$req->action() not empty' );
     $this->assert_str_equals( '', $req->pathInfo,
         '$req->pathInfo() not empty' );
@@ -46,6 +47,9 @@ sub test_empty_new {
     $this->assert_str_equals( 'HASH', ref($ref),
         '$req->uploads did not returned a hashref' );
     $this->assert_str_equals( 0, scalar keys %$ref, '$req->uploads not empty' );
+    
+    # TODO: test POSTing data
+    # TODO: test uploading data
 }
 
 sub test_new_from_hash {
@@ -58,6 +62,7 @@ sub test_new_from_hash {
         multi_undef => [],
     );
     my $req = new Foswiki::Request( \%init );
+    $this->assert(! $req->is_psgi, '$req->is_psgi' );
     $this->assert_str_equals(
         5,
         scalar $req->param(),
@@ -99,6 +104,7 @@ EOF
     );
     seek( $tmp, 0, 0 );
     my $req = new Foswiki::Request($tmp);
+    $this->assert(! $req->is_psgi, '$req->is_psgi' );
     $this->assert_str_equals(
         4,
         scalar $req->param(),
@@ -158,7 +164,9 @@ sub test_new_psgi {
     };
 
     my $req = Foswiki::Request->new_psgi($env);
-
+    
+    $this->assert( $req->is_psgi, '$req->is_psgi' );
+    $this->assert( $req->{env}, '$req->env() null' );
     $this->assert_str_equals( '', $req->action, '$req->action() not empty' );
     $this->assert_str_equals( '/bin/view', $req->pathInfo,
         '$req->pathInfo() not /bin/view' );

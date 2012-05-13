@@ -37,6 +37,8 @@ use Error    ();
 use IO::File ();
 use CGI::Util qw(rearrange);
 use URI::Escape ();
+use HTTP::Body 1.11;
+use Plack::TempBuffer;
 
 =begin TML
 
@@ -108,6 +110,7 @@ sub new_psgi {
     $this = {
         action         => '',
         cookies        => {},
+        env            => $env,
         headers        => {},
         method         => $env->{REQUEST_METHOD},
         param          => {},
@@ -124,6 +127,7 @@ sub new_psgi {
     bless $this, $class;
  
     $this->_prepareQueryParameters( $env->{QUERY_STRING} );
+    $this->_prepareBodyParameters;
 
     # save cookies
     my %cookies = ();
@@ -165,6 +169,76 @@ sub _prepareQueryParameters {
     foreach my $param (@plist) {
         $this->queryParam( $param, $params{$param} );
     }
+}
+
+# very similar to Plack::Request::_parse_request_body
+sub _prepareBodyParameters {
+    my $self = shift;
+
+    my $ct = $self->env->{CONTENT_TYPE};
+    my $cl = $self->env->{CONTENT_LENGTH};
+    if (!$ct && !$cl) {
+        # No Content-Type nor Content-Length -> GET/HEAD
+        return;
+    }
+
+    my $body = HTTP::Body->new($ct, $cl);
+
+    # HTTP::Body will create temporary files in case there was an
+    # upload.  Those temporary files can be cleaned up by telling
+    # HTTP::Body to do so. It will run the cleanup when the request
+    # env is destroyed. That the object will not go out of scope by
+    # the end of this sub we will store a reference here.
+    $self->env->{'plack.request.http.body'} = $body;
+    $body->cleanup(1);
+
+    my $input = $self->env->{'psgi.input'};
+
+    my $buffer;
+    if ($self->env->{'psgix.input.buffered'}) {
+        # Just in case if input is read by middleware/apps beforehand
+        $input->seek(0, 0);
+    } else {
+        $buffer = Plack::TempBuffer->new($cl);
+    }
+
+    my $spin = 0;
+    while ($cl) {
+        $input->read(my $chunk, $cl < 8192 ? $cl : 8192);
+        my $read = length $chunk;
+        $cl -= $read;
+        $body->add($chunk);
+        $buffer->print($chunk) if $buffer;
+
+        if ($read == 0 && $spin++ > 2000) {
+            # TODO: should I be carping?
+            Carp::croak "Bad Content-Length: maybe client disconnect? ($cl bytes remaining)";
+        }
+    }
+
+    if ($buffer) {
+        $self->env->{'psgix.input.buffered'} = 1;
+        $self->env->{'psgi.input'} = $buffer->rewind;
+    } else {
+        $input->seek(0, 0);
+    }
+
+    #$self->env->{'plack.request.body'}   = Hash::MultiValue->from_mixed($body->param);
+    for my $key (@{$body->param_order}){
+        $self->bodyParam( -name => $key, -value => $body->param->{$key} );
+    }
+
+    # TODO: uplaods
+    #my @uploads = Hash::MultiValue->from_mixed($body->upload)->flatten;
+    #my @obj;
+    #while (my($k, $v) = splice @uploads, 0, 2) {
+    #    push @obj, $k, $self->_make_upload($v);
+    #}
+
+    # TODO
+    #$self->env->{'plack.request.upload'} = Hash::MultiValue->new(@obj);
+
+    1;
 }
 
 =begin TML
@@ -280,6 +354,7 @@ Returns query_string part of request uri, if any.
 
 sub queryString {
     my $this = shift;
+
     my @params;
     foreach my $name ( $this->param ) {
         my $key = Foswiki::urlEncode($name);
@@ -826,6 +901,21 @@ Convenience method to get Referer uri.
 =cut
 
 sub referer { shift->header('Referer') }
+
+=begin TML
+
+---++ ObjectMethod is_psgi()
+
+Returns true if we are running under PSGI, false otherwise.
+
+Check this before using any PSGI specific methods.
+
+=cut
+
+
+sub is_psgi { defined shift->{env} }
+
+sub env { $_[0]->{env} }
 
 1;
 __END__
