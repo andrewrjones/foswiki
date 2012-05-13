@@ -20,6 +20,8 @@ use Error qw( :try );
 use Assert;
 use Scalar::Util ();
 
+#use Data::Dumper;
+
 =begin TML
 
 ---++ ClassMethod new() -> $engine
@@ -44,12 +46,119 @@ Start point to Runtime Engines.
 =cut
 
 sub run {
-    my $this = shift;
-    my $req  = $this->prepare();
-    if ( defined $req ) {
-        my $res = Foswiki::UI::handleRequest($req);
-        $this->finalize( $res, $req );
+    my ($this, $env) = @_;
+    
+    #print STDERR Dumper($env);
+    
+    # from prepare. Is needed?
+    if ( $Foswiki::cfg{RCS}{overrideUmask} && $Foswiki::cfg{OS} ne 'WINDOWS' ) {
+
+# Note: The addition of zero is required to force dirPermission and filePermission
+# to be numeric.   Without the additition, certain values of the permissions cause
+# runtime errors about illegal characters in subtraction.   "and" with 777 to prevent
+# sticky-bits from breaking the umask.
+        my $oldUmask = umask(
+            (
+                oct(777) - (
+                    (
+                        $Foswiki::cfg{RCS}{dirPermission} + 0 |
+                          $Foswiki::cfg{RCS}{filePermission} + 0
+                    )
+                  ) & oct(777)
+            )
+        );
     }
+    
+    # TODO: should this be in Request?
+    my $action = $this->get_action($env);
+    
+    # try and create a request object. If there are any errors, clean them up
+    # and write a notice to the browser
+    my $req;
+    try {
+        $req = Foswiki::Request->new_psgi($env);
+        $req->action($action);
+        #print STDERR Dumper($req);
+    } catch Foswiki::EngineException with {
+        my $e   = shift;
+        my $res = $e->{response};
+        unless ( defined $res ) {
+            $res = new Foswiki::Response();
+            $res->content_type('text/html');
+            $res->status($e->{status});
+            my $html = CGI::start_html( $e->{status} . ' Bad Request' );
+            $html .= CGI::h1( {}, 'Bad Request' );
+            $html .= CGI::p( {}, $e->{reason} );
+            $html .= CGI::end_html();
+            $res->body($html);
+        }
+        return $res->finalize;
+    }
+    otherwise {
+        my $e   = shift;
+        my $res = Foswiki::Response->new();
+        #$res->content_type( 'text/plain' );
+        if (DEBUG) {
+
+            # output the full message and stacktrace to the browser
+            $res->body( $e->stringify() );
+        }
+        else {
+            my $mess = $e->stringify();
+            print STDERR $mess;
+
+            # tell the browser where to look for more help
+            my $text =
+'Foswiki detected an internal error - please check your Foswiki logs and webserver logs for more information.'
+              . "\n\n";
+            $mess =~ s/ at .*$//s;
+
+            # cut out pathnames from public announcement
+            $mess =~ s#/[\w./]+#path#g;
+            $text .= $mess;
+            $res->body($text);
+        }
+        return $res->psgi_finalize;
+    };
+    
+    my $res = Foswiki::UI::handleRequest($req);
+    # just for debugging
+    #use Storable qw(dclone);
+    #my $dres = dclone($res);
+    #$dres->{body} = '';
+    #print STDERR Dumper($dres);
+    $res->psgi_finalize;
+}
+    
+sub get_action {
+    my ($this, $env) = @_;
+    
+    if($env->{PATH_INFO}){
+        $env->{PATH_INFO} =~ s#^$Foswiki::cfg{ScriptUrlPath}/*#/#;
+    }
+    
+    # what action are we doing?
+    my $action;
+    if ( exists $env->{FOSWIKI_ACTION} ) {
+        # This handles scripts that have set $FOSWIKI_ACTION
+        # SMELL: Do we need this, for compatibility?
+        $action = $env->{FOSWIKI_ACTION};
+    }
+    elsif( $env->{PATH_INFO} =~ s#^$Foswiki::cfg{PubUrlPath}/## ){
+        $action = 'viewfile';
+    }
+    else {
+        if( $env->{PATH_INFO} =~ m#^/(\w+)/?# ){
+            my $script = $1;
+            if( exists $Foswiki::cfg{SwitchBoard}{$script} ){
+                $env->{PATH_INFO} =~ s#^/$script##;
+                $action = $script;
+            }
+        }
+    }
+    $action ||= 'view';
+    
+    return $action;
 }
 
 =begin TML
