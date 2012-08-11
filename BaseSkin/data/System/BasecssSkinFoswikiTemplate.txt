@@ -52,11 +52,10 @@
 	text="
 $percntIF{
 $quot$WIKILOGOIMG$quot
-then=$quot.foswikiLogo {
+then=$quot.foswikiLogo a {
     width: 40px;
     height: 40px;
 	background-image:url(%WIKILOGOIMG%);
-	background-repeat: no-repeat;
 }$quot
 }$percnt
 "
@@ -68,11 +67,11 @@ then=$quot.foswikiLogo {
 ---------------------------------------------------
 }%%TMPL:DEF{"head:css:screen:_less"}%%TMPL:P{
 	"LIBJS"
-	id="BaseSkinCss/less-1.2.1.min"
+	id="BaseSkinCss/less/less-1.3.0.min"
 	name="lessparser"
 }%%TMPL:P{
 	"LIBLESS"
-	id="BaseSkinCss/baseskin-bootstrap"
+	id="BaseSkinCss/less/base"
 	name="base:screen"
 }%%TMPL:END%%{
 ---------------------------------------------------
@@ -81,7 +80,7 @@ then=$quot.foswikiLogo {
 ---------------------------------------------------
 }%%TMPL:DEF{"head:css:screen:_css"}%%TMPL:P{
 	"LIBCSS"
-	id="BaseSkinCss/baseskin"
+	id="BaseSkinCss/base"
 	name="base:screen"
 }%%TMPL:END%%{
 ===================================================

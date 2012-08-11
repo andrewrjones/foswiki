@@ -134,6 +134,7 @@ data/System/ManagingWebs.txt 0644
 data/System/MetaData.txt 0644
 data/System/ObjectMethod.txt 0644
 data/System/PageCaching.txt 0644
+data/System/ParentList.txt 0644
 data/System/PerlDoc.txt 0644
 data/System/PlainSkin.txt 0644
 data/System/Plugins.txt 0644
@@ -203,6 +204,7 @@ data/System/VarBR.txt 0644
 data/System/VarBROWN.txt 0644
 data/System/VarBULLET.txt 0644
 data/System/VarCARET.txt 0644
+data/System/VarCLEAR.txt 0644
 data/System/VarCOVER.txt 0644
 data/System/VarDATE.txt 0644
 data/System/VarDISPLAYTIME.txt 0644
@@ -326,6 +328,7 @@ data/System/WebAtomBase.txt 0644
 data/System/WebChanges.txt 0644
 data/System/WebChangesAlert.txt 0644
 data/System/WebCreateNewTopic.txt 0644
+data/System/WebCreateNewTopicComponents.txt 0644
 data/System/WebCreateNewTopicTemplate.txt 0644
 data/System/WebHome.txt 0644
 data/System/WebIndex.txt 0644
@@ -581,6 +584,7 @@ lib/Foswiki/Configure/resources/ajaxLoader.gif 0444
 lib/Foswiki/Configure/resources/base.css 0444
 lib/Foswiki/Configure/resources/bg_button_gradient.gif 0444
 lib/Foswiki/Configure/resources/bg_buttoncancel_gradient.gif 0444
+lib/Foswiki/Configure/resources/bg_expert.gif 0444
 lib/Foswiki/Configure/resources/bg_submit_gradient.gif 0444
 lib/Foswiki/Configure/resources/close.gif 0444
 lib/Foswiki/Configure/resources/favicon.ico 0444
@@ -778,6 +782,10 @@ lib/Foswiki/Query/Parser.pm 0444
 lib/Foswiki/Query/UnaryOP.pm 0444
 lib/Foswiki/Render.pm 0444
 lib/Foswiki/Render/Anchors.pm 0444
+lib/Foswiki/Render/IconImage.pm 0444
+lib/Foswiki/Render/Moved.pm 0444
+lib/Foswiki/Render/Parent.pm 0444
+lib/Foswiki/Render/Tooltip.pm 0444
 lib/Foswiki/Request.pm 0444
 lib/Foswiki/Request/Cache.pm 0444
 lib/Foswiki/Request/Upload.pm 0444
@@ -906,6 +914,9 @@ pub/System/JavascriptFiles/foswikiStringUnicodeChars_src.js 0644
 pub/System/JavascriptFiles/foswikiStyles.js 0644
 pub/System/JavascriptFiles/foswikiStyles.js.gz 0644
 pub/System/JavascriptFiles/foswikiStyles_src.js 0644
+pub/System/JavascriptFiles/foswikiWebTopicCreator.js 0644
+pub/System/JavascriptFiles/foswikiWebTopicCreator.js.gz 0644
+pub/System/JavascriptFiles/foswikiWebTopicCreator_src.js 0644
 pub/System/JavascriptFiles/foswikiWindow.js 0644
 pub/System/JavascriptFiles/foswikiWindow.js.gz 0644
 pub/System/JavascriptFiles/foswikiWindow_src.js 0644
@@ -1033,3 +1044,4 @@ working/registration_approvals/README 0444
 working/tmp/README 0444
 working/work_areas/README 0444
 working/logs/README 0444
+working/configure/.htdigest-configure 0640 Htdigest file protects configure

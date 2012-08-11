@@ -1,0 +1,283 @@
+/*
+ * CONTENT ELEMENTS
+ * -------------------------------------------------------------------------- */
+
+a {
+	text-decoration: none;
+	
+	&:hover {
+		text-decoration: underline;
+	}
+}
+
+hr {
+	height:1px;
+	border:none;
+}
+
+/*
+ * STRUCTURAL TOPIC COMPONENTS
+ * -------------------------------------------------------------------------- */
+
+.foswikiDiffDebug,
+blockquote .foswikiDiffDebug,
+.foswikiBroadcastMessage,
+.foswikiNotification,
+.foswikiHelp {
+	/*
+	you might want to differentiate in border style
+	by default, foswikiBroadcastMessage and foswikiNotification look the same
+	*/
+	border-style: solid;
+	border-width: 1px;
+	.fw_border-radius(@fw_corner_radius_block);
+}
+
+pre,
+blockquote pre {
+    border: none;
+    .fw_border-radius(0);
+}
+
+pre {
+    width: auto;
+    overflow: auto;
+}
+
+/*
+ * NON-STRUCTURAL TOPIC ELEMENTS
+ * -------------------------------------------------------------------------- */
+
+/* consistent block size */
+
+blockquote,
+pre,
+.foswikiHelp,
+.foswikiBroadcastMessage,
+.foswikiNotification,
+.foswikiFormStep {
+	.fw_component_padding();
+	li {
+		list-style-type: circle;
+	}
+}
+
+/* if we don't use a background or border for blockquotes, we don't need the top and bottom padding */
+blockquote {
+	padding-top: 0;
+	padding-bottom: 0;
+	font-style: normal;
+}
+
+.foswikiLeft {
+	float: left;
+	position: relative;
+}
+.foswikiRight {
+	position: relative;
+	float: right;
+}
+.foswikiClear {
+	/* to clean up floats */
+	margin: 0;
+	padding: 0;
+	height: 0;
+	line-height: 0;
+	clear: both;
+	display: block;
+}
+.foswikiHidden {
+	display: none;
+}
+
+.foswikiNoBorder {
+	border: none;
+}
+
+.foswikiNewLink {}
+
+// Clearfix for clearing floats like a boss h5bp.com/q
+.foswikiClearfix {
+	.fw_clearfix();
+}
+form .foswikiClearfix {
+	margin-bottom: @fw_component_padding_em;
+}
+form .foswikiFormStep.foswikiClearfix {
+	margin-bottom: 0;
+}
+fieldset {
+    border: none;
+    -webkit-margin-start: 0;
+    -webkit-margin-end: 0;
+    -webkit-padding-before: 0;
+    -webkit-padding-start: 0;
+    -webkit-padding-end: 0;
+    -webkit-padding-after: 0;
+}
+
+
+/* prevent double padding with bullet list in block */
+blockquote,
+pre,
+.foswikiHelp,
+.foswikiBroadcastMessage,
+.foswikiNotification {
+	ol:first-child,
+	ul:first-child {
+		margin-top: 0;
+	}
+	ol:last-child,
+	ul:last-child {
+		margin-bottom: 0;
+	}
+}
+/* prevent double padding inside block */
+blockquote,
+pre,
+.foswikiLogin,
+.foswikiHelp,
+.foswikiBroadcastMessage,
+.foswikiNotification,
+.foswikiFormStep,
+.foswikiSection,
+.foswikiTopicText,
+.foswikiTabContent,
+.jqTabContents,
+td {
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6,
+	p,
+	legend,
+	pre,
+	ul {
+		&:first-child {
+			margin-top: 0;
+		}
+	}
+}
+
+/* breadcrumbs */
+
+.foswikiBreadcrumb {
+	margin-top: 0;
+	
+	& > ul {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		float: none;
+		
+		& > li {
+			display: inline;
+			float: none;
+			padding: @fw_button_padding;
+			padding-bottom: @fw_button_padding_bottom - 2;
+			padding-left: 0;
+			padding-right: 0;
+			
+			a {
+				margin: 0;
+				padding: 0;
+				display: inline;
+				
+				&:hover {
+					text-decoration: underline;
+				}
+			}
+		}
+		
+		.foswikiSeparator {
+			padding: 0 5px;
+		}
+	}
+}
+
+/* miscellaneous */
+
+a.foswikiDisplayRoomy,
+a.foswikiDisplayCosy,
+a.foswikiDisplayTight {
+	img {
+		display: none;
+		padding-left: 1em;
+		vertical-align: text-top;
+	}
+}
+
+/* search results */
+
+.foswikiSearchResults {
+
+	.foswikiSearchResult {
+		position: relative;
+		border-style: none none solid none;
+		border-width: 1px;
+		
+		.foswikiSearchResultImage img {
+			max-width: 70px;
+			float:left;
+		}
+	}
+	
+	.foswikiSearchResultsHeader {}
+	.foswikiSearchResultsPager {
+		margin:1em 0;
+		padding:.25em 0;
+	}
+}
+
+.foswikiSearchResultContents {
+    margin: 0 0 0 90px;
+}
+.foswikiSearchResultTitle {
+    font-weight: bold;
+}
+
+/* attachments */
+
+.foswikiAttachments {
+
+	.foswikiAttachment {
+
+		& img,
+		& .foswikiIcon img {
+			vertical-align: text-bottom;
+		}
+		&.foswikiSearchResult .foswikiSearchResultContents {
+			margin: 0 0 0 70px;
+		}
+		
+		.foswikiSearchResultTitle {
+			a {
+				.fw_heading_6();
+			}
+		}	
+		
+		.foswikiSearchResultMeta {
+			.foswikiSmall;
+		}
+	}
+	ul {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		list-style-image: none;
+	}
+	
+	&.bsHideDetails .foswikiSearchResultMeta {
+		display:none;
+	}
+}
+
+/* jQueryPlugin styles */
+
+.jqTabContents {
+	.fw_component_padding();
+    padding-top: 0;
+    padding-bottom: 0;
+}

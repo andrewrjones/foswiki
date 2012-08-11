@@ -36,6 +36,7 @@ use Fcntl qw( :DEFAULT :flock SEEK_SET );
 use Foswiki::Store                         ();
 use Foswiki::Sandbox                       ();
 use Foswiki::Iterator::NumberRangeIterator ();
+use Foswiki::Attrs                         ();
 
 # use the locale if required to ensure sort order is correct
 BEGIN {
@@ -150,7 +151,7 @@ sub init {
 
     return unless $this->{topic};
 
-    unless ( -e $this->{file} ) {
+    unless ( $this->storedDataExists() ) {
         if ( $this->{attachment} && !$this->isAsciiDefault() ) {
             $this->initBinary();
         }
@@ -236,7 +237,7 @@ sub getInfo {
         # TOPICINFO may be OK
         $this->_getTOPICINFO($info);
     }
-    elsif ( -e $this->{rcsFile} ) {
+    elsif ( $this->revisionHistoryExists() ) {
 
         # There is a checkin pending, and there is an rcs file.
         # Ignore TOPICINFO
@@ -245,8 +246,7 @@ sub getInfo {
     }
     else {
 
-# There is a checkin pending, but no RCS file. Make the best we can of TOPICINFO.
-        $this->_getTOPICINFO($info);
+        # There is a checkin pending, but no RCS file.
         $info->{version} = 1;
         $info->{comment} = "pending";
     }
@@ -267,7 +267,6 @@ sub _getTOPICINFO {
         my $ti = <$f>;
         close($f);
         if ( defined $ti && $ti =~ /^%META:TOPICINFO{(.*)}%/ ) {
-            require Foswiki::Attrs;
             my $a = Foswiki::Attrs->new($1);
 
             # Default bad revs to 1, not 0, because this is coming from
@@ -289,11 +288,11 @@ sub noCheckinPending {
     my $this    = shift;
     my $isValid = 0;
 
-    if ( !-e $this->{file} ) {
+    if ( !$this->storedDataExists() ) {
         $isValid = 1;    # Hmmmm......
     }
     else {
-        if ( -e $this->{rcsFile} ) {
+        if ( $this->revisionHistoryExists() ) {
 
 # Check the time on the rcs file; is the .txt newer?
 # Danger, Will Robinson! stat isn't reliable on all file systems, though [9] is claimed to be OK
@@ -302,7 +301,7 @@ sub noCheckinPending {
               1;         # don't need to open the file on Win32
             my $rcsTime  = ( stat( $this->{rcsFile} ) )[9];
             my $fileTime = ( stat( $this->{file} ) )[9];
-            $isValid = ( $rcsTime < $fileTime ) ? 0 : 1;
+            $isValid = ( $fileTime > $rcsTime ) ? 0 : 1;
         }
     }
     return $isValid;
@@ -315,9 +314,10 @@ sub ci {
 
 # Protected for use only in subclasses. Check that the object has a history
 # and the .txt is consistent with that history.
+# returns true when damage was saved, returns false when there's no checkin pending
 sub _saveDamage {
     my $this = shift;
-    return if $this->noCheckinPending();
+    return 0 if $this->noCheckinPending();
 
     # the version in the TOPICINFO may not be correct. We need
     # to check the change in and update the TOPICINFO accordingly
@@ -325,7 +325,9 @@ sub _saveDamage {
 
     # If this is a topic, adjust the TOPICINFO
     if ( defined $this->{topic} && !defined $this->{attachment} ) {
-        my $rev = -e $this->{rcsFile} ? $this->getLatestRevisionID() : 1;
+        my $rev =
+          $this->revisionHistoryExists() ? $this->getLatestRevisionID() : 1;
+
         $t =~ s/^%META:TOPICINFO{(.*)}%$//m;
         $t =
             '%META:TOPICINFO{author="'
@@ -337,6 +339,46 @@ sub _saveDamage {
     }
     $this->ci( 0, $t, 'autosave',
         $Foswiki::Users::BaseUserMapping::UNKNOWN_USER_CUID, time() );
+
+    return 1;
+}
+
+# update the topicinfo cache
+sub _cacheMetaInfo {
+    my ( $this, $text, $comment, $user, $date, $rev ) = @_;
+
+    $user = $Foswiki::Users::BaseUserMapping::UNKNOWN_USER_CUID
+      unless defined $user;
+    $date = time() unless defined $date;
+
+    # remove the previous record
+    if ( $text =~ s/^%META:TOPICINFO{(.*)}%\n//m ) {
+        my $info = Foswiki::Attrs->new($1);
+
+        # keep the rev id as is unless specified as parameter
+        unless ( defined $rev ) {
+            $rev = $info->{version};
+        }
+
+        unless ($comment) {
+            $comment = $info->{comment};
+        }
+    }
+
+    $rev ||= 1;
+
+    $text =
+        '%META:TOPICINFO{author="' 
+      . $user
+      . '" comment="'
+      . $comment
+      . '" date="'
+      . $date
+      . '" format="1.1" version="'
+      . $rev . '"}%'
+      . "\n$text";
+
+    return $text;
 }
 
 =begin TML
@@ -356,7 +398,15 @@ sub addRevisionFromText {
     $this->init();
 
     # Commit any out-of-band damage to .txt
-    $this->_saveDamage();
+    my $rev;
+
+    # get a new rev id when we saved damage
+    if ( $this->_saveDamage() ) {
+        $rev = $this->getNextRevisionID();
+    }
+
+    $text = $this->_cacheMetaInfo( $text, $comment, $user, $date, $rev );
+
     $this->ci( 0, $text, $comment, $user, $date );
 }
 
@@ -383,20 +433,31 @@ sub addRevisionFromStream {
 
 =begin TML
 
----++ ObjectMethod replaceRevision($text, $comment, $cUID, $date)
+---++ ObjectMethod replaceRevision($text, $comment, $user, $date)
 
 Replace the top revision.
    * =$text= is the new revision
    * =$date= is in epoch seconds.
-   * =$cUID= is a cUID.
+   * =$user= is a cUID.
    * =$comment= is a string
 
 =cut
 
 sub replaceRevision {
-    my $this = shift;
-    $this->_saveDamage();
-    $this->repRev(@_);
+    my ( $this, $text, $comment, $user, $date ) = @_;
+
+    unless ( $this->noCheckinPending() ) {
+
+# As this will check in a new revision, we dump the $date and use the current time.
+# Otherwise rcs will barf at us when $date is older than the last release in the revision
+# history.
+        return $this->addRevisionFromText( $text, $comment, $user, time() );
+    }
+
+    my $rev = $this->getLatestRevisionID();
+    $text = $this->_cacheMetaInfo( $text, $comment, $user, $date, $rev );
+
+    $this->repRev( $text, $comment, $user, $date );
 }
 
 # Signature as for replaceRevision
@@ -420,9 +481,9 @@ an empty iterator if the file does not exist.
 sub getRevisionHistory {
     my $this = shift;
     ASSERT( $this->{file} ) if DEBUG;
-    unless ( -e $this->{rcsFile} ) {
+    unless ( $this->revisionHistoryExists() ) {
         require Foswiki::ListIterator;
-        if ( -e $this->{file} ) {
+        if ( $this->storedDataExists() ) {
             return Foswiki::ListIterator->new( [1] );
         }
         else {
@@ -446,12 +507,24 @@ been no revisions committed to the store.
 
 sub getLatestRevisionID {
     my $this = shift;
-    return 0 unless -e $this->{file};
-    my $rev = $this->_numRevisions() || 1;
+    return 0 unless $this->storedDataExists();
+
+    my $info = {};
+    my $rev;
+
+    my $checkinPending = $this->noCheckinPending() ? 0 : 1;
+    unless ($checkinPending) {
+        $this->_getTOPICINFO($info);
+        $rev = $info->{version};
+    }
+
+    unless ( defined $rev ) {
+        $rev = $this->_numRevisions() || 1;
+    }
 
     # If there is a pending pseudo-revision, need n+1, but only if there is
     # an existing history
-    $rev++ unless $this->noCheckinPending() || !-e $this->{rcsFile};
+    $rev++ if $checkinPending && $this->revisionHistoryExists();
     return $rev;
 }
 
@@ -471,7 +544,11 @@ doesn't get merged into rev 1.
 
 sub getNextRevisionID {
     my $this = shift;
-    return $this->getLatestRevisionID() + 1;
+
+    my $rev = $this->getLatestRevisionID();
+    return $rev + 1
+      if $this->noCheckinPending() || !$this->revisionHistoryExists();
+    return $rev;
 }
 
 =begin TML
@@ -602,7 +679,7 @@ does; that is regarded as a "non-topic".
 
 sub getRevision {
     my ($this) = @_;
-    if ( defined $this->{file} && -e $this->{file} ) {
+    if ( $this->storedDataExists() ) {
         return ( readFile( $this, $this->{file} ), 1 );
     }
     return ( undef, undef );
@@ -624,6 +701,20 @@ sub storedDataExists {
 
 =begin TML
 
+---++ ObjectMethod revisionHistoryExists() -> $boolean
+
+Establishes if htere is history data associated with this handler.
+
+=cut
+
+sub revisionHistoryExists {
+    my $this = shift;
+    return 0 unless $this->{rcsFile};
+    return -e $this->{rcsFile};
+}
+
+=begin TML
+
 ---++ ObjectMethod restoreLatestRevision( $cUID )
 
 Restore the plaintext file from the revision at the head.
@@ -637,7 +728,7 @@ sub restoreLatestRevision {
     my ($text) = $this->getRevision($rev);
 
     # If there is no ,v, create it
-    unless ( -e $this->{rcsFile} ) {
+    unless ( $this->revisionHistoryExists() ) {
         $this->addRevisionFromText( $text, "restored", $cUID, time() );
     }
     else {
@@ -699,7 +790,7 @@ sub moveTopic {
 
     # Move history
     $this->mkPathTo( $new->{rcsFile} );
-    if ( -e $this->{rcsFile} ) {
+    if ( $this->revisionHistoryExists() ) {
         $this->moveFile( $this->{rcsFile}, $new->{rcsFile} );
     }
 
@@ -731,7 +822,7 @@ sub copyTopic {
     my $new = $store->getHandler( $newWeb, $newTopic );
 
     $this->copyFile( $this->{file}, $new->{file} );
-    if ( -e $this->{rcsFile} ) {
+    if ( $this->revisionHistoryExists() ) {
         $this->copyFile( $this->{rcsFile}, $new->{rcsFile} );
     }
 
@@ -767,7 +858,7 @@ sub moveAttachment {
 
     $this->moveFile( $this->{file}, $new->{file} );
 
-    if ( -e $this->{rcsFile} ) {
+    if ( $this->revisionHistoryExists() ) {
         $this->moveFile( $this->{rcsFile}, $new->{rcsFile} );
     }
 }
@@ -794,7 +885,7 @@ sub copyAttachment {
 
     $this->copyFile( $this->{file}, $new->{file} );
 
-    if ( -e $this->{rcsFile} ) {
+    if ( $this->revisionHistoryExists() ) {
         $this->copyFile( $this->{rcsFile}, $new->{rcsFile} );
     }
 }
@@ -1453,7 +1544,7 @@ sub getTimestamp {
     ASSERT( $this->{file} ) if DEBUG;
 
     my $date = 0;
-    if ( -e $this->{file} ) {
+    if ( $this->storedDataExists() ) {
 
         # If the stat fails, stamp it with some arbitrary static
         # time in the past (00:40:05 on 5th Jan 1989)

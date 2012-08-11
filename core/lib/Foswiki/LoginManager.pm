@@ -65,7 +65,7 @@ our $M3 = chr(7);
 our %secretSK = ( STRIKEONESECRET => 1, VALID_ACTIONS => 1 );
 our %readOnlySK = ( %secretSK, AUTHUSER => 1, SUDOFROMAUTHUSER => 1 );
 
-use constant TRACE => 0;
+use constant TRACE => $Foswiki::cfg{Trace}{LoginManager} || 0;
 
 =begin TML
 
@@ -157,6 +157,10 @@ sub new {
         },
         $class
     );
+
+    # make sure the filePermission setting has got a sensible default
+    $Foswiki::cfg{Session}{filePermission} = 0600
+      unless defined $Foswiki::cfg{Session}{filePermission};
 
     $session->leaveContext('can_login');
     map { $this->{_authScripts}{$_} = 1; }
@@ -262,7 +266,7 @@ sub _IP2SID {
 ---++ ObjectMethod loadSession($defaultUser, $pwchecker) -> $login
 
 Get the client session data, using the cookie and/or the request URL.
-Set up appropriate session variables in the twiki object and return
+Set up appropriate session variables in the session object and return
 the login name.
 
 $pwchecker is a pointer to an object that implements checkPassword
@@ -277,7 +281,7 @@ sub loadSession {
     my ( $this, $defaultUser, $pwchecker ) = @_;
     my $session = $this->{session};
 
-    _trace( $this, "LOAD\n" );
+    _trace( $this, "loadSession\n" );
 
     $defaultUser = $Foswiki::cfg{DefaultUserLogin}
       unless ( defined($defaultUser) );
@@ -288,7 +292,7 @@ sub loadSession {
     my $authUser = $this->getUser($this);
     _trace( $this, "Webserver says user is $authUser" ) if ($authUser);
 
-    # If the NO_FOSWIKI_SESSION environment varaible is defined, then
+    # If the NO_FOSWIKI_SESSION environment variable is defined, then
     # do not create the session. This might be defined if the request
     # is made by a search engine bot, depending on how the web server
     # is configured
@@ -322,6 +326,17 @@ sub loadSession {
             }
         }
 
+        # force an appropriate umask
+        my $oldUmask =
+          umask(
+            oct(777) - ( ( $Foswiki::cfg{Session}{filePermission} + 0 ) ) &
+              oct(777) );
+
+     #my $umask = sprintf('%04o', umask() );
+     #$oldUmask = sprintf('%04o', $oldUmask );
+     #my $filePerm = sprintf('%04o', $Foswiki::cfg{Session}{filePermission}+0 );
+     #print STDERR "login manager changes $oldUmask to $umask from $filePerm\n";
+
         # First, see if there is a cookied session, creating a new session
         # if necessary.
         if ( $Foswiki::cfg{Sessions}{MapIP2SID} ) {
@@ -330,17 +345,25 @@ sub loadSession {
 
             my $sid = $this->_IP2SID();
             if ($sid) {
-                $this->{_cgisession} =
-                  Foswiki::LoginManager::Session->new( undef, $sid,
-                    { Directory => $sessionDir } );
+                $this->{_cgisession} = Foswiki::LoginManager::Session->new(
+                    undef, $sid,
+                    {
+                        Directory => $sessionDir,
+                        UMask     => $Foswiki::cfg{Session}{filePermission}
+                    }
+                );
             }
             else {
 
                 # The IP address was not mapped; create a new session
 
-                $this->{_cgisession} =
-                  Foswiki::LoginManager::Session->new( undef, undef,
-                    { Directory => $sessionDir } );
+                $this->{_cgisession} = Foswiki::LoginManager::Session->new(
+                    undef, undef,
+                    {
+                        Directory => $sessionDir,
+                        UMask     => $Foswiki::cfg{Session}{filePermission}
+                    }
+                );
                 _trace( $this, "New IP2SID session" );
                 $this->_IP2SID( $this->{_cgisession}->id() );
             }
@@ -349,10 +372,18 @@ sub loadSession {
 
             # IP mapping is off; use the request cookie
 
-            $this->{_cgisession} =
-              Foswiki::LoginManager::Session->new( undef, $session->{request},
-                { Directory => $sessionDir } );
+            $this->{_cgisession} = Foswiki::LoginManager::Session->new(
+                undef,
+                $session->{request},
+                {
+                    Directory => $sessionDir,
+                    UMask     => $Foswiki::cfg{Session}{filePermission}
+                }
+            );
         }
+
+        # restore old umask
+        umask($oldUmask);
 
         die Foswiki::LoginManager::Session->errstr()
           unless $this->{_cgisession};
@@ -454,34 +485,8 @@ sub loadSession {
             $authUser = $sudoUser;
         }
         else {
-            _trace( $this, "User is logging out" );
-            $session->logEvent( 'logout', ' ',
-                "AUTHENTICATION LOGOUT - $authUser - " );
-
-            #TODO: consider if we should risk passing on the urlparams on logout
-            my $path_info = $session->{request}->path_info();
-            if ( my $topic = $session->{request}->param('topic') )
-            {    #we should at least respect the ?topic= request
-                my $topicRequest = Foswiki::Sandbox::untaintUnchecked(
-                    $session->{request}->param('topic') );
-                my ( $web, $topic ) =
-                  $this->{session}
-                  ->normalizeWebTopicName( undef, $topicRequest );
-                $path_info = '/' . $web . '/' . $topic;
-            }
-
-            my $redirectUrl;
-            if ($path_info) {
-                $redirectUrl = $session->{request}->url() . $path_info;
-            }
-            else {
-                $redirectUrl = $session->{request}->referer();
-            }
-
-            #lets avoid infinite loops
-            $session->{request}->delete('logout');
-            $authUser = $defaultUser;
-            $session->redirect( $redirectUrl, 0 );
+            $authUser =
+              $this->redirectToLoggedOutUrl( $authUser, $defaultUser );
         }
     }
     $session->{request}->delete('logout');
@@ -507,6 +512,57 @@ sub loadSession {
         # new response object.
         $this->_addSessionCookieToResponse();
     }
+
+    return $authUser;
+}
+
+=begin TML
+
+---++ ObjectMethod redirectToLoggedOutUrl($authUser, $defaultUser)
+
+Helper method, called by loadSession, to redirect to the non-authenticated url and return the non-authenticated "default user" login name.
+
+$authUser is the currently logged in user, derived from the request's username.
+
+$defaultUser is a username to use if one is not available from other
+sources. The username passed when you create a Foswiki instance is
+passed in here.
+
+=cut
+
+sub redirectToLoggedOutUrl {
+    my ( $this, $authUser, $defaultUser ) = @_;
+    _trace( $this, "User is logging out" );
+
+    my $session = $this->{session};
+    $defaultUser = $Foswiki::cfg{DefaultUserLogin}
+      unless ( defined($defaultUser) );
+
+    $session->logEvent( 'logout', ' ', "AUTHENTICATION LOGOUT - $authUser - " );
+
+    #TODO: consider if we should risk passing on the urlparams on logout
+    my $path_info = $session->{request}->path_info();
+    if ( my $topic = $session->{request}->param('topic') )
+    {    #we should at least respect the ?topic= request
+        my $topicRequest = Foswiki::Sandbox::untaintUnchecked(
+            $session->{request}->param('topic') );
+        my ( $web, $topic ) =
+          $this->{session}->normalizeWebTopicName( undef, $topicRequest );
+        $path_info = '/' . $web . '/' . $topic;
+    }
+
+    my $redirectUrl;
+    if ($path_info) {
+        $redirectUrl = $session->{request}->url() . $path_info;
+    }
+    else {
+        $redirectUrl = $session->{request}->referer();
+    }
+
+    #lets avoid infinite loops
+    $session->{request}->delete('logout');
+    $authUser = $defaultUser;
+    $session->redirect( $redirectUrl, 0 );
 
     return $authUser;
 }
@@ -646,9 +702,25 @@ sub userLoggedIn {
 
         # create new session if necessary
         unless ( $this->{_cgisession} ) {
-            $this->{_cgisession} =
-              Foswiki::LoginManager::Session->new( undef, $session->{request},
-                { Directory => "$Foswiki::cfg{WorkingDir}/tmp" } );
+
+            # force an appropriate umask
+            my $oldUmask =
+              umask(
+                oct(777) - ( ( $Foswiki::cfg{Session}{filePermission} + 0 ) ) &
+                  oct(777) );
+
+            $this->{_cgisession} = Foswiki::LoginManager::Session->new(
+                undef,
+                $session->{request},
+                {
+                    Directory => "$Foswiki::cfg{WorkingDir}/tmp",
+                    UMask     => $Foswiki::cfg{Session}{filePermission}
+                }
+            );
+
+            # restore old umask
+            umask($oldUmask);
+
             die Foswiki::LoginManager::Session->errstr()
               unless $this->{_cgisession};
         }
@@ -1195,7 +1267,6 @@ sub _SESSION_VARIABLE {
 
 ---++ ObjectMethod _LOGINURL ($thisl)
 
-
 =cut
 
 sub _LOGINURL {
@@ -1264,7 +1335,7 @@ sub _skinSelect {
 __END__
 Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 
-Copyright (C) 2008-2010 Foswiki Contributors. Foswiki Contributors
+Copyright (C) 2008-2012 Foswiki Contributors. Foswiki Contributors
 are listed in the AUTHORS file in the root of this distribution.
 NOTE: Please extend that file, not this notice.
 

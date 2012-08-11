@@ -1,6 +1,10 @@
 %META:TOPICINFO{author="BaseUserMapping_333" comment="reprev" date="1321144375" format="1.1" reprev="4" version="4"}%
 ---+ !BaseSkin test page
-   
+
+<div class='foswikiBar'>
+bar
+</div>
+
 text
 
 <h2>Heading 2</h2> 
@@ -256,7 +260,7 @@ Numbered list:
 
 ---++ Sections
 %TMPL:P{"endsection"}%%TMPL:P{"startsection" class="foswikiColorBlack"}%
----+ Header
+---+ Header foswikiColorBlack
 <div class="foswikiNotification">
 ---++ h2 header in a block
 Normal text. Normal text. Normal text. Normal text. Normal text. Normal text. Normal text. Normal text. Normal text. Normal text. Normal text. Normal text. 
@@ -376,6 +380,32 @@ disabled: <button class="foswikiButtonCancel foswikiButtonDisabled">foswikiButto
 <button class="foswikiButtonLarge">foswikiButtonLarge</button>
  or <button class="foswikiButton foswikiButtonLarge">foswikiButton foswikiButtonLarge</button>
 
+---+++ button groups
+
+<div class="foswikiButtonGroup">
+    <button class="foswikiButton">%TMPL:P{"edit_or_create"}%</button>
+    <button class="foswikiButton foswikiDropdownToggle" data-toggle="dropdown">
+        <span class="foswikiCaret"></span>
+    </button>
+    <ul class="foswikiDropdownMenu">
+        <li>%TMPL:P{"edit_or_create"}%</li>
+        <li>%TMPL:P{"raw_edit_link"}%</li>
+        <li><a href='#'>Attach files or images</a></li>
+        <li class='foswikiDivider'></li>
+        <li><p>Data &amp; settings</p></li>
+        <li>%TMPL:P{"edit_formdata_link"}%</li>
+        <li><a href='#'>Edit topic settings</a></li>
+        <li><a href='#'>Select parent topic</a></li>
+        <li class='foswikiMenuDivider'></li>
+        <li><p>Manage</p></li>
+        <li><a href='#'>Restore topic</a></li>
+        <li><a href='#'>Rename topic</a></li>
+        <li><a href='#'>Move to different Web</a></li>
+        <li><a href='#'>Move to trash</a></li>
+    </ul>
+</div>
+
+
 ---+++ Input fields 
 =.foswikiInputField=
 
@@ -384,9 +414,7 @@ disabled: <button class="foswikiButtonCancel foswikiButtonDisabled">foswikiButto
 <textarea class="foswikiInputField" cols="20" rows="4"></textarea>
 
 ---++ JQuery buttons
-=%<nop>BUTTON{}%=
-
-Should look the same
+Using =%<nop>BUTTON{}%=
 
 %BUTTON{"%MAKETEXT{"OK"}%" icon="tick" onclick="alert($(this).text());"}%
 %BUTTON{"%MAKETEXT{"Cancel"}%" icon="cross" onclick="alert($(this).text());"}%
@@ -394,13 +422,16 @@ Should look the same
 %BUTTON{"%MAKETEXT{"Add"}%" icon="add" onclick="alert($(this).text());"}%
 %BUTTON{"%MAKETEXT{"Delete"}%" icon="delete" onclick="alert($(this).text());"}%
 %BUTTON{"%MAKETEXT{"Globe"}%" icon="world_key" onclick="alert('foo')"}%
-%CLEAR%
+<div class='clear'></div>
 
 ---++ Re-created jQuery buttons
 =.jqButton=
 
 <a class="jqButton jqButtonDefault" href="#"><span> <span class="jqButtonIcon" style="background-image:url(%ICONURLPATH{"choice-yes"}%)">OK</span> </span></a>
 
+=.foswikiButton=
+
+<a class="foswikiButton" href="#"><span> <span class="foswikiButtonIcon" style="background-image:url(%ICONURLPATH{"choice-yes"}%)">OK</span> </span></a>
 
 
 ---++ Form steps
@@ -440,7 +471,7 @@ Please see %POPUPWINDOW{"%SYSTEMWEB%.FileAttachment" label="System.FileAttachmen
 
 Normal text. Normal text. Normal text. Normal text. Normal text. Normal text.
 
-<img src="%PUBURLPATH%/%SYSTEMWEB%/BeginnersStartHere/Motorola_logo" height="65" alt="" />
+<img src="%PUBURLPATH%/%SYSTEMWEB%/BeginnersStartHere/Motorola_logo.gif" height="65" alt="" />
 
 Normal text. Normal text. Normal text. Normal text. Normal text. Normal text.
 
@@ -449,7 +480,7 @@ Normal text. Normal text. Normal text. Normal text. Normal text. Normal text.
 =.foswikiImage=
 
 Normal text. Normal text. Normal text. Normal text. Normal text. Normal text.
-<div class="foswikiImage"><img src="%PUBURLPATH%/%SYSTEMWEB%/BeginnersStartHere/Motorola_logo" height="65" alt="" /></div>
+<div class="foswikiImage"><img src="%PUBURLPATH%/%SYSTEMWEB%/BeginnersStartHere/Motorola_logo.gif" height="65" alt="" /></div>
 
 ---+++ Very large image
 =.foswikiImage=
@@ -470,7 +501,7 @@ Normal text. Normal text. Normal text. Normal text. Normal text. Normal text. No
 =.foswikiToolbar=
 
 <div class='foswikiBar foswikiColorSecondary foswikiToolbar foswikiClearfix'>
-	<ul class='foswikiNavigation'>
+	<ul class='foswikiControls'>
 		<li><a class='foswikiButton'>Button 1</a></li>
 		<li><a class='foswikiButton'>Button 2</a></li>
 	</ul>

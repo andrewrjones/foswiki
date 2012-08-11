@@ -8,79 +8,115 @@ data/System/BaseSkinAttachAgainTemplate.txt 0644
 data/System/BaseSkinAttachNewTemplate.txt 0644
 data/System/BaseSkinAttachtablesTemplate.txt 0644
 data/System/BaseSkinAttachTemplate.txt 0644
-data/System/BaseSkinEditTemplate.txt 0644
 data/System/BaseSkinEditFormTemplate.txt 0644
+data/System/BaseSkinEditTemplate.txt 0644
 data/System/BaseSkinFormtablesTemplate.txt 0644
 data/System/BaseSkinFoswikiTemplate.txt 0644
 data/System/BaseSkinLoginTemplate.txt 0644
 data/System/BaseSkinTestPage.txt 0644 # for testing the skin in the browser
 data/System/BaseSkinTinyMCEPlugin.txt 0644 # custom setup for TinyMCE editor
+data/System/BaseSkinTopicActionsTemplate.txt 0644
 data/System/BaseSkinViewTemplate.txt 0644
 data/System/BaseSkinWebBottomBarExample.txt 0644
 data/System/BaseSkinWebBottomBarTemplate.txt 0644
 data/System/BaseSkinWebTopBarExample.txt 0644
 data/System/BaseSkinWebTopBarTemplate.txt 0644
-pub/System/BaseSkin/foswiki-logo-top.png 0644
+data/System/WebTopNavigation.txt 0644
+lib/Foswiki/Contrib/BaseSkin.pm 0644
 pub/System/BaseSkin/controls-icon-check.png 0644
-pub/System/BaseSkinCss/baseskin_src.css 0644 # the styles in css
-pub/System/BaseSkinCss/baseskin-bootstrap.less 0644
-pub/System/BaseSkinCss/baseskin-colors.less 0644
-pub/System/BaseSkinCss/baseskin-forms.less 0644
-pub/System/BaseSkinCss/baseskin-javascript.less 0644
-pub/System/BaseSkinCss/baseskin-mixins.less 0644
-pub/System/BaseSkinCss/baseskin-overrides.less 0644
-pub/System/BaseSkinCss/baseskin-screensizes.less 0644
-pub/System/BaseSkinCss/baseskin-type.less 0644
-pub/System/BaseSkinCss/baseskin-variables.less 0644
-pub/System/BaseSkinCss/baseskin.css 0644 # the styles in css
-pub/System/BaseSkinCss/baseskin.css 0644 # the styles minified
-pub/System/BaseSkinCss/baseskin.less 0644 # the styles in less
-pub/System/BaseSkinCss/less-1.2.1.min.js 0644
-pub/System/BaseSkinCss/twitter-bootstrap/bootstrap.less 0644
-pub/System/BaseSkinCss/twitter-bootstrap/forms.less 0644
-pub/System/BaseSkinCss/twitter-bootstrap/mixins.less 0644
-pub/System/BaseSkinCss/twitter-bootstrap/patterns.less 0644
-pub/System/BaseSkinCss/twitter-bootstrap/reset.less 0644
-pub/System/BaseSkinCss/twitter-bootstrap/scaffolding.less 0644
-pub/System/BaseSkinCss/twitter-bootstrap/tables.less 0644
-pub/System/BaseSkinCss/twitter-bootstrap/type.less 0644
-pub/System/BaseSkinCss/twitter-bootstrap/variables.less 0644
-pub/System/BaseSkinCss/webfonts_src.css 0644
-pub/System/BaseSkinCss/webfonts.css 0644
-pub/System/BaseSkinCss/webfonts/droidsans/droidsans-bold.eot 0644 # DroidSans web font
-pub/System/BaseSkinCss/webfonts/droidsans/droidsans-bold.svg 0644 # DroidSans web font
-pub/System/BaseSkinCss/webfonts/droidsans/droidsans-bold.ttf 0644 # DroidSans web font
-pub/System/BaseSkinCss/webfonts/droidsans/droidsans-bold.woff 0644 # DroidSans web font
-pub/System/BaseSkinCss/webfonts/droidsans/droidsans.eot 0644 # DroidSans web font
-pub/System/BaseSkinCss/webfonts/droidsans/droidsans.svg 0644 # DroidSans web font
-pub/System/BaseSkinCss/webfonts/droidsans/droidsans.ttf 0644 # DroidSans web font
-pub/System/BaseSkinCss/webfonts/droidsans/droidsans.woff 0644 # DroidSans web font
-pub/System/BaseSkinCss/webfonts/droidsans/LICENSE.txt 0644 # DroidSans web font
-pub/System/BaseSkinCss/webfonts/opensans/LICENSE.txt 0644 # Open Sans web font
-pub/System/BaseSkinCss/webfonts/opensans/opensans-bold.eot 0644 # Open Sans web font
-pub/System/BaseSkinCss/webfonts/opensans/opensans-bold.svg 0644 # Open Sans web font
-pub/System/BaseSkinCss/webfonts/opensans/opensans-bold.ttf 0644 # Open Sans web font
-pub/System/BaseSkinCss/webfonts/opensans/opensans-bold.woff 0644 # Open Sans web font
-pub/System/BaseSkinCss/webfonts/opensans/opensans-bolditalic.eot 0644 # Open Sans web font
-pub/System/BaseSkinCss/webfonts/opensans/opensans-bolditalic.svg 0644 # Open Sans web font
-pub/System/BaseSkinCss/webfonts/opensans/opensans-bolditalic.ttf 0644 # Open Sans web font
-pub/System/BaseSkinCss/webfonts/opensans/opensans-bolditalic.woff 0644 # Open Sans web font
-pub/System/BaseSkinCss/webfonts/opensans/opensans-italic.eot 0644 # Open Sans web font
-pub/System/BaseSkinCss/webfonts/opensans/opensans-italic.svg 0644 # Open Sans web font
-pub/System/BaseSkinCss/webfonts/opensans/opensans-italic.ttf 0644 # Open Sans web font
-pub/System/BaseSkinCss/webfonts/opensans/opensans-italic.woff 0644 # Open Sans web font
-pub/System/BaseSkinCss/webfonts/opensans/opensans-regular.eot 0644 # Open Sans web font
-pub/System/BaseSkinCss/webfonts/opensans/opensans-regular.svg 0644 # Open Sans web font
-pub/System/BaseSkinCss/webfonts/opensans/opensans-regular.ttf 0644 # Open Sans web font
-pub/System/BaseSkinCss/webfonts/opensans/opensans-regular.woff 0644 # Open Sans web font
-pub/System/BaseSkinCss/webfonts/opensans/opensans-semibold.eot 0644 # Open Sans web font
-pub/System/BaseSkinCss/webfonts/opensans/opensans-semibold.svg 0644 # Open Sans web font
-pub/System/BaseSkinCss/webfonts/opensans/opensans-semibold.ttf 0644 # Open Sans web font
-pub/System/BaseSkinCss/webfonts/opensans/opensans-semibold.woff 0644 # Open Sans web font
-pub/System/BaseSkinCss/webfonts/opensans/opensans-semibolditalic.eot 0644 # Open Sans web font
-pub/System/BaseSkinCss/webfonts/opensans/opensans-semibolditalic.svg 0644 # Open Sans web font
-pub/System/BaseSkinCss/webfonts/opensans/opensans-semibolditalic.ttf 0644 # Open Sans web font
-pub/System/BaseSkinCss/webfonts/opensans/opensans-semibolditalic.woff 0644 # Open Sans web font
+pub/System/BaseSkin/foswiki-logo-top.png 0644
+pub/System/BaseSkinCss/base_src.css 0644
+pub/System/BaseSkinCss/base.css 0644
+pub/System/BaseSkinCss/base.css.gz 0644
+# webfonts
+pub/System/BaseSkinCss/webfonts-opensans_src.css 0644
+pub/System/BaseSkinCss/webfonts-opensans.css 0644
+pub/System/BaseSkinCss/webfonts-opensans.css.gz 0644
+pub/System/BaseSkinCss/webfonts-dejavu_src.css 0644
+pub/System/BaseSkinCss/webfonts-dejavu.css 0644
+pub/System/BaseSkinCss/webfonts-dejavu.css.gz 0644
+# less
+pub/System/BaseSkinCss/less/less-1.3.0.min.js 0644
+pub/System/BaseSkinCss/less/base.less 0644
+pub/System/BaseSkinCss/less/buttons.less 0644
+pub/System/BaseSkinCss/less/colors.less 0644
+pub/System/BaseSkinCss/less/content.less 0644
+pub/System/BaseSkinCss/less/forms.less 0644
+pub/System/BaseSkinCss/less/menus.less 0644
+pub/System/BaseSkinCss/less/mixins.less 0644
+pub/System/BaseSkinCss/less/overrides.less 0644
+pub/System/BaseSkinCss/less/reset.less 0644
+pub/System/BaseSkinCss/less/screensizes.less 0644
+pub/System/BaseSkinCss/less/structure.less 0644
+pub/System/BaseSkinCss/less/tables.less 0644
+pub/System/BaseSkinCss/less/type.less 0644
+pub/System/BaseSkinCss/less/variables.less 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusans-bold.eot 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusans-bold.svg 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusans-bold.ttf 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusans-bold.woff 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusans-boldoblique.eot 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusans-boldoblique.svg 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusans-boldoblique.ttf 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusans-boldoblique.woff 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusans-oblique.eot 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusans-oblique.svg 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusans-oblique.ttf 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusans-oblique.woff 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusans.eot 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusans.svg 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusans.ttf 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusans.woff 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusanscondensed-bold.eot 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusanscondensed-bold.svg 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusanscondensed-bold.ttf 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusanscondensed-bold.woff 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusanscondensed-boldoblique.eot 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusanscondensed-boldoblique.svg 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusanscondensed-boldoblique.ttf 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusanscondensed-boldoblique.woff 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusanscondensed-oblique.eot 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusanscondensed-oblique.svg 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusanscondensed-oblique.ttf 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusanscondensed-oblique.woff 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusanscondensed.eot 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusanscondensed.svg 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusanscondensed.ttf 0644
+pub/System/BaseSkinCss/webfonts/dejavusans/dejavusanscondensed.woff 0644
+pub/System/BaseSkinCss/webfonts/droidsans/droidsans-bold.eot 0644
+pub/System/BaseSkinCss/webfonts/droidsans/droidsans-bold.svg 0644
+pub/System/BaseSkinCss/webfonts/droidsans/droidsans-bold.ttf 0644
+pub/System/BaseSkinCss/webfonts/droidsans/droidsans-bold.woff 0644
+pub/System/BaseSkinCss/webfonts/droidsans/droidsans.eot 0644
+pub/System/BaseSkinCss/webfonts/droidsans/droidsans.svg 0644
+pub/System/BaseSkinCss/webfonts/droidsans/droidsans.ttf 0644
+pub/System/BaseSkinCss/webfonts/droidsans/droidsans.woff 0644
+pub/System/BaseSkinCss/webfonts/droidsans/LICENSE.txt 0644
+pub/System/BaseSkinCss/webfonts/opensans/LICENSE.txt 0644
+pub/System/BaseSkinCss/webfonts/opensans/opensans-bold.eot 0644
+pub/System/BaseSkinCss/webfonts/opensans/opensans-bold.svg 0644
+pub/System/BaseSkinCss/webfonts/opensans/opensans-bold.ttf 0644
+pub/System/BaseSkinCss/webfonts/opensans/opensans-bold.woff 0644
+pub/System/BaseSkinCss/webfonts/opensans/opensans-bolditalic.eot 0644
+pub/System/BaseSkinCss/webfonts/opensans/opensans-bolditalic.svg 0644
+pub/System/BaseSkinCss/webfonts/opensans/opensans-bolditalic.ttf 0644
+pub/System/BaseSkinCss/webfonts/opensans/opensans-bolditalic.woff 0644
+pub/System/BaseSkinCss/webfonts/opensans/opensans-italic.eot 0644
+pub/System/BaseSkinCss/webfonts/opensans/opensans-italic.svg 0644
+pub/System/BaseSkinCss/webfonts/opensans/opensans-italic.ttf 0644
+pub/System/BaseSkinCss/webfonts/opensans/opensans-italic.woff 0644
+pub/System/BaseSkinCss/webfonts/opensans/opensans-regular.eot 0644
+pub/System/BaseSkinCss/webfonts/opensans/opensans-regular.svg 0644
+pub/System/BaseSkinCss/webfonts/opensans/opensans-regular.ttf 0644
+pub/System/BaseSkinCss/webfonts/opensans/opensans-regular.woff 0644
+pub/System/BaseSkinCss/webfonts/opensans/opensans-semibold.eot 0644
+pub/System/BaseSkinCss/webfonts/opensans/opensans-semibold.svg 0644
+pub/System/BaseSkinCss/webfonts/opensans/opensans-semibold.ttf 0644
+pub/System/BaseSkinCss/webfonts/opensans/opensans-semibold.woff 0644
+pub/System/BaseSkinCss/webfonts/opensans/opensans-semibolditalic.eot 0644
+pub/System/BaseSkinCss/webfonts/opensans/opensans-semibolditalic.svg 0644
+pub/System/BaseSkinCss/webfonts/opensans/opensans-semibolditalic.ttf 0644
+pub/System/BaseSkinCss/webfonts/opensans/opensans-semibolditalic.woff 0644
 pub/System/BaseSkinFileIcons/aac-large.png 0644
 pub/System/BaseSkinFileIcons/ai-large.png 0644
 pub/System/BaseSkinFileIcons/air-large.png 0644
@@ -102,6 +138,7 @@ pub/System/BaseSkinFileIcons/flac-large.png 0644
 pub/System/BaseSkinFileIcons/flv-large.png 0644
 pub/System/BaseSkinFileIcons/fon-large.png 0644
 pub/System/BaseSkinFileIcons/gif-large.png 0644
+pub/System/BaseSkinFileIcons/gz-large.png 0644
 pub/System/BaseSkinFileIcons/h-large.png 0644
 pub/System/BaseSkinFileIcons/hlp-large.png 0644
 pub/System/BaseSkinFileIcons/html-large.png 0644
@@ -115,9 +152,11 @@ pub/System/BaseSkinFileIcons/m4a-large.png 0644
 pub/System/BaseSkinFileIcons/mdb-large.png 0644
 pub/System/BaseSkinFileIcons/mkv-large.png 0644
 pub/System/BaseSkinFileIcons/mov-large.png 0644
+pub/System/BaseSkinFileIcons/mp3-large.png 0644
 pub/System/BaseSkinFileIcons/mpg-large.png 0644
 pub/System/BaseSkinFileIcons/otf-large.png 0644
 pub/System/BaseSkinFileIcons/pdf-large.png 0644
+pub/System/BaseSkinFileIcons/php-large.png 0644
 pub/System/BaseSkinFileIcons/pl-large.png 0644
 pub/System/BaseSkinFileIcons/png-large.png 0644
 pub/System/BaseSkinFileIcons/pps-large.png 0644
@@ -133,6 +172,7 @@ pub/System/BaseSkinFileIcons/sass-large.png 0644
 pub/System/BaseSkinFileIcons/scss-large.png 0644
 pub/System/BaseSkinFileIcons/sh-large.png 0644
 pub/System/BaseSkinFileIcons/svg-large.png 0644
+pub/System/BaseSkinFileIcons/tgz-large.png 0644
 pub/System/BaseSkinFileIcons/tiff-large.png 0644
 pub/System/BaseSkinFileIcons/ttf-large.png 0644
 pub/System/BaseSkinFileIcons/txt-large.png 0644
@@ -154,22 +194,20 @@ pub/System/BaseSkinJs/base_attachments.js.gz 0644
 pub/System/BaseSkinJs/base_edit_src.js 0644
 pub/System/BaseSkinJs/base_edit.js 0644
 pub/System/BaseSkinJs/base_edit.js.gz 0644
+pub/System/BaseSkinJs/base_edit_tinymce_src.js 0644
+pub/System/BaseSkinJs/base_edit_tinymce.js 0644
+pub/System/BaseSkinJs/base_edit_tinymce.js.gz 0644
 pub/System/BaseSkinJs/base_src.js 0644
 pub/System/BaseSkinJs/base.js 0644
 pub/System/BaseSkinJs/base.js.gz 0644
-pub/System/BaseSkinJs/bootstrap-dropdown_src.js 0644
-pub/System/BaseSkinJs/bootstrap-dropdown.js 0644
-pub/System/BaseSkinJs/bootstrap-dropdown.js.gz 0644
 pub/System/BaseSkinJs/bootstrap-modal_src.js 0644
 pub/System/BaseSkinJs/bootstrap-modal.js 0644
 pub/System/BaseSkinJs/bootstrap-modal.js.gz 0644
-pub/System/BaseSkinJs/bootstrap-tabs_src.js 0644
-pub/System/BaseSkinJs/bootstrap-tabs.js 0644
-pub/System/BaseSkinJs/bootstrap-tabs.js.gz 0644
+pub/System/BaseSkinJs/bootstrap-tab_src.js 0644
+pub/System/BaseSkinJs/bootstrap-tab.js 0644
+pub/System/BaseSkinJs/bootstrap-tab.js.gz 0644
 pub/System/BaseSkinJs/closelabel.png 0644
 pub/System/BaseSkinJs/facebox_src.js 0644
-pub/System/BaseSkinJs/facebox.js 0644
-pub/System/BaseSkinJs/facebox.js.gz 0644
 pub/System/BaseSkinJs/jquery.easing.1.3_src.js 0644
 pub/System/BaseSkinJs/jquery.easing.1.3.js 0644
 pub/System/BaseSkinJs/jquery.easing.1.3.js.gz 0644
@@ -183,10 +221,16 @@ pub/System/BaseSkinJs/loading.gif 0644
 pub/System/BaseSkinJs/modernizr-1.7_src.js 0644
 pub/System/BaseSkinJs/modernizr-1.7.js 0644
 pub/System/BaseSkinJs/modernizr-1.7.js.gz 0644
-pub/System/BaseSkinTestPage/butterfly2_large.jpg 0644 # test attachment
-pub/System/BaseSkinTestPage/ISS1.jpg 0644 # test attachment
-pub/System/BaseSkinTestPage/ISS1.jpg,v 0644 # test attachment
-pub/System/BaseSkinTestPage/Paper004.pdf 0644 # test attachment
-pub/System/BaseSkinTestPage/Paper004.pdf,v 0644 # test attachment
-pub/System/BaseSkinTestPage/Paul_Cezanne_169.jpg 0644 # test attachment
-pub/System/BaseSkinTestPage/Paul_Cezanne_169.jpg,v 0644 # test attachment
+pub/System/BaseSkinTestPage/butterfly2_large.jpg 0644
+pub/System/BaseSkinTestPage/ISS1.jpg 0644
+pub/System/BaseSkinTestPage/ISS1.jpg,v 0644
+pub/System/BaseSkinTestPage/movie.mov 0644
+pub/System/BaseSkinTestPage/movie.mov,v 0644
+pub/System/BaseSkinTestPage/Paper004.pdf 0644
+pub/System/BaseSkinTestPage/Paper004.pdf,v 0644
+pub/System/BaseSkinTestPage/Paul_Cezanne_169.jpg 0644
+pub/System/BaseSkinTestPage/Paul_Cezanne_169.jpg,v 0644
+pub/System/BaseSkinTestPage/prologue.txt 0644
+pub/System/BaseSkinTestPage/prologue.txt,v 0644
+pub/System/BaseSkinTestPage/triangle.svg 0644
+pub/System/BaseSkinTestPage/triangle.svg,v 0644

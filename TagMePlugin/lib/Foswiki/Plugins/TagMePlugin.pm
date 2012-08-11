@@ -1,30 +1,12 @@
-# Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
-#
-# Copyright (C) 2006 Peter Thoeny, peter@thoeny.org
-# Copyright (c) 2006 Fred Morris, m3047-twiki@inwa.net
-# Copyright (c) 2007-2011 Sven Dowideit, SvenDowideit@fosiki.com
-# Copyright (c) 2007 Arthur Clemens, arthur@visiblearea.com
-# Copyright (c) 2007-2009 Crawford Currie, http://c-dot.co.uk
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details, published at
-# http://www.gnu.org/copyleft/gpl.html
-#
-# =========================
-#
+# See bottom of file for license and copyright information
+
 # This Plugin implements tags in Foswiki.
 
 # =========================
 package Foswiki::Plugins::TagMePlugin;
 
 use strict;
+use warnings;
 
 # =========================
 use vars qw(
@@ -35,11 +17,11 @@ use vars qw(
 );
 
 our $VERSION           = '$Rev$';
-our $RELEASE           = '29 Jun 2011';
+our $RELEASE           = '2.1.1';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION =
   'Tag wiki content collectively to find content by keywords';
-our $pluginName = 'TagMePlugin';    # Name of this Plugin
+our $pluginName = 'TagMePlugin';
 
 our $initialized = 0;
 our $lineRegex   = "^0*([0-9]+), ([^,]+), (.*)";
@@ -305,14 +287,20 @@ sub _showDefault {
     foreach (@allTags) {
         push( @notSeen, $_ ) unless ( $seen{$_} );
     }
-    if ( scalar @notSeen ) {
-        if ( $tagMode eq 'nojavascript' ) {
-            $text .= _createNoJavascriptSelectBox(@notSeen);
-        }
-        else {
-            $text .= _createJavascriptSelectBox(@notSeen);
-        }
-    }
+    
+    my $topicObject =
+      Foswiki::Meta->new( $Foswiki::Plugins::SESSION, $web, $topic );
+
+    if ( $topicObject->haveAccess('CHANGE') ) {
+		if ( scalar @notSeen ) {
+			if ( $tagMode eq 'nojavascript' ) {
+				$text .= _createNoJavascriptSelectBox(@notSeen);
+			}
+			else {
+				$text .= _createJavascriptSelectBox(@notSeen);
+			}
+		}
+	}
     $text .= ' '
       . _wrapHtmlTagControl(
             "<a href=\"%SCRIPTURL{viewauth}%/$installWeb/TagMeCreateNewTag"
@@ -1177,7 +1165,22 @@ sub _addTag {
     my $num      = '';
     my $users    = '';
     my @result   = ();
-    if ( Foswiki::Func::topicExists( $web, $topic ) ) {
+
+    # check if topic exists, and if the user has CHANGE permission
+    if ( !Foswiki::Func::topicExists( $web, $topic ) ) {
+        $text .=
+          _wrapHtmlFeedbackErrorInline("tag not added, topic does not exist");
+    }
+    else {
+        my $topicObject =
+          Foswiki::Meta->new( $Foswiki::Plugins::SESSION, $web, $topic );
+        $text .= _wrapHtmlFeedbackErrorInline("<nop>$user cannot add new tags")
+          if ( !$topicObject->haveAccess('CHANGE') );
+    }
+
+    unless ($text) {
+
+        # checks completed ok
         foreach my $line (@tagInfo) {
             if ( $line =~ /$lineRegex/ ) {
                 $num   = $1;
@@ -1214,10 +1217,6 @@ sub _addTag {
         }
         @tagInfo = reverse sort(@result);
         _writeTagInfo( $webTopic, @tagInfo );
-    }
-    else {
-        $text .=
-          _wrapHtmlFeedbackErrorInline("tag not added, topic does not exist");
     }
 
     # Suppress status? FWM, 03-Oct-2006
@@ -1306,7 +1305,7 @@ sub _removeTag {
 }
 
 # =========================
-# Force remove tag  from topic (clear all users votes)
+# Force remove tag from topic (clear all users votes)
 sub _removeAllTag {
     my ($attr) = @_;
 
@@ -1537,8 +1536,9 @@ sub _modifyTag {
 sub _canChange {
 
     my $allowModifyPrefNames =
-      Foswiki::Func::getPluginPreferencesValue('ALLOW_TAG_CHANGE')
-      || 'AdminGroup';
+      Foswiki::Func::getPluginPreferencesValue('ALLOW_TAG_CHANGE');
+    $allowModifyPrefNames = 'AdminGroup'
+        unless defined $allowModifyPrefNames;   # default to AdminGroup
 
     return 1 if !$allowModifyPrefNames;    # anyone is allowed to change
 
@@ -1776,9 +1776,10 @@ sub _writeDebug {
 
 # =========================
 sub _writeLog {
+    my ($text) = @_;
+
     if ($logAction) {
-        $Foswiki::Plugins::SESSION->logger->log( 'info', 'tagme', "$web.$topic",
-            @_ );
+        Foswiki::Func::writeEvent( 'tagme', $text );
     }
 }
 
@@ -1815,3 +1816,25 @@ sub indexTopicHandler {
 }
 
 1;
+
+__DATA__
+
+# Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
+#
+# Copyright (C) 2011-2012 Foswiki Contributors
+# Copyright (c) 2007-2011 Sven Dowideit, SvenDowideit@fosiki.com
+# Copyright (c) 2007 Arthur Clemens, arthur@visiblearea.com
+# Copyright (c) 2007-2009 Crawford Currie, http://c-dot.co.uk
+# Copyright (c) 2006 Fred Morris, m3047-twiki@inwa.net
+# Copyright (C) 2006 Peter Thoeny, peter@thoeny.org
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details, published at
+# http://www.gnu.org/copyleft/gpl.html

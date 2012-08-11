@@ -1,0 +1,941 @@
+
+// colors TODO
+
+.fw_btn {
+	color: #666;
+	border: 1px solid #ccc;
+	border-bottom-color: darken(#ccc, 10%);
+	text-shadow: 0 1px 1px rgba(255,255,255,.75);
+	.fw_buttonBackground(@btnBackground, @btnBackgroundHighlight);
+	@shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 1px 2px rgba(0,0,0,.05);
+	.fw_box-shadow(@shadow);
+
+	&:hover {
+		color: #666;
+		background-color: darken(#fff, 10%); 
+	}
+	
+	// Active state
+	&.active,
+	&:active {
+		@shadow: inset 0 2px @fw_corner_radius_button rgba(0,0,0,.15), 0 1px 2px rgba(0,0,0,.05);
+		.fw_box-shadow(@shadow);
+		background-color: darken(#fff, 10%);
+		background-color: darken(#fff, 15%) e("\9");
+	}
+}
+
+.foswikiButtonDisabled,
+.foswikiSubmitDisabled,
+.foswikiButton[disabled],
+.foswikiSubmitDisabled[disabled] {
+	background-image: none;
+	background-color: darken(#fff, 10%);
+	.fw_opacity(65);
+	.fw_box-shadow(none);
+}
+
+
+
+/*
+ * COLORS
+ * -------------------------------------------------------------------------- */
+
+/*
+ * Foswiki base colors
+ */
+
+/* foreground colors */
+.foswikiYellowFG { color:#ff0; }
+.foswikiOrangeFG { color:#f60; }
+.foswikiRedFG    { color:#f00; }
+.foswikiPinkFG   { color:#f0f; }
+.foswikiPurpleFG { color:#800080; }
+.foswikiTealFG   { color:#008080; }
+.foswikiNavyFG   { color:#000080; }
+.foswikiBlueFG   { color:#00f; }
+.foswikiAquaFG   { color:#0ff; }
+.foswikiLimeFG   { color:#0f0; }
+.foswikiGreenFG  { color:#008000; }
+.foswikiOliveFG  { color:#808000; }
+.foswikiMaroonFG { color:#800000; }
+.foswikiBrownFG  { color:#963; }
+.foswikiBlackFG  { color:#000; }
+.foswikiGrayFG   { color:#808080; }
+.foswikiSilverFG { color:#c0c0c0; }
+.foswikiWhiteFG  { color:#fff; }
+
+/* background colors */
+.foswikiYellowBG { background-color:#ff0; }
+.foswikiOrangeBG { background-color:#f60; } 
+.foswikiRedBG    { background-color:#f00; } 
+.foswikiPinkBG   { background-color:#f0f; } 
+.foswikiPurpleBG { background-color:#800080; } 
+.foswikiNavyBG   { background-color:#000080; } 
+.foswikiBlueBG   { background-color:#0000ff; } 
+.foswikiTealBG   { background-color:#008080; } 
+.foswikiAquaBG   { background-color:#0ff; } 
+.foswikiLimeBG   { background-color:#0f0; } 
+.foswikiGreenBG  { background-color:#008000; } 
+.foswikiOliveBG  { background-color:#808000; } 
+.foswikiMaroonBG { background-color:#800000; } 
+.foswikiBrownBG  { background-color:#963; } 
+.foswikiBlackBG  { background-color:#000; } 
+.foswikiGrayBG   { background-color:#808080; } 
+.foswikiSilverBG { background-color:#c0c0c0; } 
+.foswikiWhiteBG  { background-color:#fff; } 
+
+
+/*
+ * Handy variables
+ */
+
+// Grays
+// -------------------------
+@black:                 #000;
+@grayDarker:            #222;
+@grayDark:              #333;
+@gray:                  #555;
+@grayLight:             #999;
+@grayLighter:           #eee;
+@white:                 #fff;
+
+// Accent colors
+// -------------------------
+@blue:                  #049cdb;
+@blueDark:              #0064cd;
+@green:                 #46a546;
+@red:                   #9d261d;
+@yellow:                #ffc40d;
+@orange:                #f89406;
+@pink:                  #c3325f;
+@purple:                #7a43b6;
+
+/*
+ * Color scheme function
+ */
+
+.fw_color_scheme(
+	@background,
+	@border,
+	@text,
+	@text_shadow,
+	@pane_background,
+	@text_toned_down,
+	@text_light,
+	@header_text,
+	@header_h1_text,
+	@hint_text,
+	@border_secondary,
+	@background_secondary,
+	@code_text,
+	@link_text,
+	@link_text_hover,
+	@navigation_link_text,
+	@navigation_link_background,
+	@navigation_link_text_hover,
+	@navigation_link_background_hover,
+	@button_gradient_vertical_three_colors_start,
+	@button_gradient_vertical_three_colors_mid,
+	@button_gradient_vertical_three_colors_stop,
+	@button_gradient_vertical_three_colors_end,
+	@button_text,
+	@button_text_shadow,
+	@dropdown_menu_border,
+	@dropdown_menu_background,
+	@dropdown_menu_text,
+	@dropdown_menu_link,
+	@dropdown_menu_link_highlight_background,
+	@dropdown_menu_link_highlight,
+	@input_border,
+	@input_border_focus,
+	@input_background,
+	@input_box_shadow,
+	@input_box_shadow_focus,
+	@alert_text,
+	@message_background) {
+	
+	background-color: @background;
+	color: @text;
+	text-shadow: @text_shadow;
+	border-color: @border;
+	
+	p {
+		color: @text;
+	}
+
+	h1 {
+		color: @header_h1_text;
+	}
+	h2, h3, h4, h5, h6 {
+		color: @header_text;
+	}
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		text-shadow: @text_shadow;
+	}
+	
+	.foswikiSection,
+	.foswikiContainer {
+		border-color: @border_secondary;
+	}
+	.foswikiGrayText,
+	.foswikiHint {
+		color: @hint_text;
+	}
+	.foswikiMessage {
+		background-color: @message_background;
+	}
+	.foswikiButtonGroup {
+		border-color: @border_secondary;
+	}
+	
+	.foswikiMenuDivider {
+		background-color: darken(@border_secondary, 10%);
+	}
+
+	.foswikiHorizontalList li {
+		border-color: @border;
+	}
+	a {
+		color: @link_text;
+	}
+	
+	hr {
+		border-bottom-color: @border_secondary;
+		background-color: @border_secondary;
+	}
+
+	/* links styled as buttons */
+	.foswikiButton,
+	.foswikiButtonSmall,
+	.foswikiButtonLarge {
+		&,
+		&.a {
+			color: @button_text;
+			
+			&:hover {
+				color: @button_text;
+			}
+		}
+	}
+	.foswikiSubmit {
+		&,
+		&:hover,
+		&:active,
+		&.a {
+			.fw_gradientBar(lighten(@blue, 5%), darken(@blue, 5%));
+			color: @white;
+		}		
+	}
+	.foswikiButtonCancel {
+		&,
+		&:hover,
+		&:active,
+		&.a {
+			.fw_gradientBar(lighten(@red, 5%), darken(@red, 5%));
+			color: @white;
+		}
+	}
+	.foswikiButtonDisabled,
+	.foswikiSubmitDisabled {
+		&,
+		&.a,
+		&.foswikiButton,
+		&.foswikiSubmit,
+		&.foswikiButtonCancel,
+		&:hover,
+		&:active {
+			cursor: default;
+			background-image: none;
+			.fw_reset-filter();
+			.fw_opacity(70);
+			.fw_box-shadow(none);
+			color: @hint_text;
+			text-shadow: none;
+			background-color: darken(@background_secondary,5%);
+			border-color: @border_secondary;
+		}
+	}
+
+	pre,
+	tt,
+	kbd,
+	samp,
+	.foswikiDiffDebug {
+		color: @code_text;
+		background-color: @background_secondary;
+		border-color: @border_secondary;
+	}
+	code {
+		color: @code_text;
+		background: none;
+		border: none;
+		
+		& a,
+		& a:hover,
+		& a:visited {
+			color: @link_text;
+		}
+	}
+	
+	a code {
+		color: @link_text;
+	}
+	
+	.fw_button() {
+		color: @button_text;
+		#fw_gradient > .vertical-three-colors(@button_gradient_vertical_three_colors_start, @button_gradient_vertical_three_colors_mid, @button_gradient_vertical_three_colors_stop, @button_gradient_vertical_three_colors_end);
+		text-shadow: @button_text_shadow;
+
+		&.primary {
+			color: @white;
+			.fw_gradientBar(@blue, @blueDark)
+  		}
+  		
+  		&:hover {
+			text-shadow: @button_text_shadow;
+			background-position: 0 -15px;
+			color: #333;
+			text-decoration: none;
+		}
+	}
+	
+	.foswikiTopic {
+		text-shadow: none;
+	}
+	
+	.foswikiFormSteps {
+		border-color: @border_secondary;
+		background: @background_secondary;
+	}
+	.foswikiFormStep {
+		border-color: @border_secondary;
+	}
+
+	.foswikiImage img {
+		background: @background;
+		border-color: @border_secondary;
+	}
+
+	.foswikiBreadcrumb {
+		&,
+		a,
+		> ul a {
+			color: @hint_text;
+//			text-shadow: @text_shadow;
+		}
+        a,
+		> ul a {
+		    &:hover {
+				color: @link_text;	
+			}
+		}
+		
+        &:hover {
+	        a {
+    			color: @link_text;	
+    		}
+		}
+	}
+	
+	.foswikiNavigation,
+	.foswikiNavigationSecondary {
+		
+		> li {
+			&,
+			> a,
+			> .foswikiRequiresChangePermission > a {
+				color: @text;
+				background: none;
+				text-shadow: none;
+				.fw_box-shadow(none);
+			}
+			> a,
+			> .foswikiRequiresChangePermission > a {
+				color: @navigation_link_text;
+			}
+			
+			& > a:hover,
+			& > .foswikiRequiresChangePermission > a:hover {
+			    color: @navigation_link_text_hover;
+			}
+		}
+	}
+	
+    .foswikiControls,
+    .foswikiControlsSecondary {
+        > li {
+            > a,
+            > .foswikiRequiresChangePermission > a {  
+                background: none;
+                border-color: transparent;
+                .fw_box-shadow(none);
+            } 
+            &:hover {
+                > a,
+                > .foswikiRequiresChangePermission > a {
+                    background: darken(@background, 5%);
+                    background-color: darken(@background, 5%);
+                    color: @text;
+                }
+                
+                .foswikiCaret {			
+                    border-top-color: darken(@dropdown_menu_border, 10%);
+                }
+            }
+        }
+    }
+    
+    .foswikiToolbar {
+        .foswikiControls,
+        .foswikiControlsSecondary {
+            > li {
+                > a,
+                > .foswikiRequiresChangePermission > a {
+                    border-color: darken(@border_secondary, 5%);
+                }
+            }
+        }
+    }
+			
+	.foswikiDropdownMenu {
+		background: @dropdown_menu_background;
+		border-color: @dropdown_menu_border;
+		color: @dropdown_menu_text;
+		.fw_box-shadow();
+		
+		> li {
+			> a,
+			> .foswikiRequiresChangePermission > a {
+				color: @dropdown_menu_link;
+				
+				&:hover {
+					background: @dropdown_menu_link_highlight_background;
+					color: @dropdown_menu_link_highlight;
+				}
+			}
+		}
+		
+        p {
+            color: @dropdown_menu_text;   
+        }
+		
+		.foswikiMenuDivider {
+			background-color: lighten(@border_secondary, 6%);
+			border-color: lighten(@border_secondary, 6%);
+		}
+	}
+	
+	.foswikiCaret {			
+		border-top-color: darken(@dropdown_menu_border, 5%);
+	}
+    .foswikiButtonGroup > li.foswikiDropdownToggle {
+	    border-color: @dropdown_menu_border;
+	}
+	
+	.foswikiTable {
+		&,
+		th,
+		td {
+//			color: @text;
+			border-color: @border_secondary;
+		}
+		th {
+			a:link,
+			a:visited {
+//				color: @text;
+			}
+		}
+	}
+	
+	.foswikiSearchResults {
+		.foswikiSearchResult {
+			border-color: @border_secondary;
+		}
+		
+		.foswikiSearchResultMeta {
+			color: @text_light;
+		}
+	}
+	
+  	.foswikiToolbar {
+  		border:1px solid @border_secondary;
+		background: @background_secondary;
+		
+		a:link,
+		a:visited {
+			color: @text;
+		}
+  	}
+
+	.foswikiSeparator {
+		color: @text_light;
+	}
+
+	.foswikiEmulatedLink {
+		color: @link_text;
+	}
+	
+	.foswikiAlert,
+	.foswikiAlert code {
+		color: @alert_text;
+	}
+	
+	textarea,
+	input[type='text'],
+	input[type='password'] {
+		background-color: @input_background;
+  		color: @text;
+  		border-color: @input_border;
+
+	    .fw_box-shadow(@input_box_shadow);
+
+  		&:-moz-placeholder {
+			color: @text_light;
+		}
+		&::-webkit-input-placeholder {
+		  color: @text_light;
+		}
+		&:hover {
+			background-color: @input_background;
+			color: @text;
+		}
+  		&:focus,
+		&.focused {
+			outline: 0;
+			background-color: @white;
+			.fw_box-shadow(@input_box_shadow_focus);
+			border-color: @input_border_focus;
+			color: @black;
+		}
+  	}
+	
+	select,
+	input[type='file'] {
+		color: @text;
+	}
+
+	.foswikiEditTextarea {
+		border-color: @border_secondary;
+		textarea:focus {
+			outline: 0;
+			border-color: inherit;
+			.fw_box-shadow(none);
+		}
+	}
+	
+	/* tabs */
+	
+	.foswikiTabs ul,
+	.jqTabPaneSimple > ul.jqTabGroup {
+		li {
+			& {
+				a,
+				a:hover {
+					border-color: @border_secondary;
+					background-color: transparent;
+					color: @text;
+				}
+			}
+			
+			& a:hover {
+				border-bottom-color: @pane_background;
+				background: @pane_background;
+			}
+	
+			&.foswikiActiveTab,
+			&.current {
+				a,
+				a:hover {
+					border-bottom-color: @pane_background;
+					background: @pane_background;
+				}
+			}
+		}
+	}
+	
+	.jqTabPaneDefault > ul.jqTabGroup {
+		li {
+			& {
+				a,
+				a:hover,
+				span {
+					border-color: @border_secondary;
+					color: @text;
+				}
+				
+				span {
+					border-bottom-color: @pane_background;
+				}
+			}
+	
+			&.foswikiActiveTab,
+			&.current {
+				a,
+				a:hover {
+					background: @pane_background;
+					border-bottom-color: @pane_background;
+					.fw_box-shadow(none);
+					border-bottom-color: @pane_background;
+				}
+			}
+		}
+	}
+	
+	.jqTab,
+	.foswikiTabContent {
+		background: @pane_background;
+		border-color: @border_secondary;
+	}
+
+	/* extensions */
+	
+	/* TinyMCE */
+	
+	.mceExternalToolbar,
+	.mceListBox .mceText,
+	div.mceMenu,
+	table.mceLayout,
+	table.mceLayout tr.mceFirst td,
+	table.mceLayout {
+		border-color: @border_secondary !important;
+	}
+	
+	td.mceStatusbar,
+	.mceMenuItemTitle span.mceText {
+		background-color: @border_secondary !important;
+	}
+}
+
+/* SCHEMES */
+
+.foswikiColorLight(@background: #fff, @border: #eee, @text: #444) {
+
+    @_text_shadow_dark_on_light: 0 1px 0 rgba(255, 255, 255, 0.75); 
+    @_text_shadow_dark_on_medium: 0 -1px -1px rgba(0, 0, 0, 0.5);
+    @_text_shadow_light_on_dark: none;
+
+	@pane_background: #fff;
+	@text_toned_down: #666;
+	@text_light: #bbb;
+	@text_shadow: @_text_shadow_dark_on_light;
+	@header_text: #333;
+	@header_h1_text: #444;
+	@hint_text: #888;
+	@border_secondary: #e4e4e4;
+	@background_secondary: #f3f3f3;
+	@code_text: #222;
+	@link_text: #0069d6;
+	@link_text_hover: darken(@link_text, 15);
+	@navigation_link_text: lighten(@text, 10%);
+	@navigation_link_background: @background;
+	@navigation_link_text_hover: lighten(@text, 10%);
+	@navigation_link_background_hover: darken(@navigation_link_background, 10%);
+	// unfortunately we cannot pass 1 variable without an error
+	@button_gradient_vertical_three_colors_start: #fff;
+	@button_gradient_vertical_three_colors_mid: #fff;
+	@button_gradient_vertical_three_colors_stop: 25%;
+	@button_gradient_vertical_three_colors_end: darken(#ffffff, 10%);
+	@button_text: #333;
+	@button_text_shadow: @_text_shadow_dark_on_medium;
+	@dropdown_menu_border: #ddd;
+	@dropdown_menu_background: #fff;
+	@dropdown_menu_text: #bbb;
+	@dropdown_menu_link: #666;
+	@dropdown_menu_link_highlight_background: #eee;
+	@dropdown_menu_link_highlight: #000;
+	@input_border: @border;
+	@input_border_focus: rgba(0, 0, 0, 0.4);
+	@input_background: #fff;
+	@input_box_shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+	@input_box_shadow_focus: inset 2px 2px 4px #ddd;
+	@alert_text: #f00;
+	@message_background: #fdf5d9;
+	
+	@shadow: 0 2px 3px rgba(0, 0, 0, .15);
+		
+	.fw_color_scheme(
+		@background,
+		@border,
+		@text,
+		@text_shadow,
+		@pane_background,
+		@text_toned_down,
+		@text_light,
+		@header_text,
+		@header_h1_text,
+		@hint_text,
+		@border_secondary,
+		@background_secondary,
+		@code_text,
+		@link_text,
+		@link_text_hover,
+		@navigation_link_text,
+		@navigation_link_background,
+		@navigation_link_text_hover,
+		@navigation_link_background_hover,
+		@button_gradient_vertical_three_colors_start,
+		@button_gradient_vertical_three_colors_mid,
+		@button_gradient_vertical_three_colors_stop,
+		@button_gradient_vertical_three_colors_end,
+		@button_text,
+		@button_text_shadow,
+		@dropdown_menu_border,
+		@dropdown_menu_background,
+		@dropdown_menu_text,
+		@dropdown_menu_link,
+		@dropdown_menu_link_highlight_background,
+		@dropdown_menu_link_highlight,
+		@input_border,
+		@input_border_focus,
+		@input_background,
+		@input_box_shadow,
+		@input_box_shadow_focus,
+		@alert_text,
+		@message_background
+	);
+	
+	&.foswikiBar {
+		background-color: @background;
+		border-color: @border_secondary;
+	}
+	
+	&.foswikiShadow {
+		.fw_box-shadow(@shadow);
+	}
+}
+
+.foswikiColorSilver {
+	.foswikiColorLight(#f4f4f4);
+}
+
+.foswikiColorMedium(@background: #eaeaea, @border: #dedfe2, @text: #444) {
+	
+	@pane_background: #eaeaea;
+	@text_toned_down: #666;
+	@text_light: #bbb;
+	@text_shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+	@header_text: #333;
+	@header_h1_text: #333;
+	@hint_text: #888;
+	@border_secondary: #ddd;
+	@background_secondary: #f3f3f3;
+	@code_text: #222;
+	@link_text: #0069d6;
+	@link_text_hover: darken(@link_text, 15);
+	@navigation_link_text: lighten(@text, 10%);
+	@navigation_link_background: @background;
+	@navigation_link_text_hover: #fff;
+	@navigation_link_background_hover: darken(@navigation_link_background, 10%);
+	// unfortunately we cannot pass 1 variable without an error
+	@button_gradient_vertical_three_colors_start: #fff;
+	@button_gradient_vertical_three_colors_mid: #fff;
+	@button_gradient_vertical_three_colors_stop: 25%;
+	@button_gradient_vertical_three_colors_end: darken(#fff, 10%);
+	@button_text: #333;
+	@button_text_shadow: @text_shadow;
+	@dropdown_menu_border: #ddd;
+	@dropdown_menu_background: #fff;
+	@dropdown_menu_text: #bbb;
+	@dropdown_menu_link: #666;
+	@dropdown_menu_link_highlight_background: #eee;
+	@dropdown_menu_link_highlight: #000;
+	@input_border: @border;
+	@input_border_focus: rgba(0, 0, 0, 0.4);
+	@input_background: #fff;
+	@input_box_shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+	@input_box_shadow_focus: inset 2px 2px 4px #ddd;
+	@alert_text: #f00;
+	@message_background: #fdf5d9;
+	
+	@shadow: 0 2px 3px rgba(0, 0, 0, .1);
+
+	.fw_color_scheme(
+		@background,
+		@border,
+		@text,
+		@text_shadow,
+		@pane_background,
+		@text_toned_down,
+		@text_light,
+		@header_text,
+		@header_h1_text,
+		@hint_text,
+		@border_secondary,
+		@background_secondary,
+		@code_text,
+		@link_text,
+		@link_text_hover,
+		@navigation_link_text,
+		@navigation_link_background,
+		@navigation_link_text_hover,
+		@navigation_link_background_hover,
+		@button_gradient_vertical_three_colors_start,
+		@button_gradient_vertical_three_colors_mid,
+		@button_gradient_vertical_three_colors_stop,
+		@button_gradient_vertical_three_colors_end,
+		@button_text,
+		@button_text_shadow,
+		@dropdown_menu_border,
+		@dropdown_menu_background,
+		@dropdown_menu_text,
+		@dropdown_menu_link,
+		@dropdown_menu_link_highlight_background,
+		@dropdown_menu_link_highlight,
+		@input_border,
+		@input_border_focus,
+		@input_background,
+		@input_box_shadow,
+		@input_box_shadow_focus,
+		@alert_text,
+		@message_background
+	);
+	
+	&.foswikiBar {
+		background-color: @background;
+		border-color: @border_secondary;
+	}
+	
+	&.foswikiShadow {
+		.fw_box-shadow(@shadow);
+	}
+}
+
+.foswikiColorDark(@background: #222, @border: #555, @text: #f2f2f2) {
+
+	@pane_background: lighten(@background, 5%);
+	@text_toned_down: #666;
+	@text_light: #bbb;
+	@text_shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+	@header_text: #eee;
+	@header_h1_text: #fff;
+	@hint_text: #888;
+	@border_secondary: #555;
+	@background_secondary: #333;
+	@code_text: #f2f2f2;
+	@link_text: #80b4eb;
+	@link_text_hover: darken(@link_text, 15);
+	@navigation_link_text: lighten(@text, 10%);
+	@navigation_link_background: @background;
+	@navigation_link_text_hover: #fff;
+	@navigation_link_background_hover: darken(@navigation_link_background, 10%);
+	// unfortunately we cannot pass 1 variable without an error
+	@button_gradient_vertical_three_colors_start: #fff;
+	@button_gradient_vertical_three_colors_mid: #fff;
+	@button_gradient_vertical_three_colors_stop: 25%;
+	@button_gradient_vertical_three_colors_end: darken(#fff, 10%);
+	@button_text: #333;
+	@button_text_shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+	@dropdown_menu_border: #ddd;
+	@dropdown_menu_background: lighten(@background, 5%);
+	@dropdown_menu_text: darken(@text, 10%);
+	@dropdown_menu_link: lighten(@text, 5%);
+	@dropdown_menu_link_highlight_background: @background;
+	@dropdown_menu_link_highlight: #fff;
+    @input_border: @border;
+	@input_border_focus: rgba(0, 0, 0, 0.4);
+	@input_background: @background;
+	@input_box_shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+	@input_box_shadow_focus: inset 2px 2px 4px #ddd;	@alert_text: #f00;
+	@message_background: #fdf5d9;
+	
+	@shadow: 0 2px 3px rgba(0, 0, 0, .15);
+	
+	.fw_color_scheme(
+		@background,
+		@border,
+		@text,
+		@text_shadow,
+		@pane_background,
+		@text_toned_down,
+		@text_light,
+		@header_text,
+		@header_h1_text,
+		@hint_text,
+		@border_secondary,
+		@background_secondary,
+		@code_text,
+		@link_text,
+		@link_text_hover,
+		@navigation_link_text,
+		@navigation_link_background,
+		@navigation_link_text_hover,
+		@navigation_link_background_hover,
+		@button_gradient_vertical_three_colors_start,
+		@button_gradient_vertical_three_colors_mid,
+		@button_gradient_vertical_three_colors_stop,
+		@button_gradient_vertical_three_colors_end,
+		@button_text,
+		@button_text_shadow,
+		@dropdown_menu_border,
+		@dropdown_menu_background,
+		@dropdown_menu_text,
+		@dropdown_menu_link,
+		@dropdown_menu_link_highlight_background,
+		@dropdown_menu_link_highlight,
+		@input_border,
+		@input_border_focus,
+		@input_background,
+		@input_box_shadow,
+		@input_box_shadow_focus,
+		@alert_text,
+		@message_background
+	);
+	
+	&.foswikiBar {
+		background-color: @background;
+		border-color: @border_secondary;
+	}
+	
+	&.foswikiShadow {
+		.fw_box-shadow(@shadow);
+//		#fw_gradient > .vertical-three-colors(#444, #333, 10%, #222)
+	}
+}
+
+// Set color scheme
+
+.foswikiColorNavigation {
+	.foswikiColorMedium(#e6e6e6);
+}
+.foswikiColorTopicActions {
+	.foswikiColorMedium(#f8f8f8);
+}
+.foswikiColorPrimary {
+	.foswikiColorLight(#fff);
+}
+.foswikiColorSecondary {
+	.foswikiColorSilver;
+}
+.foswikiColorBlack {
+	.foswikiColorDark();
+}
+.foswikiColorWhite {
+	.foswikiColorLight();
+}
+.foswikiColorGray {
+	.foswikiColorMedium();
+}
+.foswikiBroadcastMessage,
+.foswikiNotification {
+	.foswikiColorLight(#fdf5d9, #fceec1);
+}
+.foswikiHelp {
+	.foswikiColorMedium(#ddf4fb, #c6edf9);
+}
+body {
+	.foswikiColorTopicActions;
+}
+
+
+
+
+
+
+
+

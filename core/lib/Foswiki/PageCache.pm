@@ -140,7 +140,7 @@ sub genVariationKey {
       # SMELL: add a setting to make exclusion of session variables configurable
         next
           if $key =~
-/^(_.*|VALIDATION|REMEMBER|FOSWIKISTRIKEONE.*|VALID_ACTIONS.*|BREADCRUMB_TRAIL|DGP_hash)$/o;
+/^(_.*|VALIDATION|REMEMBER|FOSWIKISTRIKEONE.*|VALID_ACTIONS.*|BREADCRUMB_TRAIL|DGP_hash|release_lock)$/o;
 
         #writeDebug("adding session key=$key");
 
@@ -167,6 +167,7 @@ sub genVariationKey {
         next if $key =~ /^($ignoreParams)$/;
         my @vals = $request->param($key);
         foreach my $val (@vals) {
+            next unless defined $val;    # wtf?
             $variationKey .= '::' . $key . '=' . $val;
             writeDebug("adding urlparam key=$key val=$val");
         }

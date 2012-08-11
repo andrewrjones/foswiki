@@ -213,7 +213,7 @@ sub _ensureProcessed {
 
     return if $this->{state};
 
-    if ( !-e $this->{rcsFile} ) {
+    if ( !$this->revisionHistoryExists() ) {
         $this->{state} = 'nocommav';
         return;
     }
@@ -304,7 +304,7 @@ sub _ensureProcessed {
         }
         elsif ( $state eq 'delta.author' ) {
             if (/^author\s+(.*);$/) {
-                $revs[$num]->{author} = $1;
+                $revs[$num]->{author} = $1 || '';
                 if ( $num == 1 ) {
                     $state = 'desc';
                     $term  = '@';
@@ -438,7 +438,7 @@ sub _numRevisions {
 
     # if state is nocommav, and the file exists, there is only one revision
     if ( $this->{state} eq 'nocommav' ) {
-        return 1 if ( -e $this->{file} );
+        return 1 if $this->storedDataExists();
         return 0;
     }
     return $this->{head};
@@ -446,6 +446,9 @@ sub _numRevisions {
 
 sub ci {
     my ( $this, $isStream, $data, $log, $author, $date ) = @_;
+
+    # If the author is null, then we get a corrupt ,v
+    ASSERT($author) if DEBUG;
 
     _ensureProcessed($this);
 

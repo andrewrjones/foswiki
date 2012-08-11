@@ -14,7 +14,28 @@
 	Top table row definition for topic attachments and top table in attach screen
 ---------------------------------------------------
 }%%TMPL:DEF{ATTACH:files:header(toprow)}%<div class='foswikiBar foswikiToolbar foswikiClearfix'>
-	<ul class='foswikiNavigation'>
+	<ul class='foswikiControls'>
+		<li>
+			<a href='%SCRIPTURLPATH{"attach"}%/%WEB%/%TOPIC%' class='foswikiButton'>%MAKETEXT{"Upload new"}%</a>
+		</li><li>
+			<a href='%SCRIPTURLPATH{"attach"}%/%WEB%/%TOPIC%' class='foswikiButton'>%MAKETEXT{"Manage all"}%</a>
+		</li>
+	</ul>
+	<ul class='foswikiControlsSecondary foswikiSort'>
+        <li class='foswikiDropdownToggle'>
+            <a href='#'>%MAKETEXT{"Sort"}%<b class='foswikiCaret'></b></a>
+            <ul class='foswikiDropdownMenu foswikiPullRight'>
+                <li><a href='#'>%MAKETEXT{"Name"}%</a></li>
+                <li><a href='#'>%MAKETEXT{"Date"}%</a></li>
+                <li><a href='#'>%MAKETEXT{"Size"}%</a></li>
+                <li><a href='#'>%MAKETEXT{"File type"}%</a></li>
+                <li><a href='#'>%MAKETEXT{"User"}%</a></li>
+                <li><a href='#'>%MAKETEXT{"Version"}%</a></li>
+            </ul>
+        </li>
+    </ul>
+<!--
+	<ul class='foswikiControls'>
 		<li>
 			<select class='foswikiSelect foswikiSort span3'>
 				<option value='data-file'>%MAKETEXT{"Sort by name"}%</option>
@@ -26,13 +47,7 @@
 			</select>
 		</li>
 	</ul>
-	<ul class='foswikiNavigationSecondary'>
-		<li>
-			<a href='%SCRIPTURLPATH{"attach"}%/%WEB%/%TOPIC%' class='foswikiButton'>%MAKETEXT{"Manage all"}%</a>
-		</li><li>
-			<a href='%SCRIPTURLPATH{"attach"}%/%WEB%/%TOPIC%' class='foswikiButton'>%MAKETEXT{"Upload new"}%</a>
-		</li>
-	</ul>
+-->
 </div>%TMPL:P{
 	"LIBJS"
 	id="BaseSkinJs/base_attachments"
@@ -99,7 +114,7 @@
 	Top table row definition for topic attachments and top table in attach screen
 ---------------------------------------------------
 }%%TMPL:DEF{ATTACH:files:header(toprow)(basic)}%<div class='foswikiBar foswikiToolbar foswikiClearfix'>
-	<ul class='foswikiNavigation'>
+	<ul class='foswikiControls'>
 		<li>
 			<select class='foswikiSelect foswikiSort'>
 				<option value='data-rev'>%MAKETEXT{"Sort by version"}%</option>

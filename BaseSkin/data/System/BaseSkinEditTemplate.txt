@@ -14,7 +14,7 @@ Base Skin topic template
 ---------------------------------------------------
 }%%TMPL:INCLUDE{"metadata"}%%{
 ---------------------------------------------------
-	CSS class for body element says this is a view page
+	CSS class for body element says this is an edit page
 ---------------------------------------------------
 }%%TMPL:DEF{"body:class"}%foswikiManagePage foswikiEditPage%TMPL:END%%{
 ---------------------------------------------------
@@ -36,7 +36,7 @@ Base Skin topic template
 ---------------------------------------------------
 	Edit controls
 ---------------------------------------------------
-}%%TMPL:DEF{"editcontrols"}%<div class='foswikiMakeSticky foswikiShadow foswikiColorNavigationSecondary'>
+}%%TMPL:DEF{"editcontrols"}%<div class='foswikiMakeSticky foswikiShadow foswikiColorTopicActions'>
 	<div class='foswikiBar foswikiColorSecondary'>
 	<div class='foswikiContainer'>
 		<div id='foswikiEditControlsContainer'>
@@ -58,12 +58,32 @@ Base Skin topic template
 	"{Validation}{Method}='strikeone'"
 	then="<noscript>$percentTMPL:P{enable_js}$percent</noscript>"
 }%%IF{
-	"defined 'EDITOR_MESSAGE'"
+	"defined EDITOR_MESSAGE"
 	then="<div class='foswikiAlert'>%EDITOR_MESSAGE%</div>"
 }%<div class='foswikiEditTextarea'>
-<textarea class='foswikiWysiwygEdit' id='topic' name='text'>
+%TMPL:P{"topiceditor"}%</div>%TMPL:END%%{
+---------------------------------------------------
+	"topiceditor"
+		Default: WYSIWYG
+---------------------------------------------------
+}%%TMPL:DEF{"topiceditor"}%%IF{
+	"$NOWYSIWYG='1'"
+	then="$percntTMPL:P{topiceditor:tml}$percnt"
+	else="$percntTMPL:P{topiceditor:wysiwyg}$percnt"
+}%%TMPL:END%%{
+---------------------------------------------------
+	"topiceditor:tml"
+		Plain TML editor, not wysiwyg
+---------------------------------------------------
+}%%TMPL:DEF{"topiceditor:tml"}%<textarea class='' id='topic' name='text'>
 %TEXT%
-</textarea></div>%TMPL:END%%{
+</textarea>%TMPL:END%%{
+---------------------------------------------------
+	"topiceditor:wysiwyg"
+---------------------------------------------------
+}%%TMPL:DEF{"topiceditor:wysiwyg"}%<textarea class='foswikiWysiwygEdit' id='topic' name='text'>
+%TEXT%
+</textarea>%TMPL:END%%{
 ---------------------------------------------------
 	Form start
 ---------------------------------------------------
@@ -87,7 +107,7 @@ Base Skin topic template
 <input type='hidden' name='rev' value='%URLPARAM{"rev"}%' />
 <input type='hidden' name='cmd' value='%CMD%' />
 <input type='hidden' name='nowysiwyg' value='%IF{
-	"'%NOWYSIWYG%'='1'"
+	"$NOWYSIWYG='1'"
 	then="1"
 	else="%URLPARAM{"nowysiwyg"}%"
 }%' />

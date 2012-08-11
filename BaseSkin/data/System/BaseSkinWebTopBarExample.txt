@@ -1,55 +1,19 @@
-<noautolink>%TMPL:P{"startsection" class="foswikiBar foswikiTopBar foswikiColorNavigationPrimary"}%
-	<nav>
-		<ul class='foswikiNavigation' data-dropdown='dropdown'>
-			<li class='foswikiLogo'>
-				<a href='%SCRIPTURL{view}%/%BASEWEB%/%HOMETOPIC%'></a>	
-			</li>
-			<li>
-				<a href='%SCRIPTURL{view}%/%BASEWEB%/%HOMETOPIC%'>%MAKETEXT{"Home"}%</a>
-			</li>
-			<li>
-				<a href='%SCRIPTURL{view}%/%BASEWEB%/%HOMETOPIC%' class='menu'>%MAKETEXT{"[_1] Web" args="%BASEWEB%"}%</a>
-				<ul class='menu-dropdown'>
-					<li>[[WebHome][%MAKETEXT{"Home"}%]]</li>
-					<li>[[WebTopicList][%MAKETEXT{"Index"}%]]</li>
-					<li>[[%BASEWEB%.WebSearch][%MAKETEXT{"Search"}%]]</li>
-					<li>[[WebChanges][%MAKETEXT{"Changes"}%]]</li>
-					<li>[[WebNotify][%MAKETEXT{"Notifications"}%]]</li>
-					<li>[[WebRss][%MAKETEXT{"RSS Feed"}%]]</li>
-					<li>%IF{
-"istopic '%STATISTICSTOPIC%'"
-then="[[$percntSTATISTICSTOPIC$percnt][$percntMAKETEXT{\"Statistics\"}$percnt]]"
-else="$percntMAKETEXT{\"Statistics\"}$percnt" 
-						}%</li>
-					<li>[[WebPreferences][%MAKETEXT{"Preferences"}%]]</li>
-					<li class='divider'></li>
-					<li><p>Test</p></li>
-				</ul>
-			</li>
-			<li>
-				<a href='#' class='menu'>Other webs</a>
-				<ul class='menu-dropdown'>
-					<li><a href='#'>Web 2</a></li>
-					<li><a href='#'>Web 3</a></li>
-					<li class='divider'></li>
-					<li><a href='#'>Customize web list...</a></li>
-				</ul>
-			</li>
-		</ul>
-		<div class='foswikiRight'>
-			<form class='foswikiLeft' action='#'>
-				<input type='text' placeholder='%MAKETEXT{"Search or create topic..."}%'>
-			</form>
-			<ul class='foswikiNavigationSecondary' data-dropdown='dropdown'>
-				<li>
-					<a href='%SCRIPTURL{login}%/%BASEWEB%/%BASETOPIC%' class='menu'>%MAKETEXT{"Log in"}%</a>
-					<ul class='menu-dropdown'>
-						<li><a href='#'>Create account</a></li>
-						<li class='divider'></li>
-						<li><a href='#'>About this site</a></li>
-					</ul>
-				</li>
-			</ul>
-		</div>
-	</nav>
-%TMPL:P{"endsection"}%</noautolink>
+%TMPL:P{"startsection" class="foswikiBar foswikiTopBar foswikiColorNavigation"}%<ul class='foswikiNavigation'>
+    <!--
+    <li class='foswikiLogo'>
+        <a href='%SCRIPTURL{view}%/%BASEWEB%/%HOMETOPIC%'></a>	
+    </li>
+    -->%IF{
+    "istopic '%USERSWEB%.WebTopNavigation'"
+    then="$percntINCLUDE{$quot%USERSWEB%.WebTopNavigation$quot section=$quotmain$quot}$percnt"
+    else="$percntINCLUDE{$quot%SYSTEMWEB%.WebTopNavigation$quot section=$quotmain$quot}$percnt"
+}%
+</ul>
+<ul class='foswikiNavigationSecondary foswikiMetaNavigation'>
+%IF{
+    "istopic '%USERSWEB%.WebTopNavigation'"
+    then="$percntINCLUDE{$quot%USERSWEB%.WebTopNavigation$quot section=$quotmeta$quot}$percnt"
+    else="$percntINCLUDE{$quot%SYSTEMWEB%.WebTopNavigation$quot section=$quotmeta$quot}$percnt"
+}%
+</ul>
+<div class='foswikiClear'></div>%TMPL:P{"endsection"}%

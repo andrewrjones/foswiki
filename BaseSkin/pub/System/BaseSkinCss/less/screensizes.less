@@ -1,0 +1,165 @@
+/*
+ * DISPLAY DIMENSIONS ACCORDING TO UI SETTINGS
+ * -------------------------------------------------------------------------- */
+
+// defaults
+
+.foswikiContainer {
+	// Container (centered, fixed-width layouts)
+//	.fw_container-fixed();
+//	width: auto;
+//	max-width: auto;
+	padding-left: 20px;
+	padding-right: 20px;
+}
+
+.foswikiBar .foswikiContainer,
+.foswikiBar.foswikiContainer,
+.foswikiSearchResults .foswikiSearchResult {
+	.fw_tool_padding_vertical_only(cosy);
+}
+
+// have foswikiTopBar and foswikiTopicActions bar always the same size
+// regardless the display setting
+.foswikiBar.foswikiTopBar {
+    .foswikiContainer {
+        padding-top: @fw_topbar_button_padding;
+        padding-bottom: @fw_topbar_button_padding;
+    }
+}
+
+// UI setting specific
+
+.foswikiViewDisplayRoomy {
+
+	.foswikiBar .foswikiContainer,
+	.foswikiBar.foswikiContainer,
+	.foswikiSearchResults .foswikiSearchResult {
+		.fw_tool_padding_vertical_only(roomy);
+	}
+	.foswikiContainer {
+		margin: 0 auto 0 0; // left aligned
+		.fw_section_padding(roomy);
+		padding-right: 0px + @fw_strand1_ratio_up_4;
+		padding-left: 0px + @fw_strand1_ratio_up_4;
+	}
+	.foswikiTopic .foswikiContainer {
+    	max-width: 0px + @fw_strand1_ratio_up_12;
+    }
+    
+	// CONSTANT SIZE
+	.foswikiTopBar .foswikiContainer {
+	    .fw_topbar_padding_vertical_only;
+    }
+    .foswikiTopicActions .foswikiContainer {
+	    .fw_topicactions_padding_vertical_only;
+    }
+    
+	a.foswikiDisplayRoomy {
+		img {
+			display: inline;
+		}
+	}
+}
+
+.foswikiViewDisplayCosy {
+
+	.foswikiBar .foswikiContainer,
+	.foswikiBar.foswikiContainer,
+	.foswikiSearchResults .foswikiSearchResult {
+		.fw_tool_padding_vertical_only(cosy);
+	}
+	
+	.foswikiContainer {
+		margin: 0 auto 0 0; // left aligned
+		.fw_section_padding(cosy);
+		padding-right: 0px + @fw_strand1_ratio_up_3;
+		padding-left: 0px + @fw_strand1_ratio_up_3;
+	}
+	.foswikiTopic .foswikiContainer {
+    	max-width: 0px + @fw_strand1_ratio_up_13;
+    }
+	
+	// CONSTANT SIZE
+	.foswikiTopBar .foswikiContainer {
+	    .fw_topbar_padding_vertical_only;
+    }
+    .foswikiTopicActions .foswikiContainer {
+	    .fw_topicactions_padding_vertical_only;
+    }
+	
+	a.foswikiDisplayCosy {
+		img {
+			display: inline;
+		}
+	}
+}
+
+.foswikiViewDisplayTight {
+
+	.foswikiBar .foswikiContainer,
+	.foswikiBar.foswikiContainer,
+	.foswikiSearchResults .foswikiSearchResult {
+		.fw_tool_padding_vertical_only(tight);
+	}
+	
+	.foswikiContainer {
+		.fw_section_padding(tight);
+		max-width: auto;
+	}
+	
+	// CONSTANT SIZE
+	.foswikiTopBar .foswikiContainer {
+	    .fw_topbar_padding_vertical_only;
+    }
+    .foswikiTopicActions .foswikiContainer {
+	    .fw_topicactions_padding_vertical_only;
+    }
+	
+	a.foswikiDisplayTight {
+		img {
+			display: inline;
+		}
+	}
+}
+
+/*
+MEDIA QUERIES FOR DIFFERENT SCREEN SIZES
+*/
+/*
+// Landscape phones and down
+@media (max-width: 480px) {
+	.foswikiContainer {
+		max-width: 480px;
+		padding: 0 10px;
+	}
+}
+
+// Landscape phone to portrait tablet
+@media (min-width: 480px) and (max-width: 768px) {
+	.foswikiContainer {
+		max-width: 960px;
+		padding: 0 39px;
+	}
+}
+
+// Portrait tablet to landscape and desktop
+@media (min-width: 768px) and (max-width: 940px) {
+	.foswikiContainer {
+		max-width: 940px;
+		padding: 0 39px;
+	}
+}
+
+@media (min-width: 940px) and (max-width: 1024px) {
+	.foswikiContainer {
+		max-width: 1080px;
+		padding: 0 39px;
+	}
+}
+
+// Large desktop
+@media (min-width: 1080px) {
+
+}
+*/

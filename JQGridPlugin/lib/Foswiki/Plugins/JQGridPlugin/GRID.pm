@@ -1,6 +1,6 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 # 
-# Copyright (C) 2009-2011 Michael Daum, http://michaeldaumconsulting.com
+# Copyright (C) 2009-2012 Michael Daum, http://michaeldaumconsulting.com
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -58,7 +58,7 @@ sub new {
   my $this = bless($class->SUPER::new( 
     $session,
     name => 'Grid',
-    version => '4.1.2',
+    version => '4.3.3',
     author => 'Tony Tomov',
     homepage => 'http://www.trirand.com/blog/',
     puburl => '%PUBURLPATH%/%SYSTEMWEB%/JQGridPlugin',
@@ -355,6 +355,13 @@ EOT
 
     push @metadata, 'colModel: ['.join(",\n", @colModels).']';
 
+    # Connector parameters
+    my @connParams = ();
+    while(my ($k,$v) = each %$params) {
+      next unless $k =~ /_connectorparam$/;
+      push @connParams, $k, $v;
+    }
+
     my $baseWeb = $session->{webName};
     my $baseTopic = $session->{topicName};
     my $gridConnectorUrl;
@@ -374,7 +381,7 @@ EOT
       );
     } else {
 
-      if (defined $Foswiki::cfg{JQGridPlugin}{Connector}{$theConnector}) {
+      if (defined $Foswiki::cfg{JQGridPlugin}{Connector}{$theConnector} || defined $Foswiki::cfg{JQGridPlugin}{ExternalConnectors}{$theConnector}) {
         $gridConnectorUrl = Foswiki::Func::getScriptUrl(
           'JQGridPlugin', 'gridconnector', 'rest',
           web => $theWeb,
@@ -383,6 +390,7 @@ EOT
           query => $theQuery,
           columns => join(',', @selectedFields),
           connector => $theConnector,
+          @connParams
         );
       } else {
         throw Error::Simple("unknown grid connector $theConnector"); # SMELL: where's the catch

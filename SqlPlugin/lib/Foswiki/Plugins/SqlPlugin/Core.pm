@@ -23,6 +23,7 @@ use Foswiki::Sandbox ();
 our $baseWeb;
 our $baseTopic;
 our %connections;
+our %accessControls;
 our %cache;
 our $defaultDatabase;
 
@@ -31,6 +32,7 @@ use constant DEBUG => 0; # toggle me
 ###############################################################################
 sub writeDebug {
   print STDERR "- SqlPlugin::Core - $_[0]\n" if DEBUG;
+#  Foswiki::Func::writeDebug("SqlPlugin::Core", $_[0]);
 }
 
 ##############################################################################
@@ -41,6 +43,20 @@ sub init {
     my $connection = new Foswiki::Plugins::SqlPlugin::Connection(%$desc);
     $connections{$desc->{id}} = $connection;
     $defaultDatabase = $desc->{id} unless $defaultDatabase;
+  }
+
+  if (exists $Foswiki::cfg{SqlPlugin}{AccessControl} && $Foswiki::cfg{SqlPlugin}{AccessControl}) {
+    foreach my $ac (@{$Foswiki::cfg{SqlPlugin}{AccessControl}}) {
+      my $id = $ac->{id};
+      my %ac2;
+      $ac2{who} = $ac->{who}
+        if $ac->{who};
+#      $ac2{queries} = [ map { uc $_ } @{$ac->{queries}} ]
+      # This fails horribly for regexes :-(
+      $ac2{queries} = $ac->{queries}
+        if $ac->{queries};
+      push @{$accessControls{$id}}, \%ac2;
+    }
   }
 }
 
@@ -53,19 +69,43 @@ sub finish {
 ##############################################################################
 sub inlineError {
   my $msg = shift;
+  $msg =~ s/\%/&#37;/g;
 
   return "<noautolink><span class='foswikiAlert'>ERROR: $msg </span></noautolink>";
+}
+
+##############################################################################
+sub handleExecute {
+  my ($theDatabase, $theQuery, @thePlaceHolders) = @_;
+  $theDatabase
+    or $theDatabase = $defaultDatabase;
+  $theQuery
+    or throw Error::Simple("No Query provided");
+
+  checkAccess($theDatabase, $theQuery);
+
+  my $connection = $connections{$theDatabase}
+    or throw Error::Simple("unknown database '$theDatabase'");
+
+  $connection->connect();
+
+  my $sth = $connection->{db}->prepare_cached($theQuery)
+    or throw Error::Simple("Can't prepare cmd '$theQuery': ".$connection->{db}->errstr);
+  $sth->execute(@thePlaceHolders)
+    or throw Error::Simple("Can't execute cmd '$theQuery': ".$connection->{db}->errstr);
+  return $sth;
 }
 
 ##############################################################################
 sub handleSQL {
   my ($session, $params, $theTopic, $theWeb) = @_;
 
-  #writeDebug("called handleSQL()");
-
-  my $theDatabase = $params->{database} || $defaultDatabase;
+  my $theDatabase = exists $params->{database}
+    ? $params->{database}
+    : $defaultDatabase;
   my $theId = $params->{id};
   my $theQuery = $params->{_DEFAULT} || $params->{query};
+  my $theParams = $params->{params} || '';
   my $theDecode = $params->{decode} || '';
 
   if ($theDecode eq 'url') {
@@ -74,27 +114,25 @@ sub handleSQL {
     $theQuery = entityDecode($theQuery);
   }
 
+  #writeDebug("called handleSQL() - " . $theQuery);
+
+  my @bindVals = split '\s*,\s*', $theParams;
+
   my $connection = $connections{$theDatabase};
   return inlineError("unknown database '$theDatabase'") unless $connection;
   return inlineError("no query") unless defined $theQuery;
 
   my $result = '';
 
-  my $wikiName = Foswiki::Func::getWikiName();
-  my $message = $theQuery;
-  $message =~ s/\n/ /g; # remove newlines
-  Foswiki::Func::writeEvent("sql", $message);
-
   try {
+    checkAccess($theDatabase, $theQuery);
 
     $connection->connect();
-    $theQuery =~ m/(.*)/;
-    $theQuery = $1;
-    
+
     my $sth = $connection->{db}->prepare_cached($theQuery) or
       throw Error::Simple("Can't prepare cmd '$theQuery': ".$connection->{db}->errstr);
 
-    $sth->execute or 
+    $sth->execute(@bindVals) or 
       throw Error::Simple("Can't execute cmd '$theQuery': ".$connection->{db}->errstr);
 
     # cache this statement under the given id
@@ -114,7 +152,8 @@ sub handleSQL {
 
   } catch Error::Simple with {
     my $msg = shift->{-text};
-    #$msg =~ s/ at .*?$//gs;
+    $msg =~ s/ at .*?$//gs;
+    $msg .= "<br>for query $theQuery";
     $result = inlineError($msg);
   };
 
@@ -257,6 +296,81 @@ sub formatResult {
 
   return $result;
 }
+
+##############################################################################
+# Check if the currently logged in user has permission to run
+# $theQuery on $theDatabase.  Thows Error::Simple on access failure.
+##############################################################################
+sub checkAccess {
+  my ($theDatabase, $theQuery) = @_;
+  my $ret = _checkAccess(@_);
+
+  my $message = $theQuery;
+  $message =~ s/\n/ /g; # remove newlines
+  if (! $ret) {
+    $message .= " [ACCESS DENIED]";
+  }
+  Foswiki::Func::writeEvent("sql", $message);
+
+  if (! $ret) {
+    Foswiki::Func::writeWarning("SqlPlugin", "Access control check failed on database '$theDatabase' for query '$theQuery'");
+    throw Error::Simple("Access control check failed on database $theDatabase for query $theQuery");
+  }
+}
+
+sub _checkAccess {
+  my ($theDatabase, $theQuery) = @_;
+
+  if (! %accessControls || ! exists $accessControls{$theDatabase}) {
+    return 1;
+  }
+
+  my $user = Foswiki::Func::getWikiName();
+  foreach my $access (@{$accessControls{$theDatabase}}) {
+
+    my $whoPasses = 0;
+    if (! exists $access->{who} ) {
+      $whoPasses = 1;
+    } else {
+      my $who = $access->{who};
+      if ($who eq $user) {
+        $whoPasses = 1;
+      } elsif ( Foswiki::Func::isGroupMember( $who)) {
+        $whoPasses = 1;
+      }
+    }
+
+    my $queryPasses = 0;
+    if (! exists $access->{queries} ) {
+      $queryPasses = 1;
+    } else {
+      my $searchQuery = uc $theQuery;
+      # convert multiple lines into one
+      $searchQuery = join ' ', ($searchQuery =~ /^(.*)$/gm);
+      $searchQuery =~ s/\s+/ /g;
+      for my $query (@{$access->{queries}}) {
+      	if ($searchQuery eq $query) {
+      	  $queryPasses = 1;
+      	  last;
+      	}
+      	# Trap regexp compilation errors - we don't care.
+      	eval {
+        	if ($searchQuery =~ /^\s*$query\s*$/) {
+        	  $queryPasses = 1;
+        	  last;
+        	}
+      	}
+      }
+    }
+
+    if ($whoPasses && $queryPasses) {
+      return 1;
+    }
+  }
+
+  return undef;
+}
+
 
 sub urlDecode {
   my $text = shift;

@@ -1,0 +1,327 @@
+/*
+ * BUTTONS
+ * -------------------------------------------------------------------------- */
+
+
+/*
+ * Generic button function
+ */
+ 
+.fw_btn() {
+	display: inline-block;
+	.fw_ie7-inline-block();
+	padding: @fw_button_padding_top @fw_button_padding_side @fw_button_padding_bottom;
+	margin-bottom: 0; // For input.foswikiButton
+	font-size: 0px + @fw_basefont;
+	line-height: 0px + @fw_body_line_height;
+	text-align: center;
+	vertical-align: baseline;
+	.fw_border-radius(@fw_corner_radius_button);
+	cursor: pointer;
+	text-decoration: none;
+	background: none;
+	
+	// Give IE7 some love
+	.fw_ie7-restore-left-whitespace();
+
+	&:hover {
+		text-decoration: none;
+		background-position: 0 -15px;
+		
+		// transition is only when going to hover, otherwise the background
+		// behind the gradient (there for IE<=9 fallback) gets mismatched
+		.fw_transition(background-position .1s linear);
+	}
+	
+	// Focus state for keyboard and accessibility
+	&:focus {
+		.fw_tab-focus();
+	}
+	
+	// Active state
+	&.active,
+	&:active {
+		background-image: none;
+		outline: 0;
+	}
+	
+	// Disabled state
+	&.disabled,
+	&[disabled] {
+		cursor: default;
+		.fw_box-shadow(none);
+	}
+}
+
+.foswikiButton,
+.jqButton,
+.jqButton:hover,
+.foswikiSubmit,
+.foswikiButtonCancel,
+// jqButton with ButtonCancel should not be red
+.jqButton.foswikiButtonCancel,
+.foswikiButtonSmall,
+.foswikiButtonLarge,
+.foswikiButtonDisabled,
+.foswikiSubmitDisabled,
+.foswikiSubmit.foswikiButtonDisabled,
+.foswikiButtonCancel.foswikiButtonDisabled {
+	.fw_btn();
+}
+
+// Focus state for keyboard and accessibility
+.foswikiButton:focus {
+	.fw_tab-focus();
+}
+
+// Disabled state
+.foswikiButtonDisabled,
+.foswikiSubmitDisabled,
+.foswikiButton[disabled],
+.foswikiSubmitDisabled[disabled] {
+	cursor: default;
+}
+
+
+/*
+ * Button sizes
+ */
+
+// Large
+.foswikiButtonLarge {
+	padding: 9px 14px;
+	font-size: @fw_basefont + 2px;
+	line-height: normal;
+	.fw_border-radius(@fw_corner_radius_button_large);
+}
+.foswikiButtonLarge [class^="icon-"] {
+	margin-top: 1px;
+}
+
+// Small
+.foswikiButtonSmall {
+	padding: 5px 9px;
+	font-size: @fw_basefont - 2px;
+	line-height: @fw_body_line_height - 2px;
+}
+.foswikiButtonSmall [class^="icon-"] {
+	margin-top: -1px;
+}
+
+// Mini
+.foswikiButtonMini {
+	padding: 2px @fw_corner_radius_button_large;
+	font-size: @fw_basefont - 2px;
+	line-height: @fw_body_line_height - @fw_corner_radius_button;
+}
+
+
+/*
+ * JQBUTTON styles and buttons with icons
+ */
+
+// Unify style
+.jqButton {
+	height: auto;
+	float: none;
+	margin: 0;
+}
+.jqButton span {
+	background: none;
+	float: none;
+	height: auto;
+	line-height: normal;
+	padding: 0;
+	margin: 0;
+}
+
+// Icons
+.jqButton .jqButtonIcon,
+.jqButton:active .jqButtonIcon,
+.foswikiButton .foswikiButtonIcon,
+.foswikiButton:active .foswikiButtonIcon {
+	@size: 16px;
+	background-repeat: no-repeat;
+	background-position: 0 50%;
+	padding: 0 0 0 @size + 7;
+	display: inline-block;
+	height: @size;
+	line-height: normal;
+	vertical-align: baseline;
+}
+
+
+/*
+ * Cross-browser stuff from twitter-bootstrap
+ */
+button.foswikiButton,
+input[type="submit"].foswikiSubmit {
+
+  // Firefox 3.6 only I believe
+  &::-moz-focus-inner {
+    padding: 0;
+    border: 0;
+  }
+
+  // IE7 has some default padding on button controls
+  *padding-top: 2px;
+  *padding-bottom: 2px;
+  &.foswikiButtonLarge {
+    *padding-top: 7px;
+    *padding-bottom: 7px;
+  }
+  &.foswikiButtonSmall {
+    *padding-top: @fw_button_padding_top;
+    *padding-bottom: @fw_button_padding_bottom;
+  }
+}
+
+.foswikiDropdownToggle {
+    position: relative;
+}
+
+/* button groups */
+
+.foswikiButtonGroup > li.foswikiDropdownToggle {
+    padding-left: 0;
+    padding-right: 0;
+    border-width: 1px;
+    border-style: none none none solid;
+    box-shadow: none;
+    
+    > a {
+        padding-left: 2px;
+        padding-right: (@fw_topbar_height/4 - @fw_body_line_height/4);
+    }
+}
+
+// Make the div behave like a button
+.foswikiButtonGroup {
+	position: relative;
+	.fw_clearfix(); // clears the floated buttons
+	.fw_ie7-restore-left-whitespace();
+}
+
+// Space out series of button groups
+.foswikiButtonGroup + .foswikiButtonGroup {
+	margin: 0 5px;
+}
+
+// Optional: Group multiple button groups together for a toolbar
+.foswikiToolbar {
+	margin-top: @fw_body_line_height / 2;
+	margin-bottom: @fw_body_line_height / 2;
+	.foswikiButtonGroup {
+		display: inline-block;
+		.fw_ie7-inline-block();
+	}
+}
+
+// Float them, remove border radius, then re-add to first and last elements
+.foswikiButtonGroup .foswikiButton {
+	position: relative;
+	float: left;
+	margin-left: -1px;
+	.fw_border-radius(0);
+}
+// Set corners individual because sometimes a single button can be in a .foswikiButtonGroup and we need :first-child and :last-child to both match
+.foswikiButtonGroup .foswikiButton:first-child {
+  margin-left: 0;
+     -webkit-border-top-left-radius: @fw_corner_radius_button;
+         -moz-border-radius-topleft: @fw_corner_radius_button;
+             border-top-left-radius: @fw_corner_radius_button;
+  -webkit-border-bottom-left-radius: @fw_corner_radius_button;
+      -moz-border-radius-bottomleft: @fw_corner_radius_button;
+          border-bottom-left-radius: @fw_corner_radius_button;
+}
+.foswikiButtonGroup .foswikiButton:last-child,
+.foswikiButtonGroup .foswikiDropdownToggle {
+     -webkit-border-top-right-radius: @fw_corner_radius_button;
+         -moz-border-radius-topright: @fw_corner_radius_button;
+             border-top-right-radius: @fw_corner_radius_button;
+  -webkit-border-bottom-right-radius: @fw_corner_radius_button;
+      -moz-border-radius-bottomright: @fw_corner_radius_button;
+          border-bottom-right-radius: @fw_corner_radius_button;
+}
+// Reset corners for large buttons
+.foswikiButtonGroup .foswikiButtonLarge:first-child {
+  margin-left: 0;
+     -webkit-border-top-left-radius: @fw_corner_radius_button_large;
+         -moz-border-radius-topleft: @fw_corner_radius_button_large;
+             border-top-left-radius: @fw_corner_radius_button_large;
+  -webkit-border-bottom-left-radius: @fw_corner_radius_button_large;
+      -moz-border-radius-bottomleft: @fw_corner_radius_button_large;
+          border-bottom-left-radius: @fw_corner_radius_button_large;
+}
+.foswikiButtonGroup .foswikiButtonLarge:last-child,
+.foswikiButtonGroup .large.foswikiDropdownToggle {
+     -webkit-border-top-right-radius: @fw_corner_radius_button_large;
+         -moz-border-radius-topright: @fw_corner_radius_button_large;
+             border-top-right-radius: @fw_corner_radius_button_large;
+  -webkit-border-bottom-right-radius: @fw_corner_radius_button_large;
+      -moz-border-radius-bottomright: @fw_corner_radius_button_large;
+          border-bottom-right-radius: @fw_corner_radius_button_large;
+}
+
+// On hover/focus/active, bring the proper btn to front
+.foswikiButtonGroup .foswikiButton:hover,
+.foswikiButtonGroup .foswikiButton:focus,
+.foswikiButtonGroup .foswikiButton:active,
+.foswikiButtonGroup .foswikiButton.active {
+	z-index: 2;
+}
+
+/* On active and open, don't show outline */
+.foswikiButtonGroup .foswikiDropdownToggle:active {
+	outline: 0;
+}
+
+
+
+
+// Split button dropdowns
+// ----------------------
+
+// Give the line between buttons some depth
+.foswikiButtonGroup .foswikiDropdownToggle {
+	padding-left: 5px;
+	padding-right: 5px;
+	@shadow: inset 1px 0 0 rgba(255,255,255,.125), inset 0 1px 0 rgba(255,255,255,.2), 0 1px 2px rgba(0,0,0,.05);
+	.fw_box-shadow(@shadow);
+	*padding-top: @fw_button_padding_top;
+	*padding-bottom: @fw_button_padding_bottom;
+}
+.foswikiButtonGroup .foswikiButton-mini.foswikiDropdownToggle {
+	padding-left: 5px;
+	padding-right: 5px;
+	*padding-top: 1px;
+	*padding-bottom: 1px;
+}
+.foswikiButtonGroup .foswikiButton-small.foswikiDropdownToggle {
+	*padding-top: @fw_corner_radius_button;
+	*padding-bottom: @fw_corner_radius_button;
+}
+.foswikiButtonGroup .foswikiButton-large.foswikiDropdownToggle {
+	padding-left: 12px;
+	padding-right: 12px;
+}
+
+// Reposition the caret
+.foswikiButton .foswikiCaret {
+	margin-top: 0;
+	margin-left: 0;
+}
+// Carets in other button sizes
+.foswikiButton-mini .foswikiCaret {
+	margin-top: 5px;
+}
+.foswikiButton-small .foswikiCaret {
+	margin-top: @fw_corner_radius_button_large;
+}
+.foswikiButton-large .foswikiCaret {
+	margin-top: @fw_corner_radius_button_large;
+	border-left:  5px solid transparent;
+	border-right: 5px solid transparent;
+}
+
+

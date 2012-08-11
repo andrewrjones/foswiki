@@ -53,6 +53,7 @@ test/unit/StringifierContrib/attachement_examples/Simple_example.xlsb 0644
 test/unit/StringifierContrib/attachement_examples/Simple_example.xlsm 0644
 test/unit/StringifierContrib/attachement_examples/Simple_example.xlsx 0644
 test/unit/StringifierContrib/attachement_examples/test.odt 0644
+test/unit/StringifierContrib/StringifierTest.pm 0644
 test/unit/StringifierContrib/Doc_abiwordTests.pm 0644
 test/unit/StringifierContrib/Doc_antiwordTests.pm 0644
 test/unit/StringifierContrib/Doc_wvTests.pm 0644
@@ -63,7 +64,6 @@ test/unit/StringifierContrib/PdfTests.pm 0644
 test/unit/StringifierContrib/PptTests.pm 0644
 test/unit/StringifierContrib/PptxTests.pm 0644
 test/unit/StringifierContrib/StringifierContribSuite.pm 0644
-test/unit/StringifierContrib/StringifierTest.pm 0644
 test/unit/StringifierContrib/StringifyBaseTest.pm 0644
 test/unit/StringifierContrib/tree_example/sub_tree/test_file.txt 0644
 test/unit/StringifierContrib/tree_example/test_file.txt 0644

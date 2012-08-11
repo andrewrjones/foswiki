@@ -42,12 +42,12 @@ jQuery(document).ready(function ($) {
 	}
 	
 	// find currently selected value and sort
-	$('select.foswikiSort').livequery(function() {
+	$('.foswikiSort').livequery(function() {
 		sort($(this), $(this).val());
 		return false;
 	});
 	
-	$('select.foswikiSort').livequery('change', function() {
+	$('.foswikiSort').livequery('change', function() {
 		sort($(this), $(this).val());
 		return false;
 	});

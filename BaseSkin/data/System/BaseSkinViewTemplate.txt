@@ -18,7 +18,8 @@ Base Skin topic template
 ---------------------------------------------------
 }%%TMPL:DEF{"body:class"}%foswikiViewPage%TMPL:END%%{
 ---------------------------------------------------
-	Title (void)
+	controls:title
+	    emptied
 ---------------------------------------------------
 }%%TMPL:DEF{"controls:title"}%%TMPL:END%%{
 ---------------------------------------------------
@@ -26,6 +27,12 @@ Base Skin topic template
 	TODO: test this
 ---------------------------------------------------
 }%%TMPL:DEF{"topic:before"}%%TMPL:P{"form:top"}%%TMPL:P{"attachments:top"}%%TMPL:P{"topic:actions"}%%TMPL:END%%{
+---------------------------------------------------
+	content
+---------------------------------------------------
+}%%TMPL:DEF{"content"}%
+%TMPL:P{"breadcrumb"}%
+%TEXT%%TMPL:END%%{
 ---------------------------------------------------
 	meta contains the form and attachment tab pane
 	Conditionally include TopicInteractionPlugin meta data
@@ -39,18 +46,17 @@ Base Skin topic template
 	}$percnt"
 }%%TMPL:END%%{
 ---------------------------------------------------
-	Meta contents
+	meta:contents
 ---------------------------------------------------
 }%%TMPL:DEF{"meta:contents"}%%TMPL:P{"startsection" class="foswikiMeta foswikiColorSecondary"}%
-%TMPL:P{context="TopicInteractionPluginEnabled" then="metadata" else="topic:metadata:base"}%
+%TMPL:P{"topic:metadata:base"}%
 %TMPL:P{"endsection"}%%TMPL:END%%{
 ---------------------------------------------------
 	Fallback if TopicInteractionPlugin is not enabled
 ---------------------------------------------------
 }%%TMPL:DEF{"topic:metadata:base"}%%TABPANE{
 	class="simple"
-}%
-%IF{
+}%%IF{
 	"%QUERY{"length(attachments[NOT lc(attr)=~'h'])"}% > 0"
 	then="$percntTMPL:P{
 		\"attachments\"

@@ -1034,7 +1034,10 @@ sub loadVersion {
             #ASSERT($rev == $this->{_loadedRev}) if DEBUG;
             return;
         }
-        ASSERT( not( $this->{_loadedRev} ) ) if DEBUG;
+
+        # SMELL: Sven added this assert, but i don't understand why and
+        # it causes PlainFile to fail for no good reason. C.
+        #ASSERT( not( $this->{_loadedRev} ), $this->{_loadedRev} ) if DEBUG;
     }
     elsif ( defined( $this->{_loadedRev} ) ) {
 
@@ -1050,7 +1053,9 @@ sub loadVersion {
     return $this->{_loadedRev}
       if ( $rev && $this->{_loadedRev} && $rev == $this->{_loadedRev} );
 
-    ASSERT( not( $this->{_loadedRev} ) ) if DEBUG;
+    # SMELL: Sven added this assert, but i don't understand why and
+    # it causes PlainFile to fail for no good reason. C.
+    #ASSERT( not( $this->{_loadedRev} ) ) if DEBUG;
 
     ( $this->{_loadedRev}, $this->{_latestIsLoaded} ) =
       $this->{_session}->{store}->readTopic( $this, $rev );
@@ -1586,7 +1591,7 @@ Merge the data in the other meta block.
    * Form field values that are different in each set are text-merged
    * We don't merge for field attributes or title
    * Topic info is not touched
-   * The =mergeable= method on the form def is used to determine if that field is mergeable. If it isn't, the value currently in meta will _not_ be changed.
+   * The =isTextMergeable= method on the form def is used to determine if that field is mergeable. If it isn't, the value currently in meta will _not_ be changed.
 
 =cut
 
@@ -1917,11 +1922,9 @@ sub save {
         $signal = shift;
     };
 
-    ASSERT( $newRev, $this->{loadedRev} ) if DEBUG;
-
     # Semantics inherited from TWiki. See
     # TWiki:Codev.BugBeforeSaveHandlerBroken
-    if ( $plugins->haveHandlerFor('afterSaveHandler') ) {
+    if ( !defined $signal && $plugins->haveHandlerFor('afterSaveHandler') ) {
         my $text = $this->getEmbeddedStoreForm();
         delete $this->{_preferences};    # Make sure handler has changed prefs
         my $error = $signal ? $signal->{-text} : undef;
@@ -1930,6 +1933,8 @@ sub save {
     }
 
     throw $signal if $signal;
+
+    ASSERT( $newRev, $this->{loadedRev} ) if DEBUG;
 
     my @extras = ();
     push( @extras, 'minor' )   if $opts{minor};      # don't notify
@@ -3746,6 +3751,31 @@ sub dataDecode {
 
     $datum =~ s/%([\da-f]{2})/chr(hex($1))/gei;
     return $datum;
+}
+
+=begin TML
+
+---++ ClassMethod type() => $resourcetype
+
+(see Foswiki::Address::type)
+
+Returns the resource type name.
+   * webpath, Eg. =Web/SubWeb/=
+   * topic, Eg. =Web/SubWeb.
+   * undef, I have no idea whats going on, we're not there yet
+
+=cut
+
+sub type {
+    my ($this) = @_;
+
+    if ( defined( $this->{_web} ) ) {
+        if ( defined( $this->{_topic} ) ) {
+            return 'topic';
+        }
+        return 'webpath';
+    }
+    return;
 }
 
 1;

@@ -8,10 +8,14 @@ if (!foswiki.base) {
 var FoswikiTiny,
 	tinymce;
 
-foswiki.base.edit = (function () {
+foswiki.base.edit = (function ($) {
 
 	"use strict";
 
+	var SELECTOR_WYSIWYG_TEXTAREA = 'textarea.foswikiWysiwygEdit',
+		SELECTOR_TEXTAREA_CONTAINER = '.foswikiEditTextarea',
+		CSS_CLASS_HAS_WYSIWYG = 'foswikiHasWysiwyg';
+	
 	return {
 
 		/**
@@ -23,6 +27,10 @@ foswiki.base.edit = (function () {
 				return;
 			}
 
+			if (!$(SELECTOR_WYSIWYG_TEXTAREA).length) {
+				return;
+			}
+			
 			var $toolbar,
 				$container,
 				classes = [],
@@ -54,24 +62,27 @@ foswiki.base.edit = (function () {
 			$toolbar.appendTo($container);
 
 
-			jQuery('body').addClass('foswikiHasWysiwyg');
+//			jQuery('body').addClass(CSS_CLASS_HAS_WYSIWYG);
 
 			// remove original toolbar table cells
 			jQuery('#topic_tbl .mceToolbar').remove();
 		},
 
 		fitToContent: function (elem, minAreaHeight) {
-
+			var SAFE_PADDING,
+				adjustedHeight,
+				elemMinHeight,
+				nowysiwyg;
+				
 			if (!elem) {
 				return;
 			}
 
-			var SAFE_PADDING = 15,
-				adjustedHeight,
-				elemMinHeight = document.documentElement.clientHeight - minAreaHeight,
-				nowysiwyg = parseInt(jQuery('form[name=main] [name="nowysiwyg"]').val(), 10);
+			SAFE_PADDING = 15;
+			elemMinHeight = document.documentElement.clientHeight - minAreaHeight;
+			nowysiwyg = parseInt(jQuery('form[name=main] [name="nowysiwyg"]').val(), 10);
 
-			if (jQuery('body.foswikiHasWysiwyg').length > 0) {
+			if (jQuery('body.' + CSS_CLASS_HAS_WYSIWYG).length > 0) {
 				// we use the autoresize plugin from TineMCE,
 				// so don't continue with our own resizing
 				return;
@@ -92,12 +103,18 @@ foswiki.base.edit = (function () {
 		Sets up the fit to content calls for the raw editor.
 		*/
 		initRaw: function () {
-			var nowysiwyg = parseInt(jQuery('form[name=main] [name="nowysiwyg"]').val(), 10),
-				$textarea = jQuery('.foswikiEditTextarea textarea.foswikiWysiwygEdit'),
+			var nowysiwyg,
+				$textarea,
+				$textareaContainer,
 				that = this;
 
-			if (nowysiwyg !== 1) {
-				jQuery('body').addClass('foswikiHasWysiwyg');
+			nowysiwyg = parseInt(jQuery('form[name=main] [name="nowysiwyg"]').val(), 10);
+			$textareaContainer = jQuery(SELECTOR_TEXTAREA_CONTAINER);
+			$textarea = jQuery(SELECTOR_WYSIWYG_TEXTAREA, $textareaContainer);
+			that = this;
+
+			if ($textarea.length && nowysiwyg !== 1) {
+				jQuery('body').addClass(CSS_CLASS_HAS_WYSIWYG);
 			}
 
 			$textarea.livequery(function () {
@@ -108,15 +125,38 @@ foswiki.base.edit = (function () {
 		},
 
 		fitTextArea: function () {
-			var FOOTER_HEIGHT = jQuery('.foswikiFooter').outerHeight(),
-				MIN_AREA_HEIGHT = jQuery('.foswikiEditTextarea').position().top + FOOTER_HEIGHT,
-				$textarea = jQuery('.foswikiEditTextarea textarea.foswikiWysiwygEdit');
+			var FOOTER_HEIGHT,
+				MIN_AREA_HEIGHT,
+				$textarea,
+				$textareaContainer;
+			
+			$textareaContainer = jQuery(SELECTOR_TEXTAREA_CONTAINER);
+			if (!$textareaContainer.length) {
+				return;
+			}
+			
+			FOOTER_HEIGHT = jQuery('.foswikiFooter').outerHeight();
+			MIN_AREA_HEIGHT = $textareaContainer.position().top + FOOTER_HEIGHT;
+			$textarea = jQuery(SELECTOR_WYSIWYG_TEXTAREA, $textareaContainer);
 			this.fitToContent($textarea[0], MIN_AREA_HEIGHT);
+		},
+		
+		updateUI: function () {
+			var ed = tinymce.activeEditor,
+				that = this;
+				
+		    setTimeout(function() {
+		    	ed.hide();
+		    }, 1);
+    		setTimeout(function() {
+    			ed.show();
+    			that.fitTextArea();
+    		}, 10);
 		}
+		
 	};
 
-
-}());
+}(jQuery));
 
 function tinyMceInited() {
 	"use strict";
@@ -145,6 +185,10 @@ if (FoswikiTiny !== undefined) {
 jQuery(document).ready(function ($) {
 	"use strict";
 	foswiki.base.edit.initRaw();
+	
+	$(foswiki.base).bind('update', function(e) {
+		foswiki.base.edit.updateUI();
+	});
 });
 
 

@@ -49,10 +49,12 @@ foswiki.base = (function ($) {
 			});
 
 			if (PREVENT_ANCHOR_JUMP_AT_PAGE_LOAD && location.hash) {
-				// hide body before forcing to top
-				$('body').hide();
-				// secretly go to top
-				window.scrollTo(0, 0);
+				if ($(location.hash).length) {
+					// hide body before forcing to top
+					$('body').hide();
+					// secretly go to top
+					window.scrollTo(0, 0);
+				}
 			}
 			
 			$(window).pageScroll({
@@ -121,8 +123,10 @@ foswiki.base = (function ($) {
 						setDisplay('foswikiViewDisplayTight');
 						break;
 				}
+				
+				$(foswiki.base).trigger('update');
 			};	
-			$('a.foswikiDisplayRoomy,a.foswikiDisplayCosy,a.foswikiDisplayTight').livequery('click', function (e) {
+			$('a.foswikiDisplayRoomy, a.foswikiDisplayCosy, a.foswikiDisplayTight').livequery('click', function (e) {
 				var $this = $(this),
 					mode = $this.attr('class');
 				

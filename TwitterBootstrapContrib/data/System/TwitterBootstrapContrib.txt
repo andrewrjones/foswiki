@@ -1,0 +1,65 @@
+<!--
+One line description, required for extensions repository catalog.
+   * Set SHORTDESCRIPTION = twitter bootstrap
+-->
+---+!! TwitterBootstrapContrib
+
+%SHORTDESCRIPTION%
+
+%TOC%
+
+---++ twitter bootstrap v2.0.4
+package up [[http://twitter.github.com/bootstrap/][twitter bootstrap]]
+
+the simplest way to add the bootstrap javascript and css, is to add =%<nop>JQREQUIRE{bootstrap}%= to your skin or topic.
+
+for example, see the [[%SCRIPTURL{view}%/%BASEWEB%.%BASETOPIC%?skin=bootstrapeg][example bootstrap skin]].
+
+<form name="new" action="%SCRIPTURLPATH{save}%/%USERSWEB%/%WIKINAME%" method="post">
+<input type="hidden" name="Set+SKIN" value="famfamfam,bootstrapeg" />
+<input type="submit" value="set bootstrapeg skin for the %NOP%%WIKINAME% user" %IF{
+                "context 'authenticated'" 
+                else="disabled"
+        }%/>
+</form>
+
+---++ Todo
+   * https://github.com/addyosmani/jquery-ui-bootstrap/
+   * http://fortawesome.github.com/Font-Awesome/
+   * http://ckrack.github.com/fbootstrapp/
+   * http://www.thetutlage.com/post=TUT159
+   * http://ajkochanowicz.github.com/Kickstrap/
+   * http://builtwithbootstrap.com/
+   * http://www.boottheme.com/
+   * http://dribbble.com/sacha/projects/32370-Bootstrap-Themes
+      * http://sachagreif.com/bootstrap/
+   * http://glyphicons.com/
+   * http://stylebootstrap.info/
+   * https://wrapbootstrap.com/
+   * http://bootswatch.com 
+      * =curl http://api.bootswatch.com | sed 's/,/\n/g' | grep '"css"' | sed 's/"css":"/curl /' | sed 's/com\/\(.*\)\/bootstrap.css"$/com\/\1\/bootstrap.css > \1.css/' | sh=
+=
+
+---++ Installation
+%$INSTALL_INSTRUCTIONS%
+
+---++ Attributions:
+---+++ Twitter Bootstrap
+twitter bootstrap 2.0.4 is included (and is the basis for) this Contrib.
+---+++ Bootswatch themes
+the free themes from http://bootswatch.com are in this Contrib, and the simplex theme has been hardcoded (for now)
+---+++ Font Awesome
+added the css version of http://fortawesome.github.com/Font-Awesome/
+---++ Info
+
+|  Author: | SvenDowideit |
+|  Copyright &copy;: | 2012, http://fosiki.com - SvenDowideit@fosiki.com |
+|  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
+|  Dependencies: | %$DEPENDENCIES% |
+|  Version: | %$VERSION% |
+|  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|  1.0.0 (15 Jul 2012): | Initial version |
+|  Home: | http://foswiki.org/Extensions/%TOPIC% |
+|  Support: | http://foswiki.org/Support/%TOPIC% |
+
+

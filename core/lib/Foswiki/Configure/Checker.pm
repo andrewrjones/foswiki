@@ -18,6 +18,7 @@ use warnings;
 use Foswiki::Configure::UI ();
 our @ISA = ('Foswiki::Configure::UI');
 
+use Assert;
 use File::Spec               ();
 use CGI                      ();
 use Foswiki::Configure::Load ();
@@ -131,8 +132,13 @@ sub guessMajorDir {
         $Foswiki::cfg{$cfg} =~ s|\\|/|g;
         $msg = $this->guessed();
     }
-    unless ( $silent || -d $Foswiki::cfg{$cfg} ) {
-        $msg .= $this->ERROR("Directory '$Foswiki::cfg{$cfg}'  does not exist");
+    $val = $Foswiki::cfg{$cfg};
+    Foswiki::Configure::Load::expandValue($val);
+    unless ( $silent || -d $val ) {
+        $msg .=
+          $this->ERROR( "Directory '$Foswiki::cfg{$cfg}'"
+              . ( $val eq $Foswiki::cfg{$cfg} ? '' : " ($val)" )
+              . "  does not exist" );
     }
     return $msg;
 }
@@ -284,7 +290,7 @@ sub checkTreePerms {
         && -d $path )
     {
         unless ( -e "$path/$Foswiki::cfg{WebPrefsTopicName}.txt" ) {
-            $permErrs .= " $path missing $Foswiki::cfg{WebPrefsTopicName} Topic"
+            $permErrs .= " $path missing $Foswiki::cfg{WebPrefsTopicName} topic"
               . CGI::br();
             $this->{missingFile}++;
         }
@@ -515,7 +521,12 @@ sub checkRCSProgram {
             $err .= $this->ERROR( $prog
                   . ' did not return a version number (or might not exist..)' );
         }
-        if ( $version =~ /^\d/ && $version < $rcsverRequired ) {
+
+        # Item11955 - '5.8.1' < 5.7 results in a warning (non-numeric compare)
+        # Best practice is to use CPAN:version, but isn't core until perl 5.10.
+        # So instead let's make the comparison work by stripping out sub-decimal
+        ASSERT( $rcsverRequired =~ /^\d+(\.\d+)?$/ ) if DEBUG;
+        if ( $version =~ /\D(\d+(\.\d+)?)/ && $1 < $rcsverRequired ) {
 
             # RCS too old
             $err .=

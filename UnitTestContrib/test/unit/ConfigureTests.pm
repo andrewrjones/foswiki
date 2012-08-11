@@ -16,6 +16,7 @@ use Foswiki::Configure::FoswikiCfg     ();
 use Foswiki::Configure::Root           ();
 use Foswiki::Configure::Valuer         ();
 use Foswiki::Configure::UI             ();
+use Foswiki::Configure::Checker        ();
 use Foswiki::Configure::GlobalControls ();
 
 sub skip {
@@ -1994,6 +1995,31 @@ DONE
     undef $pkg;
 
     return;
+}
+
+#Item11955
+sub test_checkRCSProgram {
+    my ($this) = @_;
+    my $checkerObj =
+      Foswiki::Configure::Checker->new('Test::Foswiki::Configure::Dummy');
+
+    $this->assert( !exists $Foswiki::cfg{RCS}{foo} );
+    local $Foswiki::cfg{Store}{Implementation} = 'Foswiki::Store::RcsWrap';
+
+    # Don't forget that the cmd is sanitized/untainted...
+    local $Foswiki::cfg{RCS}{foo} = 'rcs';
+    $this->assert( !$checkerObj->checkRCSProgram('foo') );
+
+    return;
+}
+
+{
+
+    package Test::Foswiki::Configure::Dummy;
+    use Foswiki::Configure::UIs::Value();
+    local our @ISA = 'Foswiki::Configure::UIs::Value';
+
+    sub inc { }
 }
 
 1;

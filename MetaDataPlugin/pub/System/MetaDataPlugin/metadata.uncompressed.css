@@ -3,6 +3,9 @@
   position:relative;
   cursor:pointer;
 }
+.metaDataReadOnly table {
+  margin-right:0px;
+}
 .metaDataView tr.hover td {
   background: #F4F4F4;
 }

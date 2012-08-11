@@ -106,14 +106,20 @@ sub readTopic {
     $text =~ s/\r//g;    # Remove carriage returns
     $topicObject->setEmbeddedStoreForm($text);
 
-    unless ( $handler->noCheckinPending() ) {
+    #   Item11983 - switched off for performance reasons
+    #   unless ( $handler->noCheckinPending() ) {
+    #
+    #        # If a checkin is pending, fix the TOPICINFO
+    #        my $ri    = $topicObject->get('TOPICINFO');
+    #        my $truth = $handler->getInfo($version);
+    #        for my $i (qw(author version date)) {
+    #            $ri->{$i} = $truth->{$i};
+    #        }
+    #    }
 
-        # If a checkin is pending, fix the TOPICINFO
-        my $ri    = $topicObject->get('TOPICINFO');
-        my $truth = $handler->getInfo($version);
-        for my $i (qw(author version date)) {
-            $ri->{$i} = $truth->{$i};
-        }
+    # downgrade to first revision when there's no history
+    unless ( $handler->revisionHistoryExists() ) {
+        $version = 1;
     }
 
     $gotRev = $version;
@@ -168,7 +174,8 @@ sub readTopic {
           if @validAttachmentsFound;
     }
 
-    ASSERT( defined($gotRev) ) if DEBUG;
+    $gotRev ||= 1;    # anything going out here must be > 0
+
     return ( $gotRev, $isLatest );
 }
 
@@ -313,28 +320,42 @@ sub getVersionInfo {
       $this->askListenersVersionInfo( $topicObject, $rev, $attachment );
 
     if ( not defined $info ) {
+        $topicObject->loadVersion() unless $topicObject->latestIsLoaded();
+        $info = $topicObject->get('TOPICINFO');
+    }
+
+    if ( not defined $info ) {
         my $handler = $this->getHandler($topicObject);
 
         $info = $handler->getInfo($rev);
     }
+
+    # make sure there's at least author, date and version
+    $info->{author} = $Foswiki::Users::BaseUserMapping::UNKNOWN_USER_CUID
+      unless defined $info->{author};
+    $info->{date}    = time() unless defined $info->{date};
+    $info->{version} = 1      unless defined $info->{version};
 
     return $info;
 }
 
 sub saveAttachment {
     my ( $this, $topicObject, $name, $stream, $cUID, $comment ) = @_;
-    my $handler    = $this->getHandler( $topicObject, $name );
-    my $currentRev = $handler->getLatestRevisionID();
-    my $nextRev    = $currentRev + 1;
+
+    my $handler = $this->getHandler( $topicObject, $name );
     my $verb = ( $topicObject->hasAttachment($name) ) ? 'update' : 'insert';
+
     $handler->addRevisionFromStream( $stream, $comment, $cUID );
     $this->tellListeners(
         verb          => $verb,
         newmeta       => $topicObject,
         newattachment => $name
     );
-    $handler->recordChange( $cUID, $nextRev );
-    return $nextRev;
+
+    my $rev = $handler->getLatestRevisionID();
+    $handler->recordChange( $cUID, $rev );
+
+    return $rev;
 }
 
 sub saveTopic {
@@ -343,7 +364,6 @@ sub saveTopic {
     ASSERT($cUID) if DEBUG;
 
     my $handler = $this->getHandler($topicObject);
-
     my $verb = ( $topicObject->existsInStore() ) ? 'update' : 'insert';
 
     # just in case they are not sequential
@@ -355,6 +375,10 @@ sub saveTopic {
     $handler->addRevisionFromText( $topicObject->getEmbeddedStoreForm(),
         'save topic', $cUID, $options->{forcedate} );
 
+    # reload the topic object
+    $topicObject->unload();
+    $topicObject->loadVersion();
+
     my $extra = $options->{minor} ? 'minor' : '';
     $handler->recordChange( $cUID, $nextRev, $extra );
 
@@ -365,6 +389,7 @@ sub saveTopic {
 
 sub repRev {
     my ( $this, $topicObject, $cUID, %options ) = @_;
+
     ASSERT( $topicObject->isa('Foswiki::Meta') ) if DEBUG;
     ASSERT($cUID) if DEBUG;
     my $info    = $topicObject->getRevisionInfo();
@@ -372,6 +397,11 @@ sub repRev {
     $handler->replaceRevision( $topicObject->getEmbeddedStoreForm(),
         'reprev', $cUID,
         defined $options{forcedate} ? $options{forcedate} : $info->{date} );
+
+    # reload the topic object
+    $topicObject->unload();
+    $topicObject->loadVersion();
+
     my $rev = $handler->getLatestRevisionID();
     $handler->recordChange( $cUID, $rev, 'minor, reprev' );
 

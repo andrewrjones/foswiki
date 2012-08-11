@@ -4,7 +4,7 @@
 ---++ %SPACEOUT{%WIKITOOLNAME%}% Sitemap generated using %IF{"istopic '%SYSTEMWEB%.TreePlugin'" then="%SYSTEMWEB%.TreePlugin" else="Foswiki:Extensions.TreePlugin"}%
 
 %IF{
-	"'%BASEWEB%' allows 'CHANGE'"
+	"'%URLPARAM{"showweb" default="%BASEWEB%"}%' allows 'CHANGE'"
 	then="   * __drag a topic onto another to change the dragged topic's parent__"
 	else="   * __you do not have change access permissions to this web - drag and drop disabled__"
 }%
@@ -42,10 +42,10 @@
 </div></div>
 
 
-%ADDTOHEAD{"slicksitemapcontrib" text="<link rel='stylesheet' type='text/css' media='screen,print' href='%PUBURL%/%SYSTEMWEB%/SlickSitemapContrib/foswiki_slickmap.css' />"}%
+%ADDTOZONE{"head" id="slicksitemapcontrib" text="<link rel='stylesheet' type='text/css' media='screen,print' href='%PUBURL%/%SYSTEMWEB%/SlickSitemapContrib/foswiki_slickmap.css' />"}%
 %JQREQUIRE{"ui"}%
-%ADDTOHEAD{
-	"slicksitemapcontrib_reparent_js" 
+%ADDTOZONE{"script"
+	id="slicksitemapcontrib_reparent_js" 
 	requires="JQUERYPLUGIN::UI" 
 	text="<script type='text/javascript' src='%PUBURL%/%SYSTEMWEB%/SlickSitemapContrib/reparent.js'></script>"
 }%

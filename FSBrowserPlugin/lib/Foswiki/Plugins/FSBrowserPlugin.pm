@@ -126,7 +126,7 @@ sub _FSBROWSER {
     my $currentdepth;
     my $name;
 
-    foreach my $filepath ( sort keys { uc($a) cmp uc($b) } %fshash ) {
+    foreach my $filepath ( sort { uc($a) cmp uc($b) } keys %fshash ) {
         $currentdepth = $fshash{$filepath}{depth};
         $name         = $fshash{$filepath}{name};
         $fstree = $fstree . '   ' x $currentdepth . "* [[$filepath][$name]]\n";

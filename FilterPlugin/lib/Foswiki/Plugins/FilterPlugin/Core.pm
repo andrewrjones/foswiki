@@ -505,8 +505,8 @@ sub handleMakeIndex {
 ###############################################################################
 sub handleFormatList {
   my ($this, $params, $theTopic, $theWeb) = @_;
-  
-  #writeDebug("handleFormatList(".$params->stringify().")");
+ 
+  writeDebug("handleFormatList(".$params->stringify().")");
 
   my $theList = $params->{_DEFAULT};
   $theList = $params->{list} unless defined $theList;
@@ -518,7 +518,8 @@ sub handleFormatList {
   my $theFooter = $params->{footer} || '';
   my $theSplit = $params->{split};
   my $theSeparator = $params->{separator};
-  my $theLimit = $params->{limit} || -1; 
+  my $theLastSeparator = $params->{lastseparator};
+  my $theLimit = $params->{limit};
   my $theSkip = $params->{skip} || 0; 
   my $theSort = $params->{sort} || 'off';
   my $theUnique = $params->{unique} || '';
@@ -533,6 +534,7 @@ sub handleFormatList {
   my $theHideEmpty = Foswiki::Func::isTrue($params->{hideempty}, 1);
   my $theReplace = $params->{replace};
 
+  $theLimit = -1 unless defined $theLimit;
   $theFormat = '$1' unless defined $theFormat;
   $theSplit = '\s*,\s*' unless defined $theSplit;
   $theMarker = ' selected ' unless defined $theMarker;
@@ -546,6 +548,7 @@ sub handleFormatList {
   #writeDebug("theFormat='$theFormat'");
   #writeDebug("theSplit='$theSplit'");
   #writeDebug("theSeparator='$theSeparator'");
+  #writeDebug("theLastSeparator='$theLastSeparator'");
   #writeDebug("theLimit='$theLimit'");
   #writeDebug("theSkip='$theSkip'");
   #writeDebug("theSort='$theSort'");
@@ -594,91 +597,102 @@ sub handleFormatList {
   }
   @theList = reverse @theList if $theReverse eq 'on';
 
-  my %seen = ();
-  my @result;
   my $count = 0;
-  my $skip = $theSkip;
-  foreach my $item (@theList) {
-    #writeDebug("found '$item'");
-    next if $theExclude && $item =~ /^($theExclude)$/;
-    next if $theInclude && $item !~ /^($theInclude)$/;
-    next if $item =~ /^$/; # skip empty elements
-    my $arg1 = '';
-    my $arg2 = '';
-    my $arg3 = '';
-    my $arg4 = '';
-    my $arg5 = '';
-    my $arg6 = '';
-    my $arg7 = '';
-    my $arg8 = '';
-    my $arg9 = '';
-    my $arg10 = '';
-    if ($item =~ m/$thePattern/) {
-      $arg1 = $1;
-      $arg2 = $2;
-      $arg3 = $3;
-      $arg4 = $4;
-      $arg5 = $5;
-      $arg6 = $6;
-      $arg7 = $7;
-      $arg8 = $8;
-      $arg9 = $9;
-      $arg10 = $10;
+  my $hits = 0;
+  my @result;
 
-      $arg1 = '' unless defined $arg1;
-      $arg2 = '' unless defined $arg2;
-      $arg3 = '' unless defined $arg3;
-      $arg4 = '' unless defined $arg4;
-      $arg5 = '' unless defined $arg5;
-      $arg6 = '' unless defined $arg6;
-      $arg7 = '' unless defined $arg7;
-      $arg8 = '' unless defined $arg8;
-      $arg9 = '' unless defined $arg9;
-      $arg10 = '' unless defined $arg10;
-    } else {
-      next;
-    }
-    my $line = $theFormat;
-    $line =~ s/\$10/$arg10/g;
-    $line =~ s/\$1/$arg1/g;
-    $line =~ s/\$2/$arg2/g;
-    $line =~ s/\$3/$arg3/g;
-    $line =~ s/\$4/$arg4/g;
-    $line =~ s/\$5/$arg5/g;
-    $line =~ s/\$6/$arg6/g;
-    $line =~ s/\$7/$arg7/g;
-    $line =~ s/\$8/$arg8/g;
-    $line =~ s/\$9/$arg9/g;
-    $line =~ s/\$map\((.*?)\)/($map{$1}||$1)/ge;
-    #writeDebug("after susbst '$line'");
-    if ($theUnique eq 'on') {
-      next if $seen{$line};
-      $seen{$line} = 1;
-    }
+  if ($theLimit) {
+    my %seen = ();
+    foreach my $item (@theList) {
 
-    $line =~ s/\$index/$count+1/ge;
-    if ($theSelection && $item =~ /$theSelection/) {
-      $line =~ s/\$marker/$theMarker/g 
-    } else {
-      $line =~ s/\$marker//go;
-    }
-    if ($skip-- <= 0) {
-      push @result, $line unless ($theHideEmpty && $line eq '');
+      #writeDebug("found '$item'");
+      next if $theExclude && $item =~ /^($theExclude)$/;
+      next if $theInclude && $item !~ /^($theInclude)$/;
+      next if $item =~ /^$/; # skip empty elements
+
       $count++;
-      last if $theLimit - $count == 0;
+      next if $count <= $theSkip;
+      last if $theLimit > 0 && $hits >= $theLimit;
+
+      my $arg1 = '';
+      my $arg2 = '';
+      my $arg3 = '';
+      my $arg4 = '';
+      my $arg5 = '';
+      my $arg6 = '';
+      my $arg7 = '';
+      my $arg8 = '';
+      my $arg9 = '';
+      my $arg10 = '';
+      if ($item =~ m/$thePattern/) {
+        $arg1 = $1;
+        $arg2 = $2;
+        $arg3 = $3;
+        $arg4 = $4;
+        $arg5 = $5;
+        $arg6 = $6;
+        $arg7 = $7;
+        $arg8 = $8;
+        $arg9 = $9;
+        $arg10 = $10;
+
+        $arg1 = '' unless defined $arg1;
+        $arg2 = '' unless defined $arg2;
+        $arg3 = '' unless defined $arg3;
+        $arg4 = '' unless defined $arg4;
+        $arg5 = '' unless defined $arg5;
+        $arg6 = '' unless defined $arg6;
+        $arg7 = '' unless defined $arg7;
+        $arg8 = '' unless defined $arg8;
+        $arg9 = '' unless defined $arg9;
+        $arg10 = '' unless defined $arg10;
+      } else {
+        next;
+      }
+      my $line = $theFormat;
+      $line =~ s/\$10/$arg10/g;
+      $line =~ s/\$1/$arg1/g;
+      $line =~ s/\$2/$arg2/g;
+      $line =~ s/\$3/$arg3/g;
+      $line =~ s/\$4/$arg4/g;
+      $line =~ s/\$5/$arg5/g;
+      $line =~ s/\$6/$arg6/g;
+      $line =~ s/\$7/$arg7/g;
+      $line =~ s/\$8/$arg8/g;
+      $line =~ s/\$9/$arg9/g;
+      $line =~ s/\$map\((.*?)\)/($map{$1}||$1)/ge;
+      #writeDebug("after susbst '$line'");
+      if ($theUnique eq 'on') {
+        next if $seen{$line};
+        $seen{$line} = 1;
+      }
+
+      $line =~ s/\$index/$count/ge;
+      if ($theSelection && $item =~ /$theSelection/) {
+        $line =~ s/\$marker/$theMarker/g 
+      } else {
+        $line =~ s/\$marker//go;
+      }
+      push @result, $line unless ($theHideEmpty && $line eq '');
+      $hits++;
     }
   }
-  #writeDebug("count=$count");
+
   my $result = '';
-  if ($count == 0) {
+  if ($hits == 0) {
     return '' unless $theNullFormat;
     $result = $theNullFormat;
   } else {
-    $result = join($theSeparator, @result);
+    if (defined($theLastSeparator) && ($count > 1)) {
+      my $lastElement = pop(@result);
+      $result = join($theSeparator, @result) . $theLastSeparator . $lastElement;
+    } else {
+      $result = join($theSeparator, @result);
+    }
   }
 
   $result = $theHeader.$result.$theFooter;
-  $result =~ s/\$count/$count/g;
+  $result =~ s/\$count/$hits/g;
 
   expandVariables($result);
   return $result;

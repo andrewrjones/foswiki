@@ -219,7 +219,7 @@ sub _includeTopic {
           if $Foswiki::cfg{Cache}{Enabled};
 
         # handle sections
-        my ( $ntext, $sections ) = parseSections($text);
+        my ( $ntext, $sections ) = Foswiki::parseSections($text);
 
         my $interesting = ( defined $control->{section} );
         if ( $interesting || scalar(@$sections) ) {
@@ -227,19 +227,41 @@ sub _includeTopic {
             # Rebuild the text from the interesting sections
             $text = '';
             foreach my $s (@$sections) {
+                my $process_this_section;
                 if (   $control->{section}
                     && $s->{type} eq 'section'
                     && $s->{name} eq $control->{section} )
                 {
-                    $text .=
-                      substr( $ntext, $s->{start}, $s->{end} - $s->{start} );
-                    $interesting = 1;
-                    last;
+                    $interesting          = 1;
+                    $process_this_section = 1;
                 }
                 elsif ( $s->{type} eq 'include' && !$control->{section} ) {
+                    $interesting          = 1;
+                    $process_this_section = 1;
+                }
+
+                if ($process_this_section) {
                     $text .=
                       substr( $ntext, $s->{start}, $s->{end} - $s->{start} );
-                    $interesting = 1;
+
+                    my %defaults;
+                    foreach my $key ( keys(%$s) ) {
+
+    #remove the section parsing specific keys (probably should add a _ to them?)
+                        next
+                          if ( ( $key eq 'name' )
+                            || ( $key eq 'type' )
+                            || ( $key eq 'start' )
+                            || ( $key eq 'stop' ) );
+
+#don't over-ride existing INCLUDE params and settings (so that nested INCLUDEs pass on their values as they used to), and to avoid FINALISE issues
+                        next if ( $this->{prefs}->getPreference($key) );
+                        $defaults{$key} = $s->{$key};
+                    }
+                    $this->{prefs}->setSessionPreferences(%defaults);
+
+                    #we only process the first named section
+                    last if ( $control->{section} );
                 }
             }
         }

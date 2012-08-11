@@ -1,0 +1,114 @@
+/*
+Font files can be built with
+http://www.fontsquirrel.com/fontface/generator
+*/
+
+/* book */
+@font-face {
+    font-family: 'DejaVuSansBook';
+    src: url('webfonts/dejavusans/dejavusans.eot');
+    src: url('webfonts/dejavusans/dejavusans.eot?#iefix') format('embedded-opentype'),
+         url('webfonts/dejavusans/dejavusans.woff') format('woff'),
+         url('webfonts/dejavusans/dejavusans.ttf') format('truetype'),
+         url('webfonts/dejavusans/dejavusans.svg#DejaVuSansBook') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+/* bold */
+@font-face {
+    font-family: 'DejaVuSansBold';
+    src: url('webfonts/dejavusans/dejavusans-bold.eot');
+    src: url('webfonts/dejavusans/dejavusans-bold.eot?#iefix') format('embedded-opentype'),
+         url('webfonts/dejavusans/dejavusans-bold.woff') format('woff'),
+         url('webfonts/dejavusans/dejavusans-bold.ttf') format('truetype'),
+         url('webfonts/dejavusans/dejavusans-bold.svg#DejaVuSansBold') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* oblique */
+@font-face {
+    font-family: 'DejaVuSansOblique';
+    src: url('webfonts/dejavusans/dejavusans-oblique.eot');
+    src: url('webfonts/dejavusans/dejavusans-oblique.eot?#iefix') format('embedded-opentype'),
+         url('webfonts/dejavusans/dejavusans-oblique.woff') format('woff'),
+         url('webfonts/dejavusans/dejavusans-oblique.ttf') format('truetype'),
+         url('webfonts/dejavusans/dejavusans-oblique.svg#DejaVuSansOblique') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* boldoblique */
+@font-face {
+    font-family: 'DejaVuSansBoldOblique';
+    src: url('webfonts/dejavusans/dejavusans-boldoblique.eot');
+    src: url('webfonts/dejavusans/dejavusans-boldoblique.eot?#iefix') format('embedded-opentype'),
+         url('webfonts/dejavusans/dejavusans-boldoblique.woff') format('woff'),
+         url('webfonts/dejavusans/dejavusans-boldoblique.ttf') format('truetype'),
+         url('webfonts/dejavusans/dejavusans-boldoblique.svg#DejaVuSansBoldOblique') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* regular */
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+select,
+input,
+label,
+textarea,
+blockquote,
+.foswikiInputForm legend {
+	font-family: 'DejaVuSansBook';
+	font-weight: normal;
+}
+
+/* bold */
+ul.menu-dropdown li p,
+ul.dropdown-menu li p,
+.foswikiTable th {
+	font-family: 'DejaVuSansBold';
+	font-weight: normal;
+}
+
+b,
+strong,
+.foswikiSummary em,
+.foswikiTocTitle,
+.foswikiSearchResultTitle,
+.foswikiLabel {
+	font-family: 'DejaVuSansBold';
+	font-weight: normal;
+}
+.foswikiNavigation > li > a,
+.foswikiNavigationSecondary > li > a,
+.foswikiNavigation > li > .foswikiRequiresChangePermission > a,
+.foswikiNavigationSecondary > li > .foswikiRequiresChangePermission > a {
+    font-family: 'DejaVuSansBold';
+    font-weight: normal;
+}
+
+/* italic */
+em,
+i {
+	font-family: 'DejaVuSansOblique';
+	font-weight: normal;
+	font-style: normal;
+}
+
+/* bolditalic */
+b em,
+b i,
+strong em,
+strong i {
+	font-family: 'DejaVuSansBoldOblique';
+	font-weight: normal;
+	font-style: normal;
+}

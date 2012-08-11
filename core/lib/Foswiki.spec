@@ -48,6 +48,14 @@
 #  This is the root of all Foswiki URLs e.g. http://myhost.com:123.
 # $Foswiki::cfg{DefaultUrlHost} = 'http://your.domain.com';
 
+# **BOOLEAN EXPERT**
+# Enable this parameter to force foswiki to ignore the hostname of the entered URL and generate all links using the <code>DefaultUrlHost</code>.
+# <p>By default, foswiki will use whatever URL that was entered by the user to generate links. The only exception is the special "localhost"
+# name, which will be automatically replaced by the DefaultUrlHost.  In most installations this is the preferred behavior, however when using
+# SSL Accelerators, Reverse Proxys, and load balancers, the URL entered by the user may have been altered, and foswiki should be forced
+# to return the <code>DefaultUrlHost</code>.</p>
+$Foswiki::cfg{ForceDefaultUrlHost} = $FALSE;
+
 # **URLPATH M**
 # This is the 'cgi-bin' part of URLs used to access the Foswiki bin
 # directory e.g. <code>/foswiki/bin</code><br />
@@ -262,7 +270,8 @@ $Foswiki::cfg{UseClientSessions} = 1;
 # up expired sessions using CGI processes. Instead you should use a cron
 # job to clean up expired sessions. The standard maintenance cron script
 # <tt>tools/tick_foswiki.pl</tt> includes this function.
-# <p /> Session files are stored in the <tt>{WorkingDir}/tmp</tt> directory.
+# <p> Session files are stored in the <tt>{WorkingDir}/tmp</tt> directory.</p>
+# <p> This setting is also used to set a lifetime for registration requests.</p>
 $Foswiki::cfg{Sessions}{ExpireAfter} = 21600;
 
 # **NUMBER EXPERT DISPLAY_IF {UseClientSessions} && {LoginManager}=='Foswiki::LoginManager::TemplateLogin'**
@@ -322,6 +331,14 @@ $Foswiki::cfg{Sessions}{UseIPMatching} = 0;
 # If you turn this option on, you can safely turn {Sessions}{IDsInURLs}
 # <i>off</i>.
 $Foswiki::cfg{Sessions}{MapIP2SID} = 0;
+
+# **OCTAL EXPERT**
+# File security for new session objects created by the login manager. 
+# You may have to adjust these permissions to allow (or deny) users other than the webserver 
+# user access session objects that Foswiki creates in the filesystem. 
+# This is an <strong>octal</strong> number representing the standard UNIX permissions 
+# (e.g. 0640 == rw-r-----)
+$Foswiki::cfg{Session}{filePermission}= 0600;
 
 #---++ Validation
 # Validation is the process by which Foswiki validates that a request is
@@ -397,6 +414,10 @@ $Foswiki::cfg{Validation}{ExpireKeyOnUse} = 1;
 # </li></ol>
 $Foswiki::cfg{LoginManager} = 'Foswiki::LoginManager::TemplateLogin';
 
+# **BOOLEAN EXPERT**
+# Write debugging output to the webserver error log.
+$Foswiki::cfg{Trace}{LoginManager} = 0;
+
 # **STRING 100 DISPLAY_IF {LoginManager}=='Foswiki::LoginManager::TemplateLogin'**
 # Comma-separated list of scripts in the bin directory that require the user to
 # authenticate. This setting is used with TemplateLogin; any time an
@@ -463,7 +484,7 @@ $Foswiki::cfg{SuperAdminGroup} = 'AdminGroup';
 # use Foswiki to manually rename the existing topic</b>
 $Foswiki::cfg{UsersTopicName} = 'WikiUsers';
 
-#---++ User Mapping
+#---++ User mapping
 # The user mapping is used to equate login names, used with external
 # authentication systems, with Foswiki user identities. 
 # **SELECTCLASS Foswiki::Users::*UserMapping**
@@ -680,7 +701,7 @@ $Foswiki::cfg{AccessibleCFG} = [ '{ScriptSuffix}', '{LoginManager}', '{AuthScrip
 # a high risk.
 # <p /> You may also need to configure the proxy settings ({PROXY}{HOST} and
 # {PROXY}{PORT}) if your server is behind a firewall and you allow %INCLUDE of
-# external webpages (see Mail and Proxies).
+# external webpages (see Proxies).
 $Foswiki::cfg{INCLUDE}{AllowURLs} = $FALSE;
 
 # **BOOLEAN**
@@ -772,7 +793,30 @@ $Foswiki::cfg{UsePathForRedirectCache} = $FALSE;
 # '^.*$' to allow all environment variables to be seen (not recommended).
 $Foswiki::cfg{AccessibleENV} = '^(HTTP_\w+|REMOTE_\w+|SERVER_\w+|REQUEST_\w+|MOD_PERL|FOSWIKI_ACTION|PATH_INFO)$';
 
-#---++ Anti-Spam
+
+#---++ Proxies
+# Some environments require outbound HTTP traffic to go through a proxy
+# server. (e.g. http://proxy.your.company).
+# **STRING 30**
+# Hostname or address of the proxy server.
+# <b>CAUTION</b> This setting can be overridden by a PROXYHOST setting
+# in SitePreferences. Make sure you delete the setting from there if
+# you are using a SitePreferences topic from a previous release of Foswiki.
+# If your proxy requires authentication, simply put it in the URL, as in:
+# http://username:password@proxy.your.company.
+$Foswiki::cfg{PROXY}{HOST} = '';
+
+# **STRING 30**
+# Some environments require outbound HTTP traffic to go through a proxy
+# server. Set the port number here (e.g: 8080).
+# <b>CAUTION</b> This setting can be overridden by a PROXYPORT setting
+# in SitePreferences. Make sure you delete the setting from there if you
+# are using a SitePreferences topic from a previous release of Foswiki.
+$Foswiki::cfg{PROXY}{PORT} = '';
+
+
+
+#---++ Anti-spam
 # <p>Foswiki incorporates some simple anti-spam measures to protect
 # e-mail addresses and control the activities of benign robots. These
 # should be enough to handle intranet requirements. Administrators of
@@ -816,7 +860,7 @@ $Foswiki::cfg{AntiSpam}{EntityEncode} = $TRUE;
 # (there is an example in the root of your Foswiki installation).
 $Foswiki::cfg{AntiSpam}{RobotsAreWelcome} = $TRUE;
 
-#############################################################################
+
 #---+ Logging and Statistics
 
 # **SELECTCLASS none,Foswiki::Logger::*,Foswiki::Logger::PlainFile::* **
@@ -1356,11 +1400,11 @@ $Foswiki::cfg{Cache}{DBI}{PostgreSQL}{Username} = '';
 $Foswiki::cfg{Cache}{DBI}{PostgreSQL}{Password} = '';
 
 #############################################################################
-#---+ Mail and Proxies -- TABS
+#---+ Mail -- TABS
 # <p>Settings controlling if and how Foswiki sends email, and the proxies used
 # to access external web pages.</p>
 
-#---++ Email General
+#---++ Email general
 # <p>Settings controlling if and how Foswiki handles email including the identity of the sender
 # and other expert settings controlling the email process.</p>
 # **BOOLEAN**
@@ -1403,7 +1447,7 @@ $Foswiki::cfg{Email}{Servertime} = $FALSE;
 # Version 2012022300, Last Updated Thu Feb 23 15:07:02 2012 UTC</code>
 $Foswiki::cfg{Email}{ValidTLD} = qr(AERO|ARPA|ASIA|BIZ|CAT|COM|COOP|EDU|GOV|INFO|INT|JOBS|MIL|MOBI|MUSEUM|NAME|NET|ORG|PRO|TEL|TRAVEL|XXX)i;
 
-#---++ Email Server
+#---++ Email server
 # <p>Settings to select the destination mail server or local email agent used for forwarding email.</p>
 
 # **SELECT Net::SMTP,Net::SMTP::SSL,MailProgram **
@@ -1479,34 +1523,11 @@ $Foswiki::cfg{Email}{SmimeCertificateFile} = '$Foswiki::cfg{DataDir}/cert.pem';
 # Foswiki software; it must NOT be readable by users!</em>
 $Foswiki::cfg{Email}{SmimeKeyFile} = '$Foswiki::cfg{DataDir}/key.pem';
 
-#---++ Proxy
-# Some environments require outbound HTTP traffic to go through a proxy
-# server. (e.g. http://proxy.your.company).
-# **STRING 30**
-# Hostname or address of the proxy server.
-# <b>CAUTION</b> This setting can be overridden by a PROXYHOST setting
-# in SitePreferences. Make sure you delete the setting from there if
-# you are using a SitePreferences topic from a previous release of Foswiki.
-# If your proxy requires authentication, simply put it in the URL, as in:
-# http://username:password@proxy.your.company.
-$Foswiki::cfg{PROXY}{HOST} = '';
-
-# **STRING 30**
-# Some environments require outbound HTTP traffic to go through a proxy
-# server. Set the port number here (e.g: 8080).
-# <b>CAUTION</b> This setting can be overridden by a PROXYPORT setting
-# in SitePreferences. Make sure you delete the setting from there if you
-# are using a SitePreferences topic from a previous release of Foswiki.
-$Foswiki::cfg{PROXY}{PORT} = '';
-
-#---++ Email Test
-# <p> This section provides a test facility to verify your configuration before
-# enabling email or testing user registration.
+#---++ Email test
+# IMPORTANT: Verify your configuration before enabling email or testing user registration, before attempting to register any users to Foswiki.
 
 # *TESTEMAIL* Marker used by bin/configure script - do not remove!
 
-
-#############################################################################
 #---+ Miscellaneous -- EXPERT
 # <p>Miscellaneous expert options.</p>
 
@@ -1659,11 +1680,11 @@ $Foswiki::cfg{MimeTypesFileName} = '$Foswiki::cfg{DataDir}/mime.types';
 #############################################################################
 #---+ Extensions -- TABS
 
-#---++ Plugin Operation and Maintenance
-# <p>General configuration and maintenance of extensions.
-# <ul><li>Specify the plugin load order.
-# <li>Use the Extensions Repository to add, update or remove plugins.
-# <li>Enable and disable installed plugins.
+#---++ Extension operation and maintenance
+# <ul>
+# <li>Specify the plugin load order.</li>
+# <li>Use the Extensions Repository to add, update or remove plugins.</li>
+# <li>Enable and disable installed plugins.</li>
 # </ul>
 
 #---+++ Configure how plugins are loaded by Foswiki

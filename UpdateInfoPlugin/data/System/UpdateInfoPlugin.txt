@@ -26,7 +26,6 @@ Full syntax overrides site/topic defaults.
 
 	* =<nop>MyTopic %<nop>ISNEW%=
 	* =<nop>Web.ToPic %<nop>ISNEW%=
-	* =<nop>Gr�dWeb.Bl�B�rGr�d %<nop>ISNEW%= (I18N characters in <nop>WikiWords and <nop>WebNames are matched)
 	* =<nop>TopIc %<nop>ISNEW{days="15"}%=
 	* =<nop>TopiC %<nop>ISNEW{days="20" version="1.4"}%=
 
@@ -77,16 +76,17 @@ Full syntax overrides site/topic defaults.
 |  Version: | %$VERSION% |
 |  Release: | %$RELEASE% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
-|  20 Jan 2010: | (v3.0) - converted to Foswiki (Foswiki:Main.MichaelDaum) |
-|  26 Jul 2006: | (v2.0) - Updated to use default graphic icons from %SYSTEMWEB%.DocumentGraphics. |
-|  20 Apr 2006: | (v1.9) - Cairo+Dakar compatibility (Foswiki:Main.SteffenPoulsen) |
-|  10 Jan 2006: | (v1.8) - Dakar compatibility |
-|  7 Apr 2005: | (v1.7) - New variable name in plugin settings |
-|  6 Apr 2005: | (v1.6) - Fetch default "days" and "version" variables from variables |
-|  4 Apr 2005: | (v1.5) - Support for non-WikiWord topics in TML link syntaxes |
-|  2 Apr 2005: | (v1.4) - Support for more TML link syntaxes |
-|  1 Apr 2005: | (v1.3) - Plugin is now I18N-aware |
-|  30 Mar 2005: | (v1.2) - implemented changes/fixes from Foswiki:Extensions.UpdateInfoPluginDev |
+|  5 Jun 2012: | (3.1) - fixed crash when adding an %ISNEW tag to an url (Foswiki:Main.MichaelDaum) |
+|  20 Jan 2010: | (3.0) - converted to Foswiki (Foswiki:Main.MichaelDaum) |
+|  26 Jul 2006: | (2.0) - Updated to use default graphic icons from %SYSTEMWEB%.DocumentGraphics. |
+|  20 Apr 2006: | (1.9) - Cairo+Dakar compatibility (Foswiki:Main.SteffenPoulsen) |
+|  10 Jan 2006: | (1.8) - Dakar compatibility |
+|  7 Apr 2005: | (1.7) - New variable name in plugin settings |
+|  6 Apr 2005: | (1.6) - Fetch default "days" and "version" variables from variables |
+|  4 Apr 2005: | (1.5) - Support for non-WikiWord topics in TML link syntaxes |
+|  2 Apr 2005: | (1.4) - Support for more TML link syntaxes |
+|  1 Apr 2005: | (1.3) - Plugin is now I18N-aware |
+|  30 Mar 2005: | (1.2) - implemented changes/fixes from Foswiki:Extensions.UpdateInfoPluginDev |
 |  15 Apr 2002: | Initial version |
 |  CPAN Dependencies: | none |
 |  Other Dependencies: | none |

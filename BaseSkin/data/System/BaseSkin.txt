@@ -9,8 +9,7 @@ Copy these settings to !SitePreferences:
 <verbatim>
    * Set SKIN = basejs,basecss,base
    * Set SKIN_USE_LESS = 1
-   * Set WIKILOGOIMG = %PUBURL%/%SYSTEMWEB%/BaseSkin/foswiki-logo-top.png
-   * Set SKIN_WEBFONTS_URL = %PUBURLPATH%/%SYSTEMWEB%/BaseSkinCss/webfonts.css
+   * Set SKIN_WEBFONTS_URL = %PUBURLPATH%/%SYSTEMWEB%/BaseSkinCss/webfonts-opensans.css
 </verbatim>
 </div>
 
@@ -18,8 +17,6 @@ Copy these settings to !SitePreferences:
 
 ---++ About Base Skin
 TO WRITE
-
-=basecss= and =basejs= use [[http://twitter.github.com/bootstrap/][Twitter bootstrap]] to provide a base layer of user interface functionality.
 
 ---++ Modular skin parts
 Base Skin is built with modular, progressive parts, making it possible to load only the parts you need. For instance, you might only need the CSS, not !BaseSkin's javascript.

@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="ProjectContributor" date="1316607717" format="1.1" version="1"}%
+%META:TOPICINFO {author = "ProjectContributor" date = "1316607717" format="1.1" version="1"}%
 %META:TOPICPARENT{name="DeveloperDocumentationCategory"}%
 %STARTINCLUDE%
 ---+ CGI and Command Line Scripts
@@ -36,7 +36,15 @@ $ cd bin
 $ ../tools/mailnotify -q -nonews -nochanges -Main -System
 </verbatim>
 
----++++ Common parameters
+---++++ Context
+
+Each script sets a Foswiki =context= to signal to plugins and other components the environment that they are running.  In addition to the per-script context, two additional contexts are optionally set:
+   * =command_line= is set if there is no CGI query object available.
+   * =static= is set by scripts that render static content like PDF or other offline publishing tools
+
+A comprehensive list of core context identifiers used by Foswiki is found in the %SYSTEMWEB%.IfStatements#Context_identifiers.
+
+---+++ Common parameters
 All the scripts accept a number of common parameters. The first two components of the URL after the script name are taken as the web and the topic, respectively. Standard URL parameters are:
 
 | *Parameter* | *Description* | *Default* |
@@ -49,7 +57,8 @@ All the scripts accept a number of common parameters. The first two components o
 | =response= | Used as part of the request validation process. | |
 | =skin= | Overrides the default skin path (see [[Skins]]) | _value of the =SKIN= preference_ |
 | =t= | While the =t= parameter is not actively used by any scripts, it is used when building links to scripts such as =edit=, to ensure that each edit link is unique. This stops the browser from trying to use a cached reply from a previous call to the script. | _generally set to current time, in seconds_ |
-| =topic= | Overrides the web.topic path given in the URL (specify Web.<nop>TopicName) | |
+| =topic= | Overrides the web.topic path given in the URL (specify Web.<nop>TopicName, or <nop>TopicName in compbination with =defaultweb= below) | |
+| =defaultweb= | a default value for web, which is over-ridden by specifying either a web in the =topic= param above, or in the url location (used for selecting a web in a webform) | |
 | =user= | Command-line only; set the name of the user performing the action. Note: this usage is inherently insecure, as it bypasses webserver login constraints. For this reason only authorised users should be allowed to execute scripts from the command line. | |
 | =validation_key= | part of cross-site scripting protection. Any request sent from browsers that might change data stored on the server must carry a key that indentifies the source of the request. | |
 | _&lt;any name&gt;_ | Any other parameter name passed to the script is passed through for possible use by the script.  This is _typically_ only applicable to the =edit=, =save= and =view= scripts. | |
@@ -386,6 +395,10 @@ The =save= script performs a range of save-related functions.
 | =templatetopic= | Name of a topic to use as a template for the text and form (new topic _only_) (see [[#NewTopicCreation][New topic creation]] above) | |
 | =text= | New text of the topic | |
 | =topicparent= | If 'none' remove any current topic parent. If the name of a topic, set the topic parent to this. | |
+| =Local+name= | create/set a local META:PREFERENCE called =name= | |
+| =Set+name= |  create/set a normal topic META:PREFERENCE called =name= | |
+| =Unset+name= | remove a META:PREFERENCE call =name= | |
+| =Default+name= | gives a default for =name=. If =name= is set to this value, then the preference will be removed. %X% Requires a corresponding =Set+name= or =Local+name= to work. | |
 | _&lt;any name&gt;_ | If the topic has a form with a field called _&lt;any name&gt;_, it will set the value of that field. | |
 
 Any errors will cause a redirect to another page, either an =oops= page to report the error, or a =login= if the save is not authorized.

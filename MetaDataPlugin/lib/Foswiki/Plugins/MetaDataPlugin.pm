@@ -25,7 +25,7 @@ use Foswiki::Plugins::MetaDataPlugin::Core();
 use Error qw( :try );
 
 our $VERSION = '$Rev$';
-our $RELEASE = '1.40';
+our $RELEASE = '2.01';
 our $SHORTDESCRIPTION = 'Bring custom meta data to wiki apps';
 our $NO_PREFS_IN_TOPIC = 1;
 our $core;
@@ -80,14 +80,12 @@ sub initPlugin {
     return $core->jsonRpcDelete(@_);
   });
 
-  $core->init;
-
   return 1;
 }
 
 ##############################################################################
 sub finishPlugin {
-  $core = undef;
+  undef $core;
 }
 
 ##############################################################################
@@ -107,6 +105,7 @@ sub registerMetaData {
   foreach my $item (split(/\s*,\s*/, $topics)) {
     my ($web, $topic) = Foswiki::Func::normalizeWebTopicName($baseWeb, $item);
     my $metaDef = getMetaDataDefinition($web, $topic);
+    next unless defined $metaDef;
     my ($key) = topicName2MetaData($topic);
     #print STDERR "meta data key = $key\n";
     Foswiki::Meta::registerMETA($key, %$metaDef); 
@@ -143,31 +142,42 @@ sub getMetaDataDefinition {
   return unless Foswiki::Func::topicExists($web, $topic);
 
   my $formDef;
+  my $session = $Foswiki::Plugins::SESSION;
 
   try {
-    $formDef = new Foswiki::Form($Foswiki::Plugins::SESSION, $web, $topic);
+    $formDef = new Foswiki::Form($session, $web, $topic);
   } catch Error::Simple with {
 
     # just in case, cus when this fails it takes down more of foswiki
-    Foswiki::Func::writeWarning("MetaDataPlugin::getMetaDataDefinition() failed for $web.$topic:".shift);
+    Foswiki::Func::writeWarning("MetaDataPlugin::getMetaDataDefinition() failed for $web.$topic: ".shift);
 
   } catch Foswiki::AccessControlException with {
     # catch but simply bail out
+    #print STDERR "can't access form at $web.$topic in getMetaDataDefinition()\n";
+
+    # SMELL: manually invalidate the forms cache for a partially build form object 
+    if (exists $session->{forms}{"$web.$topic"}) {
+      #print STDERR "WARNING: bug present in Foswiki::Form - invalid form object found in cache - deleting it manually\n";
+      delete $session->{forms}{"$web.$topic"};
+    }
+
   };
 
-  return unless defined $formDef;
+  return unless defined $formDef; # Hm, or do we create an empty record?
 
   my @other = ();
   my @require = ();
 
   push @require, 'name'; # is always required
 
-  foreach my $field (@{$formDef->getFields}) {
-    my $name = $field->{name};
-    if ($field->isMandatory) {
-      push @require, $name;
-    } else {
-      push @other, $name;
+  if (defined $formDef) {
+    foreach my $field (@{$formDef->getFields}) {
+      my $name = $field->{name};
+      if ($field->isMandatory) {
+        push @require, $name;
+      } else {
+        push @other, $name;
+      }
     }
   }
 

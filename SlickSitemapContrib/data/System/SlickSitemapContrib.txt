@@ -37,11 +37,12 @@ System.WikiTreeMap also contains some javascript that will allow you to re-paren
 ---++ Info
 
 |  Author(s): | Foswiki:Main.SvenDowideit |
-|  Copyright: | &copy; 2009 SvenDowideit @ http://fosiki.com |
+|  Copyright: | &copy; 2009-2012 SvenDowideit @ http://fosiki.com |
 |  License: | [[http://www.gnu.org/licenses/gpl.html][GPL3 (Gnu General Public License)]] |
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|  July 2012: | upgrade to use foswiki 1.2.0 =foswiki.save()= |
 |  Sep 2009: | initial release |
 |  Dependencies: | %$DEPENDENCIES% |
 |  Home page: | http://foswiki.org/bin/view/Extensions/SlickSitemapContrib |

@@ -1,0 +1,75 @@
+
+// BASE TABLES
+// -----------------
+
+table {
+  max-width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  background-color: @tableBackground;
+}
+
+// BASELINE STYLES
+// ---------------
+
+.table {
+  width: 100%;
+  margin-bottom: @fw_body_line_height;
+  // Cells
+  th,
+  td {
+    padding: 8px;
+    line-height: @fw_body_line_height;
+    text-align: left;
+    vertical-align: top;
+    border-top: 1px solid @tableBorder;
+  }
+  th {
+    font-weight: bold;
+  }
+  // Bottom align for column headings
+  thead th {
+    vertical-align: bottom;
+  }
+  // Remove top border from thead by default
+  colgroup + thead tr:first-child th,
+  colgroup + thead tr:first-child td,
+  thead:first-child tr:first-child th,
+  thead:first-child tr:first-child td {
+    border-top: 0;
+  }
+  // Account for multiple tbody instances
+  tbody + tbody {
+    border-top: 2px solid @tableBorder;
+  }
+}
+
+.foswikiTable {
+
+	margin-bottom: @fw_body_line_height;
+	padding: 0;
+//	border-collapse: separate; // Done so we can round those corners!
+//	*border-collapse: collapse; /* IE7, collapse table to remove spacing */
+	border-collapse: collapse; /* Don't need to round corners */
+	border-style: solid;
+	border-width: 1px;
+	th, td {
+		.fw_tool_padding();
+		line-height: 0px + @fw_body_line_height;
+		text-align: left;
+		border-style: none none solid none;
+		border-width: 1px;
+	}
+	th {
+		vertical-align: middle;
+	}
+	td {
+		vertical-align: top;
+	}
+	td + td {
+		border-left-style: solid;
+	}
+	tr + tr td {
+		border-top-style: solid;
+	}
+}

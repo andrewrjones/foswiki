@@ -20,6 +20,7 @@ BEGIN {
 }
 
 my %parameters = (
+    copyexternal  => { default   => 1 },
     debug         => { default   => 0 },
     enableplugins => { validator => \&_validateList },
     exclusions    => { default   => '', validator => \&_wildcard2RE },
@@ -33,7 +34,7 @@ my %parameters = (
     publishskin => { validator => \&_validateList },
     relativedir => { default   => '', validator => \&_validateRelPath },
     rsrcdir => {
-        default   => 'rsrc',
+        default   => '/rsrc',
         validator => sub {
             my ( $v, $k ) = @_;
             $v = _validateRelPath( $v, $k );
@@ -162,9 +163,6 @@ sub new {
             session         => $session,
             templatesWanted => 'view',
 
-            # used to prefix alternate template renderings
-            templateLocation => '',
-
             # this records which templates (e.g. view, viewprint, viuehandheld,
             # etc) have been referred to and thus should be generated.
             templatesReferenced => {},
@@ -188,7 +186,7 @@ sub new {
     # Try and build the generator first, so we can pull in param defs
     $data->{format} ||= 'file';
     die "Bad format" unless $data->{format} =~ /^(\w+)$/;
-    $this->{generator} = 'Foswiki::Plugins::PublishPlugin::' . $1;
+    $this->{generator} = 'Foswiki::Plugins::PublishPlugin::BackEnd::' . $1;
     eval 'use ' . $this->{generator};
 
     if ($@) {
@@ -256,7 +254,7 @@ sub _loadConfigTopic {
       Foswiki::Func::normalizeWebTopicName( $this->{web},
         $this->{configtopic} );
     unless ( Foswiki::Func::topicExists( $cw, $ct ) ) {
-        die "Specified configuration topic $cw.$ct does not exist!\n";
+        die "Specified configuration topic $cw.$ct does not exist!";
     }
 
     # Untaint verified web and topic names
@@ -356,7 +354,9 @@ sub publish {
     # Push preference values. Because we use session preferences (preferences
     # that only live as long as the request) these values will not persist.
     if ( $this->{preferences} ) {
-        foreach my $setting ( split( /\r?\n/, $this->{preferences} ) ) {
+        my $sep =
+          Foswiki::Func::getContext()->{command_line} ? qr/;/ : qr/\r?\n/;
+        foreach my $setting ( split( $sep, $this->{preferences} ) ) {
             if ( $setting =~ /^(\w+)\s*=(.*)$/ ) {
                 my ( $k, $v ) = ( $1, $2 );
                 Foswiki::Func::setPreferencesValue( $k, $v );
@@ -392,6 +392,30 @@ TEXT
         return;
     }
     $this->{history} = "$hw.$ht";
+
+    # Force static context for all published topics
+    Foswiki::Func::getContext()->{static} = 1;
+
+    # Start by making a master list of all published topics. We do this
+    # so we can detect whether a topic is in the publish set when
+    # remapping links. Note that we use /, not ., in the path. This is
+    # to make matching URL paths easier.
+    my %topics;
+    foreach my $web (@webs) {
+        if ( $this->{topiclist} ) {
+            foreach my $topic ( split( /[,\s]+/, $this->{topiclist} ) ) {
+                my ( $w, $t ) =
+                  Foswiki::Func::normalizeWebTopicName( $web, $topic );
+                $topics{"$w/$t"} = 1;
+            }
+        }
+        else {
+            foreach my $topic ( Foswiki::Func::getTopicList($web) ) {
+                $topics{"$web/$topic"} = 1;
+            }
+        }
+    }
+    $this->{topics} = \%topics;
 
     foreach my $web (@webs) {
         $this->_publishWeb($web);
@@ -834,8 +858,7 @@ sub publishTopic {
 
         # Note: Foswiki 1.1 supplies this same header text
         # when dispatching completePageHandler.
-        my $CRLF = "\x0D\x0A";
-        my $hdr  = "Content-type: text/html$CRLF$CRLF";
+        my $hdr = "Content-type: text/html\r\n";
         $Foswiki::Plugins::SESSION->{plugins}
           ->dispatch( 'completePageHandler', $tmpl, $hdr );
     }
@@ -863,17 +886,25 @@ sub publishTopic {
 
     my $ilt;
 
-    # Modify local links relative to server base
+    # Modify local links to topics relative to server base
     $ilt =
       $Foswiki::Plugins::SESSION->getScriptUrl( 0, 'view', 'NOISE', 'NOISE' );
-    $ilt  =~ s!/NOISE/NOISE.*$!!;
-    $tmpl =~ s!href=(["'])$ilt/(.*?)\1!"href=$1".$this->_topicURL($2).$1!ge;
+    $ilt =~ s!/NOISE/NOISE.*$!!;
+    $tmpl =~
+      s!href=(["'])$ilt/(.*?)\1!"href=$1".$this->_topicURL($ilt, $2).$1!ge;
+
+    # Handle simple topic links (subwebs not handled)
+    $tmpl =~
+s!href=(["'])([$Foswiki::regex{mixedAlphaNum}_]+([#?].*?)?)\1!"href=$1".$this->_topicURL($ilt, "$this->{web}/$2").$1!ge;
 
     # Modify absolute topic links.
     $ilt =
       $Foswiki::Plugins::SESSION->getScriptUrl( 1, 'view', 'NOISE', 'NOISE' );
-    $ilt  =~ s!/NOISE/NOISE.*$!!;
-    $tmpl =~ s!href=(["'])$ilt/(.*?)\1!"href=$1".$this->_topicURL($2).$1!ge;
+    $ilt =~ s!/NOISE/NOISE.*$!!;
+    $tmpl =~
+      s!href=(["'])$ilt/(.*?)\1!"href=$1".$this->_topicURL($ilt, $2).$1!ge;
+
+    # Modify topic-relative links
 
     # Modify topic-relative TOC links to strip out parameters (but not anchor)
     $tmpl =~ s!href=(["'])\?.*?(\1|#)!href=$1$2!g;
@@ -948,14 +979,10 @@ sub _rewriteTemplateReferences {
 }
 
 # Where alternative templates (e.g. viewprint) renderings end up
-# This gets appended onto puburl and pubdir
-# The web is prefixed before this.
-# Do not prepend with a /
 sub _dirForTemplate {
     my ( $this, $template ) = @_;
     return '' if ( $template eq 'view' );
-    return $template unless $this->{templateLocation};
-    return "$this->{templateLocation}/$template/";
+    return $template;
 }
 
 # SMELL this needs to be table driven
@@ -1046,20 +1073,28 @@ sub _copyResource {
                 my $pub = Foswiki::Func::getPubUrlPath();
                 foreach my $resource (@moreResources) {
 
-                    # recurse
-                    if ( $resource !~ m!^/! ) {
+                    # if the resource is at an absolute URL (not path)
+                    # don't try and make a local copy of it.  that
+                    # would require rewriting the CSS file which is not
+                    # currently supported.
 
-                        # if the url is not absolute, assume it's
-                        # relative to the current path
-                        $resource = $path . '/' . $resource;
-                    }
-                    else {
-                        if ( $resource =~ m!$pub/(.*)! ) {
-                            my $old = $resource;
-                            $resource = $1;
+                    unless ( $resource =~ /^http/ ) {
+
+                        # recurse
+                        if ( $resource !~ m!^/! ) {
+
+                            # if the url is not absolute, assume it's
+                            # relative to the current path
+                            $resource = $path . '/' . $resource;
                         }
+                        else {
+                            if ( $resource =~ m!$pub/(.*)! ) {
+                                my $old = $resource;
+                                $resource = $1;
+                            }
+                        }
+                        $this->_copyResource( $resource, $copied );
                     }
-                    $this->_copyResource( $resource, $copied );
                 }
             }
         }
@@ -1069,19 +1104,38 @@ sub _copyResource {
     return "MISSING RESOURCE $rsrcName";
 }
 
+# Deal with a topic URL. The path passed is *after* removal of the prefix
+# added by getScriptURL
+# $root - the root of the URL path, recognised as being a URL on the wiki
+# $path - the foswiki path to the topic from the URL
 sub _topicURL {
-    my ( $this, $path ) = @_;
-    my $extra = '';
+    my ( $this, $root, $path ) = @_;
+    my $anchor = '';
+    my $params = '';
 
-    if ( $path && $path =~ s/([#\?].*)$// ) {
-        $extra = $1;
+    # Null path -> server root
+    $path = $Foswiki::cfg{HomeTopicName} unless defined $path;
 
-        # no point in passing on script params; we are publishing
-        # to static HTML.
-        $extra =~ s/\?.*?(#|$)/$1/;
+    if ( $path =~ s/(\?.*?)?(#.*?)?$// ) {
+        $params = $1 if defined $1;
+        $anchor = $2 if defined $2;
     }
 
-    $path ||= $Foswiki::cfg{HomeTopicName};
+    # Is this a path to a known topic? If not, reform the original URL
+    return "$root/$path$params$anchor" unless $this->{topics}->{$path};
+
+    # For here on we know we're dealing with a topic link, so we
+    # ignore params in the rewritten URL - they won't be any use
+    # when linking to static content.
+
+    # See if the generator can deal with this topic
+    if ( $this->{archive}->can('mapTopicURL') ) {
+        my $gen = $this->{archive}->mapTopicURL( $path . $anchor );
+        return $gen if $gen;
+    }
+
+    # Default handling; assumes we are recreating the hierarchy in
+    # the output.
     $path .= $Foswiki::cfg{HomeTopicName} if $path =~ /\/$/;
 
     # Normalise
@@ -1090,13 +1144,16 @@ sub _topicURL {
 
     # make a path relative to the web
     $path = File::Spec->abs2rel( $path, $web );
+
     $path .= '.html';
 
-    return $path . $extra;
+    return $path . $anchor;
 }
 
 sub _handleURL {
     my ( $this, $src, $extras ) = @_;
+
+    return $src unless $this->{copyexternal};
 
     my $data;
     if ( defined(&Foswiki::Func::getExternalResource) ) {
@@ -1145,17 +1202,28 @@ sub _handleNewLink {
 
 # return a relative path to a resource given a location to a resource
 # and the path to the current output directory.  the various stages of
-# cleanup may cause a path to get run through this function multiple
+# cleanup may cause a path to be run through this function multiple
 # times; make sure that we only modify the path the first time.
 sub _rsrcpath {
 
     my ( $this, $odir, $rsrcloc ) = @_;
 
-    # if path is already relative, return it
-    return $rsrcloc if $rsrcloc =~ m{^\.+/};
+    # if path is already relative or URLish, return it
+    return $rsrcloc if $rsrcloc =~ m{^(\.+/|[a-z]+:)};
 
-    # relative path to rsrc dir from output dir
-    my $nloc = File::Spec->abs2rel( $rsrcloc, $odir );
+    $odir = "/$odir" unless $odir =~ /^\//;
+
+    # See if the generator wants to deal with this resource
+    my $nloc;
+    if ( $this->{archive}->can('mapResourceURL') ) {
+        $nloc = $this->{archive}->mapResourceURL( $odir, $rsrcloc );
+    }
+
+    unless ($nloc) {
+
+        # relative path to rsrc dir from output dir
+        $nloc = File::Spec->abs2rel( $rsrcloc, $odir );
+    }
 
     # ensure there's an explicit relative path so it can
     # be identified next time 'round

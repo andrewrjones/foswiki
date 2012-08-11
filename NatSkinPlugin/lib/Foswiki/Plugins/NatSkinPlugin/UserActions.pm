@@ -23,7 +23,7 @@ use warnings;
 use Foswiki::Func ();
 use Foswiki::Meta ();
 use Foswiki::Plugins ();
-use Foswiki::Plugins::NatSkinPlugin::ThemeEngine ();
+use Foswiki::Plugins::NatSkinPlugin ();
 use Foswiki::Plugins::NatSkinPlugin::Utils ();
 
 ###############################################################################
@@ -41,19 +41,28 @@ sub render {
   $text = '$edit$sep$attach$sep$new$sep$raw$sep$delete$sep$history$sepprint$sep$more'
     unless defined $text;
 
+  my $context = Foswiki::Func::getContext();
+
   my $guestText = $params->{guest};
   $guestText = '$login$sep$register' 
     unless defined $guestText;
 
-  $text = $guestText unless Foswiki::Func::getContext()->{authenticated};
+  $text = $guestText unless $context->{authenticated};
 
-  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::ThemeEngine::getThemeEngine();
+  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
   if ($themeEngine->{skinState}{"history"}) {
     my $historyText = $params->{history};
     $text = $historyText if defined $historyText;
   }
 
   return '' unless $text;
+
+  if ($context->{GenPDFPrincePluginEnabled} || 
+      $context->{GenPDFWebkitPluginEnabled} ||
+      $context->{PdfPluginEnabled}) {
+    # SMELL: how do we detect GenPDFAddOn...see also getPdfUrl
+    $context->{can_generate_pdf} = 1;
+  }
 
   # params used by all actions
   my $actionParams = ();
@@ -99,7 +108,7 @@ sub render {
   $actionParams->{isRestrictedAction} = () if $gotAccess;
 
   # disable registration
-  unless (Foswiki::Func::getContext()->{registration_enabled}) {
+  unless ($context->{registration_enabled}) {
     $actionParams->{isRestrictedAction}{'register'} = 1;
   }
 
@@ -187,7 +196,7 @@ sub renderEdit {
   return '' if (defined($context) && !Foswiki::Func::getContext()->{$context});
 
   my $result = '';
-  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::ThemeEngine::getThemeEngine();
+  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
 
   if ($params->{isRestrictedAction}{'edit'}) {
     return '' if $params->{hiderestricted};
@@ -224,7 +233,7 @@ sub getEditUrl {
 sub getRestoreUrl {
   my $params = shift;
 
-  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::ThemeEngine::getThemeEngine();
+  my $themeEngine = Foswiki::Plugins::NatSkinPlugin::getThemeEngine();
 
   my $rev;
   if ($themeEngine->{skinState}{"history"}) {

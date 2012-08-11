@@ -16,6 +16,7 @@ The result of a select can be stored under a specific id to reuse it in further 
 
 | *Parameter* | *Description* | *Default* |
 | query | sql statement to be executed | | 
+| params | comma separated list of bind parameters for placeholders (?) in query | | 
 | database | connection to be used | first database in connection pool |
 | id | identifies the query result to be reusable via SQLFORMAT | |
 | decode | values are "url" or "entity"; specifies the encoding of the query before being executed | none |
@@ -74,6 +75,42 @@ $Foswiki::cfg{SqlPlugin}{Databases} = [
 
 This setting configures three connections - known under the ids =mysql=, =sqlite= and =csv= using different drivers.
 The first sets up a connection to a mysql database called "foswiki" on the localhost server, protected by the given user and password settings. The second connects to an sqlite database stored at the given path; the third one connects to a database of CSV files stored at the giveh directory. Note, you will need to make sure that the specified driver in the =dsn= parameter is installed on your system. Please look up the individual driver documentation how to specify a correct value for =dsn=. 
+
+---++ Securing database access
+
+Underneath the database connections section in =[[%SCRIPTURLPATH{configure}%][configure]]=, there is a section to configure access control.
+Access can be restricted by wiki user / group, by a 'whitelist' of permitted queries, or both.  If no access control is specified for
+a database connection, then all access is allowed for that connection.
+
+Here is an example.  Note that the first element of the =queries= list is a regular expression, and
+the rest of the entries are literal string matches.
+
+<verbatim>
+[
+  {
+    'who' => 'KipLubliner',
+    'id' => 'mysql',
+    'queries' => [
+      'SELECT [^;]+',
+      'UPDATE TEAM SET TM_NAME = ? WHERE TMID = ?',
+      'UPDATE PLAYER SET PL_NICKNAME = ?, PL_FIRSTNAME = ?, PL_LASTNAME = ?, PL_TEAM = ? WHERE PLID = ?',
+      'INSERT INTO TEAM( TM_NAME ) VALUES (?)',
+      'INSERT INTO PLAYER( PL_NICKNAME, PL_FIRSTNAME, PL_LASTNAME, PL_TEAM ) VALUES (?, ?, ?, ?)'
+    ]
+  }
+];
+</verbatim>
+
+See the integrated documentation on the configure screen for more details.
+
+---++ Plugin Upgrade Notes
+
+---+++ 1.03
+
+When the database parameter to %<nop>SQL% is present and that value was not present in the =configure= map, 
+previous versions would use the first value listed by default.  Starting with 1.03, the SQL macro call will fail instead.
+The behavior when the database parameter is omitted is unchanged.
+
 ---++ Installation Instructions
 
 %$INSTALL_INSTRUCTIONS%
@@ -84,11 +121,13 @@ The first sets up a connection to a mysql database called "foswiki" on the local
 -->
 
 |  Author(s): | Foswiki:MichaelDaum|
-|  Copyright: | &copy; 2009-2010 Michael Daum http://michaeldaumconsulting.com |
+|  Copyright: | &copy; 2009-2010 Michael Daum http://michaeldaumconsulting.com 2012 Kip Lubliner |
 |  License: | [[http://www.gnu.org/licenses/gpl.html][GPL (Gnu General Public License)]] |
 |  Version: | %$VERSION% |
 |  Release: | %$RELEASE% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|  5 Aug 2012:  | (1.03) Fix Foswiki:Tasks/Item12029 - more robust 'database' param handling <br> Foswiki:Tasks/Item12030 - DB errors cause unintended SQL calls <br> Foswiki:Tasks/Item12018 - queries spread across multiple lines <br> Foswiki:Tasks/Item12033 - also log access from API and log access control failures (Foswiki:Main/KipLubliner) |
+|  18 May 2012: | (1.02) Added bind parameters, access control, perl API.  (Foswiki:Main/KipLubliner) |
 |  14 Jun 2010: | removed hard-coded sort of column keys |
 |  Dependencies: | %$DEPENDENCIES% |
 |  Home page: | http://foswiki.org/Extensions/%TOPIC% |

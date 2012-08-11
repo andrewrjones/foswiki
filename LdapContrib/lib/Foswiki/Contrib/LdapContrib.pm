@@ -22,6 +22,7 @@ use Net::LDAP;
 use Net::LDAP::Constant qw(LDAP_SUCCESS LDAP_SIZELIMIT_EXCEEDED LDAP_CONTROL_PAGED);
 use Net::LDAP::Extension::SetPassword;
 use DB_File;
+use Encode ();
 
 use Foswiki::Func ();
 use Foswiki::Plugins ();
@@ -29,7 +30,7 @@ use Foswiki::Plugins ();
 use vars qw($VERSION $RELEASE %sharedLdapContrib);
 
 $VERSION = '$Rev: 4426 (2009-07-03) $';
-$RELEASE = '4.33';
+$RELEASE = '4.43';
 
 =pod
 
@@ -173,6 +174,7 @@ sub new {
 
     normalizeWikiName=>$Foswiki::cfg{Ldap}{NormalizeWikiNames},
     normalizeLoginName=>$Foswiki::cfg{Ldap}{NormalizeLoginNames},
+    caseSensitiveLogin=>$Foswiki::cfg{Ldap}{CaseSensitiveLogin} || 0,
     normalizeGroupName=>$Foswiki::cfg{Ldap}{NormalizeGroupNames},
 
     loginFilter=>$Foswiki::cfg{Ldap}{LoginFilter} || 'objectClass=posixAccount',
@@ -298,9 +300,9 @@ sub getLdapContrib {
 
 =pod
 
----++ connect($login, $passwd) -> $boolean
+---++ connect($dn, $passwd) -> $boolean
 
-Connect to LDAP server. If a $login name and a $passwd is given then a bind is done.
+Connect to LDAP server. If a $dn parameter and a $passwd is given then a bind is done.
 Otherwise the communication is anonymous. You don't have to connect() explicitely
 by calling this method. The methods below will do that automatically when needed.
 
@@ -335,7 +337,8 @@ sub connect {
     $args{"clientcert"} = $this->{tlsClientCert} if $this->{tlsClientCert};
     $args{"clientkey"} = $this->{tlsClientKey} if $this->{tlsClientKey};
     $args{"sslversion"} = $this->{tlsSSLVersion} if $this->{tlsSSLVersion};
-    $this->{ldap}->start_tls(%args);
+    my $msg = $this->{ldap}->start_tls(%args);
+    writeWarning($msg->{errorMessage}) if exists $msg->{errorMessage};
   }
 
   $passwd = $this->toUtf8($passwd) if $passwd;
@@ -476,7 +479,7 @@ sub getCode {
 
 =pod
 
----++ getAccount($login) -> Net::LDAP::Entry object
+---++ getAccount($loginName) -> Net::LDAP::Entry object
 
 Fetches an account entry from the database and returns a Net::LDAP::Entry
 object on success and undef otherwise. Note, the login name is match against
@@ -486,14 +489,17 @@ search using $ldap->{loginFilter} in the subtree defined by $ldap->{userBase}.
 =cut
 
 sub getAccount {
-  my ($this, $login) = @_;
+  my ($this, $loginName) = @_;
 
-  #writeDebug("called getAccount($login)");
-  return undef if $this->{excludeMap}{$login};
+  #writeDebug("called getAccount($loginName)");
+  return undef if $this->{excludeMap}{$loginName};
+
+  # take care of login case
+  $loginName = lc($loginName) unless $this->{caseSensitiveLogin};
 
   my $loginFilter = $this->{loginFilter};
   $loginFilter = "($loginFilter)" unless $loginFilter =~ /^\(.*\)$/;
-  my $filter = '(&'.$loginFilter.'('.$this->{loginAttribute}.'='.$login.'))';
+  my $filter = '(&'.$loginFilter.'('.$this->{loginAttribute}.'='.$loginName.'))';
   my $msg = $this->search(
     filter=>$filter, 
     base=>$this->{userBase}
@@ -1074,6 +1080,7 @@ sub cacheUserFromEntry {
   $loginName = $this->fromUtf8($loginName);
 
   # 2. normalize
+  $loginName = lc($loginName) unless $this->{caseSensitiveLogin};
   $loginName = $this->normalizeLoginName($loginName) if $this->{normalizeLoginName};
   return 0 if $this->{excludeMap}{$loginName};
 
@@ -1184,11 +1191,13 @@ sub cacheUserFromEntry {
 
   if (defined($loginNames->{$loginName})) {
     my $clashDN = $loginNames->{$loginName};
-    if ($clashDN eq '1') {
-      $clashDN = $data->{"U2DN::$loginName"} || '???';
+    if ($clashDN ne $dn) {
+      if ($clashDN eq '1') {
+        $clashDN = $data->{"U2DN::$loginName"} || '???';
+      }
+      writeWarning("$dn clashes with $clashDN on loginName $loginName ... please configure a unique loginName attribute");
+      return 0;
     }
-    writeWarning("$dn clashes with $clashDN on loginName $loginName ... please configure a unique loginName attribute");
-    return 0;
   }
 
   $wikiNames->{$wikiName} = $dn;
@@ -1315,7 +1324,8 @@ sub cacheGroupFromEntry {
     return 0;
   }
 
-  if (defined($data->{"U2W::$groupName"}) || defined($data->{"W2U::$groupName"})) {
+  my $loginName = $this->{caseSensitiveLogin}?$groupName:lc($groupName);
+  if (defined($data->{"U2W::$loginName"}) || defined($data->{"W2U::$groupName"})) {
     my $groupSuffix = '';
     if ($this->{normalizeGroupName}) {
       $groupSuffix = 'Group';
@@ -1351,7 +1361,6 @@ sub cacheGroupFromEntry {
     $innerGroup =~ s/\s+$//o;
     $this->{_groups}{$groupName}{$innerGroup} = 1; # delay til all groups have been fetched
   }
-
 
   # store it
   writeDebug("adding groupName='$groupName', dn=$dn");
@@ -1448,16 +1457,23 @@ sub transliterate {
 
     $string =~ s/\xc3\xa7/c/go; # c cedille 
     $string =~ s/\xc4\x87/c/go; # c acute
+    $string =~ s/\xc4\x8d/c/go; # c caron
     $string =~ s/\xc3\x87/C/go; # C cedille 
     $string =~ s/\xc4\x86/C/go; # C acute
+    $string =~ s/\xc4\x8c/C/go; # C caron
+
+    $string =~ s/\xc4\x8f/d/go; # d caron
+    $string =~ s/\xc4\x8e/D/go; # D caron
 
     $string =~ s/\xc3\xa8/e/go; # e grave
     $string =~ s/\xc3\xa9/e/go; # e acute
     $string =~ s/\xc3\xaa/e/go; # e circumflex
     $string =~ s/\xc3\xab/e/go; # e uml
+    $string =~ s/\xc4\x9b/e/go; # e caron
 
     $string =~ s/\xc4\x99/e/go; # e ogonek
     $string =~ s/\xc4\x98/E/go; # E ogonek
+    $string =~ s/\xc4\x9a/E/go; # E caron
 
     $string =~ s/\xc3\xb2/o/go; # o grave
     $string =~ s/\xc3\xb3/o/go; # o acute
@@ -1479,19 +1495,31 @@ sub transliterate {
     $string =~ s/\xc3\xba/u/go; # u acute
     $string =~ s/\xc3\xbb/u/go; # u circumflex
     $string =~ s/\xc3\xbc/ue/go; # u uml
+    $string =~ s/\xc5\xaf/u/go; # u ring above
 
     $string =~ s/\xc3\x99/U/go; # U grave
     $string =~ s/\xc3\x9a/U/go; # U acute
     $string =~ s/\xc3\x9b/U/go; # U circumflex
     $string =~ s/\xc3\x9c/Ue/go; # U uml
+    $string =~ s/\xc5\xae/U/go; # U ring above
+
+    $string =~ s/\xc5\x99/r/go; # r caron
+    $string =~ s/\xc5\x98/R/go; # R caron
 
     $string =~ s/\xc3\x9f/ss/go; # sharp s
     $string =~ s/\xc5\x9b/s/go; # s acute
+    $string =~ s/\xc5\xa1/s/go; # s caron
     $string =~ s/\xc5\x9a/S/go; # S acute
+    $string =~ s/\xc5\xa0/S/go; # S caron
+
+    $string =~ s/\xc5\xa5/t/go; # t caron
+    $string =~ s/\xc5\xa4/T/go; # T caron
 
     $string =~ s/\xc3\xb1/n/go; # n tilde
     $string =~ s/\xc5\x84/n/go; # n acute
+    $string =~ s/\xc5\x88/n/go; # n caron
     $string =~ s/\xc5\x83/N/go; # N acute
+    $string =~ s/\xc5\x87/N/go; # N caron
 
     $string =~ s/\xc3\xbe/y/go; # y acute
     $string =~ s/\xc3\xbf/y/go; # y uml
@@ -1502,12 +1530,16 @@ sub transliterate {
     $string =~ s/\xc3\xad/i/go; # i uml
 
     $string =~ s/\xc5\x82/l/go; # l stroke
+    $string =~ s/\xc4\xbe/l/go; # l caron
     $string =~ s/\xc5\x81/L/go; # L stroke
+    $string =~ s/\xc4\xbd/L/go; # L caron
 
     $string =~ s/\xc5\xba/z/go; # z acute
     $string =~ s/\xc5\xb9/Z/go; # Z acute
     $string =~ s/\xc5\xbc/z/go; # z dot
     $string =~ s/\xc5\xbb/Z/go; # Z dot
+    $string =~ s/\xc5\xbe/z/go; # z caron
+    $string =~ s/\xc5\xbd/Z/go; # Z caron
   } else {
     $string =~ s/\xe0/a/go; # a grave
     $string =~ s/\xe1/a/go; # a acute
@@ -1630,10 +1662,13 @@ sub isGroup {
   #writeDebug("called isGroup($wikiName)");
   $data ||= $this->{data};
 
+
   return undef if $this->{excludeMap}{$wikiName};
   return 1 if defined($data->{"GROUPS::$wikiName"});
   return 0 if defined($data->{"W2U::$wikiName"});
-  return 0 if defined($data->{"U2W::$wikiName"});
+
+  my $loginName = lc($wikiName) unless $this->{caseSensitiveLogin};
+  return 0 if defined($data->{"U2W::$loginName"});
 
   unless ($this->{preCache}) {
     $this->checkCacheForGroupName($wikiName, $data);
@@ -1646,20 +1681,21 @@ sub isGroup {
 
 =pod
 
----++ getEmails($login, $data) -> @emails
+---++ getEmails($loginName, $data) -> @emails
 
 fetch emails from LDAP
 
 =cut
 
 sub getEmails {
-  my ($this, $login, $data) = @_;
+  my ($this, $loginName, $data) = @_;
 
+  $loginName = lc($loginName) unless $this->{caseSensitiveLogin};
   $data ||= $this->{data};
 
-  $this->checkCacheForLoginName($login, $data) unless $this->{preCache};
+  $this->checkCacheForLoginName($loginName, $data) unless $this->{preCache};
 
-  my $emails = Foswiki::Sandbox::untaintUnchecked($data->{ "U2EMAIL::" . $login }) || '';
+  my $emails = Foswiki::Sandbox::untaintUnchecked($data->{ "U2EMAIL::" . $loginName }) || '';
   my @emails = split(/\s*,\s*/, $emails);
   return \@emails;
 }
@@ -1744,6 +1780,7 @@ sub getWikiNameOfLogin {
 
   #writeDebug("called getWikiNameOfLogin($loginName)");
 
+  $loginName = lc($loginName) unless $this->{caseSensitiveLogin};
   $data ||= $this->{data};
 
   unless ($this->{preCache}) {
@@ -1827,6 +1864,7 @@ sub getDnOfLogin {
 
   return unless $loginName;
 
+  $loginName = lc($loginName) unless $this->{caseSensitiveLogin};
   $data ||= $this->{data};
 
   return Foswiki::Sandbox::untaintUnchecked($data->{"U2DN::$loginName"});
@@ -1924,12 +1962,12 @@ interval (default every 24h). See the LdapContrib settings.
 
 sub checkCacheForLoginName {
   my ($this, $loginName, $data) = @_;
-  my %unknownNames = ();
   
   return 0 unless($loginName);
 
   #writeDebug("called checkCacheForLoginName($loginName)");
 
+  $loginName = lc($loginName) unless $this->{caseSensitiveLogin};
   $data ||= $this->{data};
 
   return 1 if $data->{"U2W::$loginName"};
@@ -1937,8 +1975,7 @@ sub checkCacheForLoginName {
   # If we are not in precache mode we need to check if the user has not yet been unsuccessfully lookedup in LDAP
   # To avoid excessive useless queries for the same non existing user
   unless ($this->{preCache}) {
-    %unknownNames = map {$_ => 1} @{$this->getAllUnknownUsers($data)};
-    if (defined($unknownNames{$loginName})) {
+    if ($this->isUnknownUser($loginName, $data)) {
       return 0;
     }
   }
@@ -2074,30 +2111,30 @@ Insert a new user in the list of unknown users that should not be lookedup in LD
 
 sub addIgnoredUser {
   my ($this, $loginName, $data) = @_;
-  my %unknownNames = ();
 
-  %unknownNames = map {$_ => 1} @{$this->getAllUnknownUsers($data)};
-  $unknownNames{$loginName} = 1;
-  $data->{UNKWNUSERS} = join(',', keys %unknownNames);
+  $data ||= $this->{data};
+
+  $data->{UNKWNUSERS} .= ',' . $loginName
+    unless $this->isUnknownUser($loginName, $data);
 }
 
 =pod 
 
----++ getAllUnknownUsers($data) -> \@array
+---++++ isUnknownUser($loginName, $data) -> $boolean
 
-returns a list of all unknown users that should not be relookedup in LDAP
+returns 1 if $loginName is an unknown user that should not be relookedup in LDAP
 
 =cut
 
-sub getAllUnknownUsers {
-  my ($this, $data) = @_;
+sub isUnknownUser {
+  my ($this, $loginName, $data) = @_;
 
   $data ||= $this->{data};
 
-  my $wikiNames = Foswiki::Sandbox::untaintUnchecked($data->{UNKWNUSERS}) || '';
-  my @wikiNames = split(/\s*,\s*/,$wikiNames);
-  return \@wikiNames;
+  my $names = Foswiki::Sandbox::untaintUnchecked($data->{UNKWNUSERS}) || '';
+  return $names =~ /\b$loginName\b/;
 }
+
 
 =pod 
 
@@ -2109,33 +2146,28 @@ Insert a new group in the list of unknown groups that should not be lookedup in 
 
 sub addIgnoredGroup {
   my ($this, $groupName, $data) = @_;
-  my %unknownNames = ();
-  
 
   $data ||= $this->{data};
 
-  %unknownNames = map {$_ => 1} @{$this->getAllUnknownGroups($data)};
-  $unknownNames{$groupName} = 1;
-  $data->{UNKWNGROUPS} = join(',', keys %unknownNames);
+  $data->{UNKWNGROUPS} .= ',' . $groupName
+    unless $this->isUnknownGroup($groupName, $data);
 }
-
 
 =pod 
 
----++ getAllUnknownGroups($data) -> \@array
+---++++ isUnknownGroup($groupName, $data) -> $boolean
 
-returns a list of all unknown groups that should not be relookedup in LDAP
+returns 1 if $groupName is an unknown groups that should not be relookedup in LDAP
 
 =cut
 
-sub getAllUnknownGroups {
-  my ($this, $data) = @_;
+sub isUnknownGroup {
+  my ($this, $groupName, $data) = @_;
 
   $data ||= $this->{data};
 
   my $wikiNames = Foswiki::Sandbox::untaintUnchecked($data->{UNKWNGROUPS}) || '';
-  my @wikiNames = split(/\s*,\s*/,$wikiNames);
-  return \@wikiNames;
+  return $wikiNames =~ /\b$groupName\b/;
 }
 
 =pod
@@ -2151,7 +2183,6 @@ This happens when the precache mode is off. See the LdapContrib settings.
 
 sub checkCacheForGroupName {
   my ($this, $groupName, $data) = @_;
-  my %unknownNames = ();
 
   #writeDebug("called checkCacheForGroupName($groupName)");
 
@@ -2159,8 +2190,7 @@ sub checkCacheForGroupName {
 
   # Skip lookup if group was already not found in LDAP since last cache expiration
   unless ($this->{preCache}) {
-    %unknownNames = map { $_ => 1 } @{ $this->getAllUnknownGroups($data) };
-    if (defined($unknownNames{$groupName})) {
+    if ($this->isUnknownGroup($groupName, $data)) {
       return 0;
     }
   }
@@ -2220,9 +2250,9 @@ sub checkCacheForGroupName {
           if (!$this->{preCache} && $member =~ /$this->{groupBase}/i) {
             my $innerGroupName = $member;
             $innerGroupName =~ s/$this->{groupBase}//o;
-            $innerGroupName =~ s/$this->{groupAttribute}=//o;
+            $innerGroupName =~ s/$this->{groupAttribute}=//oi;
             $innerGroupName =~ s/^,+//o;
-            $innerGroupName =~ s/,+$//o;
+            $innerGroupName =~ ($this->{UserScope} eq 'sub' || $this->{GroupAttribute} eq 'sub') ? s/,.*$//o : s/,+$//o;
 
             # Smell: this may not be reliable and may work only with membersindirection. TO CHECK
             if ($innerGroupName ne "" && $this->isGroup($innerGroupName, $data)) {
@@ -2294,9 +2324,7 @@ sub getGroup {
 
 ---++ fromUtf8($string) -> $string
 
-Wrapper to use Unicode::MapUTF8 for Perl < 5.008
-and Encode for later versions.
-[adopted from <nop>I18N.pm]
+recode strings coming from ldap to the site's character set
 
 =cut
 
@@ -2306,31 +2334,14 @@ sub fromUtf8 {
   my $charset = $Foswiki::cfg{Site}{CharSet};
   return $utf8string if $charset =~ /^utf-?8$/i;
 
-  if ($] < 5.008) {
-
-    # use Unicode::MapUTF8 for Perl older than 5.8
-    require Unicode::MapUTF8;
-    if (Unicode::MapUTF8::utf8_supported_charset($charset)) {
-      return Unicode::MapUTF8::from_utf8({ -string => $utf8string, -charset => $charset });
-    } else {
-      $this->writeWarning('Conversion from $encoding no supported, ' . 'or name not recognised - check perldoc Unicode::MapUTF8');
-      return $utf8string;
-    }
+  my $encoding = Encode::resolve_alias($charset);
+  if (not $encoding) {
+    $this->writeWarning('Conversion to "' . $charset . '" not supported, or name not recognised - check ' . '"perldoc Encode::Supported"');
+    return $utf8string;
   } else {
 
-    # good Perl version, just use Encode
-    require Encode;
-    import Encode;
-    my $encoding = Encode::resolve_alias($charset);
-    if (not $encoding) {
-      $this->writeWarning('Conversion to "' . $charset . '" not supported, or name not recognised - check ' . '"perldoc Encode::Supported"');
-      return $utf8string;
-    } else {
-
-      # converts to $charset, generating HTML NCR's when needed
-      my $octets = Encode::decode('utf-8', $utf8string);
-      return Encode::encode($encoding, $octets, &Encode::FB_HTMLCREF());
-    }
+    my $octets = Encode::decode('utf-8', $utf8string);
+    return Encode::encode($encoding, $octets, &Encode::FB_HTMLCREF());
   }
 }
 
@@ -2338,9 +2349,7 @@ sub fromUtf8 {
 
 ---++ toUtf8($string) -> $utf8string
 
-Wrapper to use Unicode::MapUTF8 for Perl < 5.008
-and Encode for later versions.
-[adopted from <nop>I18N.pm]
+encode strings coming from the site to be used talking to the ldap directory
 
 =cut
 
@@ -2350,29 +2359,13 @@ sub toUtf8 {
   my $charset = $Foswiki::cfg{Site}{CharSet};
   return $string if $charset =~ /^utf-?8$/i;
 
-  if ($] < 5.008) {
-
-    # use Unicode::MapUTF8 for Perl older than 5.8
-    require Unicode::MapUTF8;
-    if (Unicode::MapUTF8::utf8_supported_charset($charset)) {
-      return Unicode::MapUTF8::to_utf8({ -string => $string, -charset => $charset });
-    } else {
-      $this->writeWarning('Conversion from $encoding no supported, ' . 'or name not recognised - check perldoc Unicode::MapUTF8');
-      return $string;
-    }
+  my $encoding = Encode::resolve_alias($charset);
+  if (not $encoding) {
+    $this->writeWarning('Conversion to "' . $charset . '" not supported, or name not recognised - check ' . '"perldoc Encode::Supported"');
+    return undef;
   } else {
-
-    # good Perl version, just use Encode
-    require Encode;
-    import Encode;
-    my $encoding = Encode::resolve_alias($charset);
-    if (not $encoding) {
-      $this->writeWarning('Conversion to "' . $charset . '" not supported, or name not recognised - check ' . '"perldoc Encode::Supported"');
-      return undef;
-    } else {
-      my $octets = Encode::decode($encoding, $string, &Encode::FB_PERLQQ());
-      return Encode::encode('utf-8', $octets);
-    }
+    my $octets = Encode::decode($encoding, $string, &Encode::FB_PERLQQ());
+    return Encode::encode('utf-8', $octets);
   }
 }
 

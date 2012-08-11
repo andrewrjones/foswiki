@@ -1,0 +1,59 @@
+%{<verbatim class="tml">
+===================================================
+	Base Skin topic template
+	Defines the topic controls in a horizontal bar above the topic
+===================================================
+}%%TMPL:DEF{"controls:topicactions"}%<ul class='foswikiControlsSecondary'>                
+    <li class='foswikiDropdownToggle'>
+        <a href='#'>%MAKETEXT{"View"}%</a>
+        <ul class='foswikiDropdownMenu foswikiPullRight'>
+            <li><p>%MAKETEXT{"Topic info"}%</p></li>
+            <li><a href='#'>%MAKETEXT{"Wiki text"}%</a></li>
+            <li><a href='#'>%MAKETEXT{"Revision history"}%</a></li>
+            <li class='foswikiMenuDivider'></li>
+            <li><p>%MAKETEXT{"Connections"}%</p></li>
+            <li><a href='#'>%MAKETEXT{"Topics linking here"}%</a></li>
+            <li><a href='#'>%MAKETEXT{"Child topics"}%</a></li>
+            <li class='foswikiMenuDivider'></li>
+            <li><p>%MAKETEXT{"Export"}%</p></li>
+            <li><a href='#'>%MAKETEXT{"Print"}%</a></li>
+            <li><a href='#'>%MAKETEXT{"PDF"}%</a></li>
+        </ul>
+    </li>
+    <li class='foswikiDropdownToggle'>
+        %TMPL:P{"edit_or_create"}%
+        <ul class='foswikiDropdownMenu foswikiPullRight'>
+            <li>%TMPL:P{"edit_or_create"}%</li>
+			<li>%TMPL:P{"raw_edit_link"}%</li>
+			<li><a href='#'>%MAKETEXT{"Attach files or images"}%</a></li>
+			<li class='foswikiMenuDivider'></li>
+			<li><p>%MAKETEXT{"Data & settings"}%</p></li>
+			<li>%TMPL:P{"edit_formdata_link"}%</li>
+			<li><a href='#'>%MAKETEXT{"Edit topic settings"}%</a></li>
+			<li><a href='#'>%MAKETEXT{"Set parent topic"}%</a></li>
+			<li class='foswikiMenuDivider'></li>
+			<li><p>%MAKETEXT{"Manage"}%</p></li>
+			<li><a href='#'>%MAKETEXT{"Restore topic"}%</a></li>
+			<li><a href='#'>%MAKETEXT{"Rename topic"}%</a></li>
+			<li><a href='#'>%MAKETEXT{"Move to different Web"}%</a></li>
+			<li><a href='#'>%MAKETEXT{"Move to trash"}%</a></li>
+        </ul>
+    </li>
+    <li class='foswikiDropdownToggle'>
+        <a href='#'>%ICON{"cog"}%</a>
+        <ul class='foswikiDropdownMenu foswikiPullRight'>
+            <li><p>%MAKETEXT{"Display"}%</p></li>
+            <li><a href='#' class='foswikiDisplayTight'>%MAKETEXT{"Tight"}%<img src='%PUBURLPATH%/%SYSTEMWEB%/BaseSkin/controls-icon-check.png' /></a></li>
+            <li><a href='#' class='foswikiDisplayCosy'>%MAKETEXT{"Cosy"}%<img src='%PUBURLPATH%/%SYSTEMWEB%/BaseSkin/controls-icon-check.png' /></a></li>
+            <li><a href='#' class='foswikiDisplayRoomy'>%MAKETEXT{"Roomy"}%<img src='%PUBURLPATH%/%SYSTEMWEB%/BaseSkin/controls-icon-check.png' /></a></li>
+        </ul>
+    </li>
+</ul>
+<ul class='foswikiControls'>
+    <li class='foswikiTopicActionTitle'>
+        <noautolink>%TOPIC%</noautolink>
+    </li>
+</ul>
+%TMPL:END%%{
+===================================================
+</verbatim>}%

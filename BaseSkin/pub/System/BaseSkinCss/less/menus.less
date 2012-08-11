@@ -1,0 +1,262 @@
+/*
+ * MENU ELEMENTS
+ * -------------------------------------------------------------------------- */
+
+.foswikiBar {
+
+	form {
+		display: inline;
+	}
+	ul {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+	}
+}
+
+.foswikiTopBar {
+	z-index: 1;
+	border: none;
+	height: auto;
+	
+	// padding is set in screensizes
+    
+	.foswikiLogo {			
+        padding: 0 15px 0 0;
+
+        a {
+            background-repeat: no-repeat;
+            background-color: transparent;
+            display: inline-block;
+            padding: 0;
+            margin: 0;
+            float: left;
+            text-indent: -1234em;
+        }
+    }	
+}
+
+.foswikiControls,
+.foswikiControlsSecondary,
+.foswikiNavigation,
+.foswikiNavigationSecondary {
+    
+    > li {
+        float: left;
+        vertical-align: middle;
+        padding: 0 @fw_button_spacing 0 0;
+
+        > a,
+        > .foswikiRequiresChangePermission > a {            
+            .fw_btn(); 
+            display: inline-block;
+            text-decoration: none;
+            padding: @fw_button_padding_top @fw_button_padding_side @fw_button_padding_bottom @fw_button_padding_side;
+            .fw_border-radius(0);
+            border: none;
+            
+            .foswikiCaret {
+                margin-top: -3px;
+            }
+        }
+        
+        ul.foswikiDropdownMenu {
+           	padding: @fw_dropdown_extra_spacing 0;
+        }
+        
+        &:hover {
+            // reveal menu
+            ul {
+                display: block;
+                z-index: @zindexDropdown;
+            }
+        }
+        
+        > a,
+        > .foswikiRequiresChangePermission > a {
+            
+            &.nolabel {
+                padding-left: 1px;
+                padding-right: 6px;
+            }
+            img {
+                vertical-align: text-top;
+            }
+        }
+    }
+
+    .foswikiLarge {
+        padding: .45em 0;
+        margin: 0;
+    }
+    
+    &.foswikiButtonGroup {
+        > li {
+            margin: 0;
+            padding: 0;
+        }
+    }
+}
+
+.foswikiControls,
+.foswikiNavigation {
+    float: left;
+    
+    > li {
+        > ul {
+            left: 0;
+        }
+    }
+    
+    &.foswikiButtonGroup {
+        margin: 0 @fw_button_spacing 0 0;
+    }
+}
+
+.foswikiControlsSecondary,
+.foswikiNavigationSecondary {
+    float: right;
+    
+    > li {
+        padding: 0 0 0 @fw_button_spacing;
+        
+        > ul {
+            right: 0;
+        }
+    }
+    
+    &.foswikiButtonGroup {
+        margin: 0 0 0 @fw_button_spacing;
+    }
+}
+
+.foswikiNavigation,
+.foswikiNavigationSecondary {
+     > li {
+        > a,
+        > .foswikiRequiresChangePermission > a {
+            font-weight: bold;
+        }
+    }
+}
+
+.foswikiNavigation {
+    > li {
+        > a,
+        > .foswikiRequiresChangePermission > a {
+            padding: @fw_button_padding_top 0 @fw_button_padding_bottom 0;
+            margin: 0 @fw_button_padding_side 0 0;
+        }
+    }
+}
+
+.foswikiNavigationSecondary {
+     > li {
+        > a,
+        > .foswikiRequiresChangePermission > a {
+            padding: @fw_button_padding_top 0 @fw_button_padding_bottom 0;
+            margin: 0 0 0 @fw_button_padding_side;
+        }
+    }
+}
+
+.foswikiMenuDivider {
+	.fw_nav-divider();
+}
+
+.foswikiCaret {
+	display: inline-block;
+	width: 0;
+	height: 0;
+	vertical-align: middle;
+	border-left:  4px solid transparent;
+	border-right: 4px solid transparent;
+	border-top:   4px solid @black; // final color is set in colors.less
+	content: "";
+}
+
+// Place the caret
+.foswikiCaret {
+	margin-top: 9px;
+	margin-left: 4px;
+}
+
+
+/*
+ * DROPDOWN MENUS
+ * -------------------------------------------------------------------------- */
+
+// The dropdown menu (ul)
+// ----------------------
+.foswikiDropdownMenu {
+	position: absolute;
+	top: 94%; // cover the bottom of the button
+	left: 0;
+	z-index: @zindexDropdown;
+	float: left;
+	display: none; // none by default, but block on menu button hover
+	min-width: 180px;
+	margin: 0; // override default ul
+	list-style: none;
+
+	border-style: solid;
+	border-width: 1px;
+	
+	// Aligns the dropdown menu to right
+	&.foswikiPullRight {
+		right: 0;
+		left: auto;
+	}
+	
+	// Dividers (basically an hr) within the dropdown
+	.foswikiDivider {
+		.fw_nav-divider();
+	}
+	
+	// Links within the dropdown menu
+	p,
+	span,
+	a {
+		display: block;
+		padding: 3px 10px; 
+		margin: 0;
+		clear: both;
+		font-weight: normal;
+		white-space: nowrap;
+	}
+	
+	span.foswikiRequiresChangePermission,
+	span.foswikiAccessKey {
+	    display: inline;
+	    padding: 0;
+	    clear: none;
+	}
+	
+	a > img {
+	    margin: 0 5px 0 0;
+	    vertical-align: text-bottom;
+	}
+	
+	a:hover {
+		text-decoration: none;
+	}
+	
+	p {
+		text-transform: uppercase;
+	}
+	
+}
+
+// Hover state within menu
+// -----------
+.foswikiDropdownMenu li > a:hover,
+.foswikiDropdownMenu .active > a,
+.foswikiDropdownMenu .active > a:hover {
+	text-decoration: none;
+}
+
+// Right aligned dropdowns
+.foswikiPullRight .foswikiDropdownMenu {
+	left: auto;
+	right: 0;
+}

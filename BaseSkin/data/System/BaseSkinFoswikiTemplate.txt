@@ -9,6 +9,7 @@
 ===================================================
 }%%TMPL:INCLUDE{"foswiki"}%
 %TMPL:INCLUDE{"zoneformats"}%
+%TMPL:INCLUDE{"topicactions"}%
 %TMPL:INCLUDE{"baseskinwebtopbar"}%
 %TMPL:INCLUDE{"baseskinwebbottombar"}%
 %TMPL:INCLUDE{"viewtopicactionbuttons"}%%{
@@ -107,7 +108,7 @@
 ---------------------------------------------------
 }%%TMPL:DEF{"head:meta:description"}%%TOPIC%%TMPL:END%%{
 ---------------------------------------------------
-}%%TMPL:DEF{"head:windowtitle:separator"}% | %TMPL:END%%{
+}%%TMPL:DEF{"head:windowtitle:separator"}% / %TMPL:END%%{
 ---------------------------------------------------
 }%%TMPL:DEF{"head:windowtitle"}%<title>%TMPL:P{"titleaction"}% <nop>%BASETOPIC%%TMPL:P{"head:windowtitle:separator"}%%BASEWEB%%TMPL:P{"head:windowtitle:separator"}%<nop>%WIKITOOLNAME%</title>%TMPL:END%%{
 ---------------------------------------------------
@@ -135,7 +136,7 @@
 		- content
 		- bottom bar
 ---------------------------------------------------
-}%%TMPL:DEF{"page"}%<div class='foswikiPage'>%TMPL:P{"topbar"}%%TMPL:P{"main"}%%TMPL:P{"bottombar"}%</div>%TMPL:END%%{
+}%%TMPL:DEF{"page"}%<div class='foswikiPage'><header>%TMPL:P{"topbar"}%%TMPL:P{"controls"}%</header>%TMPL:P{"main"}%%TMPL:P{"bottombar"}%</div>%TMPL:END%%{
 ---------------------------------------------------
 	"main"
 		- controls
@@ -143,7 +144,7 @@
 		- meta
 ---------------------------------------------------
 }%%TMPL:DEF{"main"}%<div class='foswikiMain'>
-%TMPL:P{"controls"}%<div class='foswikiTopic'>
+<div class='foswikiTopic'>
 %TMPL:P{"topic"}%</div>
 %TMPL:P{"meta"}%</div>%TMPL:END%%{
 ---------------------------------------------------
@@ -157,83 +158,21 @@
 %TMPL:P{"topic:after"}%<span id='PageBottom'></span>
 %TMPL:END%%{
 ---------------------------------------------------
-	"content"
+	content
 		In templates always define the content DEF.
 ---------------------------------------------------
 }%%TMPL:DEF{"content"}%%TEXT%%TMPL:END%%{
 ---------------------------------------------------
-	"controls"
+	controls
 		- topic actions
 		If you need to have the controls fixed to the browser window: surround contents with <div class='foswikiMakeSticky'>...</div>
+		
+	controls:topicactions: topic actions buttons are imported from separate template BaseSkinTopicActionsTemplate
 ---------------------------------------------------
-}%%TMPL:DEF{"controls"}%%TMPL:P{"startsection" class="foswikiBar foswikiTopicActions foswikiColorNavigationSecondary foswikiShadow foswikiClearfix"}%
-	%TMPL:P{"breadcrumb"}%
-	%TMPL:P{"controls:topicactions"}%
+}%%TMPL:DEF{"controls"}%%TMPL:P{"startsection" class="foswikiBar foswikiTopicActions foswikiColorTopicActions foswikiClearfix"}%
+%TMPL:P{"controls:topicactions"}%
 <div class='foswikiClear'></div>
 %TMPL:P{"endsection"}%%TMPL:END%%{
----------------------------------------------------
-	Controls: topic actions
-		Implemented in sub skin baseeditable - see BaseeditableSkinFoswikiTemplate
----------------------------------------------------
-}%%TMPL:DEF{"controls:topicactions"}%<div data-dropdown='dropdown' data-minpadding='2'>
-	<div class='foswikiTopicActionButtons'>
-		<ul class='foswikiNavigationSecondary foswikiButtonGroup'>
-			<li>%TMPL:P{"edit_or_create"}%</li>
-			<li class='dropdown foswikiSecondaryDropdown'>
-				<a href='#' class='menu nolabel'></a>
-				<ul class='dropdown-menu'>
-					<li><p>Topic</p></li>
-					<li>%TMPL:P{"edit_or_create"}%</li>
-					<li>%TMPL:P{"raw_edit_link"}%</li>
-					<li><a href='#'>Attach files or images</a></li>
-					<li class='divider'></li>
-					<li><p>Data &amp; settings</p></li>
-					<li><a href='#'>Edit topic data</a></li>
-					<li><a href='#'>Edit topic settings</a></li>
-					<li><a href='#'>Select parent topic</a></li>
-					<li class='divider'></li>
-					<li><p>Manage</p></li>
-					<li><a href='#'>Restore topic</a></li>
-					<li><a href='#'>Rename topic</a></li>
-					<li><a href='#'>Move to different Web</a></li>
-					<li><a href='#'>Move to trash</a></li>
-				</ul>
-			</li>
-		</ul>
-		<ul class='foswikiNavigationSecondary'>
-			<li>
-				<a href='#' class='menu'>Info</a>
-				<ul class='menu-dropdown'>
-					<li><p>Topic</p></li>
-					<li><a href='#'>View wiki text</a></li>
-					<li><a href='#'>Revision history</a></li>
-					<li class='divider'></li>
-					<li><p>Connections</p></li>
-					<li><a href='#'>Topics that link to here</a></li>
-					<li><a href='#'>Child topics</a></li>
-				</ul>
-			</li>
-		</ul>
-		<ul class='foswikiNavigationSecondary'>
-			<li>
-				<a href='#' class='menu'>%ICON{"cog"}%</a>
-				<ul class='menu-dropdown'>
-					<li><p>Export</p></li>
-					<li><a href='#'>Print</a></li>
-					<li><a href='#'>PDF</a></li>
-					<li class='divider'></li>
-					<li><p>Display</p></li>
-					<li><a href='#' class='foswikiDisplayTight'>%MAKETEXT{"Tight"}%<img src='%PUBURLPATH%/%SYSTEMWEB%/BaseSkin/controls-icon-check.png' /></a></li>
-					<li><a href='#' class='foswikiDisplayCosy'>%MAKETEXT{"Cosy"}%<img src='%PUBURLPATH%/%SYSTEMWEB%/BaseSkin/controls-icon-check.png' /></a></li>
-					<li><a href='#' class='foswikiDisplayRoomy'>%MAKETEXT{"Roomy"}%<img src='%PUBURLPATH%/%SYSTEMWEB%/BaseSkin/controls-icon-check.png' /></a></li>
-				</ul>
-			</li>
-		</ul><!--
-		<ul class='foswikiNavigationSecondary foswikiButtonGroup'>
-			<li>%TMPL:P{"subscribe_link"}%</li>
-		</ul>-->
-	</div>
-</div>%TMPL:END%%{
 ---------------------------------------------------
 	"breadcrumb"
 ---------------------------------------------------
@@ -256,7 +195,7 @@
 ---------------------------------------------------
 }%%TMPL:DEF{"breadcrumb:currenttopic"}%<a href='%SCRIPTURL{view}%/%WEB%/%TOPIC%' title='%MAKETEXT{"Topic revision:"}% %REVINFO{format="$rev ($date - $time)"}%'>%TMPL:P{"breadcrumb:topic"}%</a>%TMPL:END%%{
 ---------------------------------------------------
-
+    topicinfo
 ---------------------------------------------------
 }%%TMPL:DEF{"topicinfo"}%%IF{
 	"defined rev"
@@ -273,7 +212,7 @@
 		- id: resource id
 		- requires
 ---------------------------------------------------
-}%%TMPL:DEF{"LIBJS" requires=""}%%ADDTOZONE{
+}%%TMPL:DEF{"LIBJS" requires="" name="%id%"}%%ADDTOZONE{
 	"script"
 	id="%name%"
 	text="<script type='text/javascript' src='%PUBURLPATH%/%SYSTEMWEB%/%id%%FWSRC%.js'></script>"
@@ -286,7 +225,7 @@
 		- id: resource id
 		- requires
 ---------------------------------------------------
-}%%TMPL:DEF{"LIBCSS" requires=""}%%ADDTOZONE{
+}%%TMPL:DEF{"LIBCSS" requires="" name="%id%"}%%ADDTOZONE{
 	"head"
 	id="%name%"
 	text="<link rel='stylesheet' href='%PUBURLPATH%/%SYSTEMWEB%/%id%%FWSRC%.css' />"
@@ -300,7 +239,7 @@
 		- url: file url, must include .css extension
 		- requires
 ---------------------------------------------------
-}%%TMPL:DEF{"CSS" requires=""}%%ADDTOZONE{
+}%%TMPL:DEF{"CSS" requires="" name="%id%"}%%ADDTOZONE{
 	"head"
 	id="%name%"
 	text="$percntFORMAT{
@@ -317,7 +256,7 @@
 		- text: css string, will be written inside <literal> tags
 		- requires
 ---------------------------------------------------
-}%%TMPL:DEF{"INLINE_CSSTEXT" requires=""}%%ADDTOZONE{
+}%%TMPL:DEF{"INLINE_CSSTEXT" requires="" name="%id%"}%%ADDTOZONE{
 	"inline-css"
 	id="%name%"
 	text="<style type='text/css'><literal>%text%</literal></style>"
@@ -330,7 +269,7 @@
 		- url: css URL
 		- requires
 ---------------------------------------------------
-}%%TMPL:DEF{"WEBFONT_CSSFILE" requires=""}%%ADDTOZONE{
+}%%TMPL:DEF{"WEBFONT_CSSFILE" requires="" name="%id%"}%%ADDTOZONE{
 	"webfont-css"
 	id="%name%"
 	text="<link rel='stylesheet' href='%url%' />"
@@ -344,7 +283,7 @@
 		- url: file url, must NOT include .css extension
 		- requires
 ---------------------------------------------------
-}%%TMPL:DEF{"LIBLESS" requires=""}%%ADDTOZONE{
+}%%TMPL:DEF{"LIBLESS" requires="" name="%id%"}%%ADDTOZONE{
 	"head"
 	id="%name%"
 	text="<link rel='stylesheet/less' href='%PUBURLPATH%/%SYSTEMWEB%/%id%%FWSRC%.less' />"
@@ -357,7 +296,7 @@
 		- url: file url, must include .less extension
 		- requires
 ---------------------------------------------------
-}%%TMPL:DEF{"LESS" requires=""}%%ADDTOZONE{
+}%%TMPL:DEF{"LESS" requires="" name="%id%"}%%ADDTOZONE{
 	"head"
 	id="%name%"
 	text="$percntFORMAT{
@@ -371,7 +310,7 @@
 	Note: non-wikiword
 ---------------------------------------------------
 }%%TMPL:DEF{"nonwikiwordwarning"}%<p class='foswikiAllowNonWikiWord'><label><input type='checkbox' class='foswikiCheckbox' name='nonwikiword' %IF{
-	"$'URLPARAM{nonwikiword}'='on'"
+	"$nonwikiword='on'"
 	then="checked='checked'"
 }% />%MAKETEXT{"Allow non <nop>WikiWord for the new topic name"}%</label> %TMPL:P{"nonwikiwordhelp"}%</p>%TMPL:END%%{
 ---------------------------------------------------
@@ -384,6 +323,14 @@
 ---------------------------------------------------
 }%%TMPL:DEF{"nonwikiwordallowed"}%<input type='hidden' name='nonwikiword' value='%URLPARAM{"nonwikiword" default="on"}%" />%TMPL:END%%{
 ---------------------------------------------------
-}%%TMPL:DEF{"nonwikiword"}%%IF{"$HIDE_NON_WIKI_WORD_WARNINGS!='on'" then="$percntTMPL:P{$quotnonwikiwordwarning$quot}$percnt" else="$percntTMPL:P{$quotnonwikiwordallowed$quot}$percnt"}%%TMPL:END%%{
+}%%TMPL:DEF{"nonwikiword"}%%IF{
+	"$HIDE_NON_WIKI_WORD_WARNINGS!='on'" 
+	then="$percntTMPL:P{$quotnonwikiwordwarning$quot}$percnt" 
+	else="$percntTMPL:P{$quotnonwikiwordallowed$quot}$percnt"
+}%%TMPL:END%%{
+---------------------------------------------------
+}%%TMPL:DEF{"LOG_IN"}%%MAKETEXT{"Login"}%%TMPL:END%%{
+---------------------------------------------------
+}%%TMPL:DEF{"LOG_OUT"}%%MAKETEXT{"Logout"}%%TMPL:END%%{
 ===================================================
 </verbatim>}%

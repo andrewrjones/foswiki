@@ -1,0 +1,158 @@
+// TEMP
+
+@white: #fff;
+@btnBackground:                     @white;
+@btnBackgroundHighlight:            darken(@white, 10%);
+@btnBorder:                         darken(@white, 20%);
+
+// Tables
+// -------------------------
+@tableBackground:                   transparent; // overall background-color
+@tableBackgroundAccent:             #f9f9f9; // for striping
+@tableBackgroundHover:              #f5f5f5; // for hover
+@tableBorder:                       #ddd; // table and cell border
+
+// Z-index master list
+// -------------------------
+// Used for a bird's eye view of components dependent on the z-axis
+// Try to avoid customizing these :)
+@zindexDropdown:          1000;
+@zindexPopover:           1010;
+@zindexTooltip:           1020;
+@zindexFixedNavbar:       1030;
+@zindexModalBackdrop:     1040;
+@zindexModal:             1050;
+
+
+// Variables and mixins for Foswiki
+
+@fw_font_family_main: "Helvetica Neue", Helvetica, Arial, sans-serif;
+@fw_font_family_serif: Georgia, "Times New Roman", Times, serif;
+@fw_font_family_code: "Andale Mono", "Courier New", monospace; 
+
+@fw_basefont: 13;
+@fw_strand1_init: @fw_basefont;
+@fw_strand2_init: 1.3333333333333333 * @fw_basefont;
+
+@fw_ratio_golden: 1.618;			// 1.618:1
+@fw_ratio_musical_fifth: 1.5;		// 3:2
+@fw_ratio_musical_fourth: 1.333;	// 4:3
+@fw_ratio_musical_diatonic_tritone: 45/32;	// 45:32
+@fw_ratio_musical_minor_sixth: 8/5; // 8:5
+// for other scales: see http://en.wikipedia.org/wiki/Music_and_mathematics
+@fw_ratio: @fw_ratio_musical_diatonic_tritone;
+
+@fw_body_line_height: @fw_ratio_golden * @fw_basefont; // could be a number as well, like 18 (pixels)
+
+@fw_display_roomy: roomy;
+@fw_display_cosy: cosy;
+@fw_display_tight: tight;
+
+@fw_corner_radius_button: 3px;
+@fw_corner_radius_button_large: 5px;
+@fw_corner_radius_block: 0;
+
+@fw_button_padding_top: 3px;
+@fw_button_padding_bottom: 3px;
+@fw_button_padding_side: 9px;
+@fw_button_padding: @fw_button_padding_top @fw_button_padding_side @fw_button_padding_bottom;
+@fw_universal_side_padding: 10px;
+@fw_topbar_height: 48px;
+@fw_topbar_button_height: 32px;
+@fw_topbar_button_padding: (@fw_topbar_height/2 - @fw_body_line_height/2) @fw_universal_side_padding (@fw_topbar_height/2 - @fw_body_line_height/2);
+@fw_button_spacing: 6px;
+@fw_dropdown_extra_spacing: 4px;
+
+// GRID
+// --------------------------------------------------
+
+// Default 940px grid
+// -------------------------
+@fw_gridColumns:             12;
+@fw_gridColumnWidth:         60px;
+@fw_gridGutterWidth:         20px;
+@fw_gridRowWidth:            (@fw_gridColumns * @fw_gridColumnWidth) + (@fw_gridGutterWidth * (@fw_gridColumns - 1));
+
+
+// Fluid grid
+// -------------------------
+@fw_fluidGridColumnWidth:    6.382978723%;
+@fw_fluidGridGutterWidth:    2.127659574%;
+
+
+
+
+// Modular Scale units
+// Using 2 strands to be used interleaved.
+
+@fw_strand1_ratio_1: @fw_strand1_init;
+
+// larger - sizes in pixels
+@fw_strand1_ratio_up_1: @fw_strand1_ratio_1 * @fw_ratio;
+@fw_strand1_ratio_up_2: @fw_strand1_ratio_up_1 * @fw_ratio;
+@fw_strand1_ratio_up_3: @fw_strand1_ratio_up_2 * @fw_ratio;
+@fw_strand1_ratio_up_4: @fw_strand1_ratio_up_3 * @fw_ratio;
+@fw_strand1_ratio_up_5: @fw_strand1_ratio_up_4 * @fw_ratio;
+@fw_strand1_ratio_up_6: @fw_strand1_ratio_up_5 * @fw_ratio;
+@fw_strand1_ratio_up_7: @fw_strand1_ratio_up_6 * @fw_ratio;
+@fw_strand1_ratio_up_8: @fw_strand1_ratio_up_7 * @fw_ratio;
+@fw_strand1_ratio_up_9: @fw_strand1_ratio_up_8 * @fw_ratio;
+@fw_strand1_ratio_up_10: @fw_strand1_ratio_up_9 * @fw_ratio;
+@fw_strand1_ratio_up_11: @fw_strand1_ratio_up_10 * @fw_ratio;
+@fw_strand1_ratio_up_12: @fw_strand1_ratio_up_11 * @fw_ratio;
+@fw_strand1_ratio_up_13: @fw_strand1_ratio_up_12 * @fw_ratio;
+@fw_strand1_ratio_up_14: @fw_strand1_ratio_up_13 * @fw_ratio;
+@fw_strand1_ratio_up_15: @fw_strand1_ratio_up_14 * @fw_ratio;
+
+// smaller - sizes in pixels
+@fw_strand1_ratio_down_1: @fw_strand1_ratio_1 / @fw_ratio;
+@fw_strand1_ratio_down_2: @fw_strand1_ratio_down_1 / @fw_ratio;
+@fw_strand1_ratio_down_3: @fw_strand1_ratio_down_2 / @fw_ratio;
+
+// strand 2
+
+@fw_strand2_ratio_1: @fw_strand2_init;
+
+// larger - sizes in pixels
+@fw_strand2_ratio_up_1: @fw_strand2_ratio_1 * @fw_ratio;
+@fw_strand2_ratio_up_2: @fw_strand2_ratio_up_1 * @fw_ratio;
+@fw_strand2_ratio_up_3: @fw_strand2_ratio_up_2 * @fw_ratio;
+@fw_strand2_ratio_up_4: @fw_strand2_ratio_up_3 * @fw_ratio;
+@fw_strand2_ratio_up_5: @fw_strand2_ratio_up_4 * @fw_ratio;
+@fw_strand2_ratio_up_6: @fw_strand2_ratio_up_5 * @fw_ratio;
+@fw_strand2_ratio_up_7: @fw_strand2_ratio_up_6 * @fw_ratio;
+@fw_strand2_ratio_up_8: @fw_strand2_ratio_up_7 * @fw_ratio;
+@fw_strand2_ratio_up_9: @fw_strand2_ratio_up_8 * @fw_ratio;
+@fw_strand2_ratio_up_10: @fw_strand2_ratio_up_9 * @fw_ratio;
+@fw_strand2_ratio_up_11: @fw_strand2_ratio_up_10 * @fw_ratio;
+@fw_strand2_ratio_up_12: @fw_strand2_ratio_up_11 * @fw_ratio;
+@fw_strand2_ratio_up_13: @fw_strand2_ratio_up_12 * @fw_ratio;
+@fw_strand2_ratio_up_14: @fw_strand2_ratio_up_13 * @fw_ratio;
+@fw_strand2_ratio_up_15: @fw_strand2_ratio_up_14 * @fw_ratio;
+
+// smaller - sizes in pixels
+@fw_strand2_ratio_down_1: @fw_strand2_ratio_1 / @fw_ratio;
+@fw_strand2_ratio_down_2: @fw_strand2_ratio_down_1 / @fw_ratio;
+@fw_strand2_ratio_down_3: @fw_strand2_ratio_down_2 / @fw_ratio;
+
+// set ratios for common elements
+
+// font sizes
+@fw_size_smallish: 0.9 * @fw_strand1_ratio_1;
+@fw_size_code:     0.9 * @fw_strand1_ratio_1;
+@fw_size_small:    0.86 * @fw_strand1_ratio_1;
+@fw_size_p:        @fw_strand1_ratio_1;
+@fw_size_h6:       @fw_strand1_ratio_1;
+@fw_size_h5:       @fw_strand2_ratio_1;
+@fw_size_h4:       @fw_strand1_ratio_up_1;
+@fw_size_h3:       @fw_strand2_ratio_up_1;
+@fw_size_h2:       @fw_strand1_ratio_up_2;
+@fw_size_h1:       @fw_strand2_ratio_up_2;
+
+// block paddings
+@fw_section_padding_em: 0em + @fw_strand1_ratio_up_3 / @fw_basefont;
+@fw_component_padding_em: 0em + @fw_strand1_ratio_up_1 / @fw_basefont;
+@fw_component_padding_v_em: 0em + @fw_strand1_ratio_up_1 / @fw_basefont;
+@fw_tool_padding_em: 0em + @fw_strand1_ratio_down_2 / @fw_basefont;
+
+

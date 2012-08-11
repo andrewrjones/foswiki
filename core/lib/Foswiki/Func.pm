@@ -306,7 +306,7 @@ sub getExternalResource {
 
 Get the request object. This is a subclass of =Foswiki::Request=. The request
 object can be used to get the parameters passed to the request, either
-via CGI or on the command ine (depending on how the script was called).
+via CGI or on the command line (depending on how the script was called).
 
 A =Foswiki::Request= object is largely compatible with a CPAN:CGI object.
 Most of the time, documentation for that class applies directly to
@@ -408,8 +408,10 @@ during specific phases of processing. For example, each of
 the standard scripts in the 'bin' directory each has a context
 identifier - the view script has 'view', the edit script has 'edit'
 etc. So you can easily tell what 'type' of script your Plugin is
-being called within. The core context identifiers are listed
-in the %SYSTEMWEB%.IfStatements topic. Please be careful not to
+being called within. 
+
+A comprehensive list of core context identifiers used by Foswiki is found in
+%SYSTEMWEB%.IfStatements#Context_identifiers. Please be careful not to
 overwrite any of these identifiers!
 
 Context identifiers can be used to communicate between Plugins, and between
@@ -734,7 +736,7 @@ sub registerMETA {
 
 Get a preferences value for the currently requested context, from the currently request topic, its web and the site.
    * =$key= - Preference name
-   * =$web= - Name of web, optional. if defined, we shortcircuit to the WebPreferences (and its Sitewide defaults)
+   * =$web= - Name of web, optional. If defined, we shortcircuit to WebPreferences (ignoring SitePreferences). This is really only useful for ACLs.
 Return: =$value=  Preferences value; empty string if not set
 
    * Example for preferences setting:
@@ -1171,7 +1173,7 @@ groups. The iterator will return each wiki name in turn (e.g. 'FredBloggs').
 
 Use it as follows:
 <verbatim>
-    my $iterator = Foswiki::Func::eachUser();
+    my $it = Foswiki::Func::eachUser();
     while ($it->hasNext()) {
         my $user = $it->next();
         # $user is a wikiname
@@ -2492,7 +2494,7 @@ sub expandTemplate {
 
 Expand all common =%<nop>VARIABLES%=
    * =$text=  - Text with variables to expand, e.g. ='Current user is %<nop>WIKIUSER%'=
-   * =$topic= - Current topic name, e.g. ='WebNotify'=
+   * =$topic= - Current topic name, optional, e.g. ='WebNotify'=
    * =$web=   - Web name, optional, e.g. ='Main'=. The current web is taken if missing
    * =$meta=  - topic meta-data to use while expanding
 Return: =$text=     Expanded text, e.g. ='Current user is <nop>WikiGuest'=
@@ -2574,7 +2576,7 @@ Render text from TML into XHTML as defined in [[%SYSTEMWEB%.TextFormattingRules]
    * =$topic= - topic name, optional, defaults to web home
 Return: =$text=    XHTML text, e.g. ='&lt;b>bold&lt;/b> and &lt;code>fixed font&lt;/code>'=
 
-NOTE: renderText expects that all %MACROS% have already been expanded - it does not expand them for you.
+NOTE: renderText expects that all %MACROS% have already been expanded - it does not expand them for you (call expandCommonVariables above).
 
 =cut
 
@@ -3152,6 +3154,10 @@ Get an iterator over the list of all the events at the given level
 between =$time= and now. Events are written to the event log using
 =writeEvent=. The Foswiki core will write other events that will
 also be returned.
+
+If the chosen Logger does not support querying the logs, an empty
+iterator will be returned.  The supplied PlainFile and Compatibility loggers
+will return events only if the log files have not been archived.
 
 Events are returned in *oldest-first* order.
 

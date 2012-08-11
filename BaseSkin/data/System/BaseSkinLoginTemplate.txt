@@ -64,9 +64,10 @@ Base Skin topic template
 ---------------------------------------------------
 }%%TMPL:DEF{"usernamestep"}%<div class='foswikiFormStep'>
 	<label for='username' class='foswikiLabel'>%MAKETEXT{"Username"}%</label>
-	<div class='foswikiInputs'>
+	<div class='foswikiFormInputGroup'>
 		%TMPL:P{"usernamefield"}%%TMPL:P{"usernamenote"}%
 	</div>
+	<div class='foswikiClear'></div>
 </div>%TMPL:END%%{
 ---------------------------------------------------
 }%%TMPL:DEF{"usernamefield"}%<input tabindex='1' type='text' class='foswikiInputField foswikiFocus' size='40' name='username' id='username' value='<nop>%URLPARAM{"usernamestep"}%' %TMPL:P{
@@ -84,10 +85,10 @@ Base Skin topic template
 ---------------------------------------------------
 }%%TMPL:DEF{"passwordstep"}%<div class='foswikiFormStep'>
 	<label for='password' class='foswikiLabel'>%MAKETEXT{"Password"}%</label>
-	<div class='foswikiInputs'>
+	<div class='foswikiFormInputGroup'>
 		%TMPL:P{"passwordfield"}%
 	</div>
-	<div class='foswikiInputs'>
+	<div class='foswikiFormInputGroup'>
 		<ul>%TMPL:P{context="can_remember_login" then="rememberbox"}%
 		</ul>
 	</div>
@@ -107,7 +108,7 @@ Base Skin topic template
 	Form submit
 ---------------------------------------------------
 }%%TMPL:DEF{"submitstep"}%<div class='foswikiFormStep'>
-	<div class='foswikiInputs'>
+	<div class='foswikiFormInputGroup'>
 		%TMPL:P{"submit"}%
 	</div>
 </div>%TMPL:END%%{
@@ -117,7 +118,7 @@ Base Skin topic template
 	"seealsostep"
 ---------------------------------------------------
 }%%TMPL:DEF{"seealsostep"}%<div class='foswikiFormStep'>
-	<div class="foswikiInputs">
+	<div class="foswikiFormInputGroup">
 	<span class='foswikiUnvisited'>[[%SCRIPTURLPATH{view}%/%SYSTEMWEB%/ResetPassword?username=%URLPARAM{usernamestep}%][%MAKETEXT{"Can't access your account?"}%]]</span>
 	</div>
 </div>%TMPL:END%%{

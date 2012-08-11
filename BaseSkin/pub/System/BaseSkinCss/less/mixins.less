@@ -1,0 +1,460 @@
+/*
+ * MIXINS
+ * -------------------------------------------------------------------------- */
+
+.fw_em_font_size(@size) {
+	font-size: 0em + (@size / @fw_basefont);
+}
+.fw_em_line_height(@size) {
+	line-height: 0em + (@fw_body_line_height / @size);
+}
+.fw_em_margin_top(@size) {
+	margin-top: 0em + (@fw_body_line_height / @size);
+}
+.fw_em_margin_bottom(@size) {
+	margin-bottom: 0em + (@fw_body_line_height / @size);
+}
+
+.fw_heading_1() {
+	line-height: 1;
+	.fw_em_font_size(@fw_size_h1);
+	.fw_em_margin_top(@fw_size_h1);
+	.fw_em_margin_bottom(@fw_size_h1);
+}
+.fw_heading_2() {
+	line-height: 1;
+	.fw_em_font_size(@fw_size_h2);
+	.fw_em_margin_top(@fw_size_h2);
+	.fw_em_margin_bottom(@fw_size_h2);
+}
+.fw_heading_3() {
+	line-height: 1;
+	.fw_em_font_size(@fw_size_h3);
+	.fw_em_margin_top(@fw_size_h3);
+	.fw_em_margin_bottom(@fw_size_h3);
+}
+.fw_heading_4() {
+	line-height: 1;
+	.fw_em_font_size(@fw_size_h4);
+	.fw_em_margin_top(@fw_size_h4);
+	.fw_em_margin_bottom(@fw_size_h4);
+}
+.fw_heading_5() {
+	line-height: 1;
+	.fw_em_font_size(@fw_size_h5);
+	.fw_em_margin_top(@fw_size_h5);
+	.fw_em_margin_bottom(@fw_size_h5);
+}
+.fw_heading_6() {
+	line-height: 1;
+	.fw_em_font_size(@fw_size_h6);
+	.fw_em_margin_top(@fw_size_h6);
+	.fw_em_margin_bottom(@fw_size_h6);
+}
+.fw_type_p() {
+	.fw_em_line_height(@fw_size_p);
+	.fw_em_font_size(@fw_size_p);
+}
+.fw_block_p() {
+	.fw_em_margin_top(@fw_size_p);
+	.fw_em_margin_bottom(@fw_size_p);
+}
+
+.fw_section_padding (@display) when (@display = roomy) {
+	@padding: 0em + @fw_strand2_ratio_up_2 / @fw_basefont;
+	padding-top: @padding;
+	padding-bottom: @padding;
+}
+.fw_section_padding (@display) when (@display = cosy) {
+	@padding: 0em + @fw_strand1_ratio_up_2 / @fw_basefont;
+	padding-top: @padding;
+	padding-bottom: @padding;
+}
+.fw_section_padding (@display) when (@display = tight) {
+	@padding: 0em + @fw_strand1_ratio_up_1 / @fw_basefont;
+	padding-top: @padding;
+	padding-bottom: @padding;
+}
+
+
+.fw_component_padding () {
+	padding-top: @fw_component_padding_em;
+	padding-bottom: @fw_component_padding_em;
+	padding-left: @fw_component_padding_em;
+	padding-right: @fw_component_padding_em;
+}
+.fw_tool_padding () {
+	padding-top: @fw_tool_padding_em;
+	padding-bottom: @fw_tool_padding_em;
+	padding-left: @fw_tool_padding_em;
+	padding-right: @fw_tool_padding_em;
+}
+
+
+.fw_tool_padding_vertical_only (@display) when (@display = roomy) {
+	@padding: 0em + @fw_strand1_ratio_1 / @fw_basefont;
+	padding-top: @padding;
+	padding-bottom: @padding;
+}
+.fw_tool_padding_vertical_only (@display) when (@display = cosy) {
+	@padding: 0em + @fw_strand1_ratio_1 / @fw_basefont;
+	padding-top: @padding;
+	padding-bottom: @padding;
+}
+.fw_tool_padding_vertical_only (@display) when (@display = tight) {
+	@padding: 0em + @fw_strand1_ratio_down_2 / @fw_basefont;
+	padding-top: @padding;
+	padding-bottom: @padding;
+}
+
+.fw_topbar_padding_vertical_only {
+	@padding: 0em + @fw_strand2_ratio_down_3 / @fw_basefont;
+	padding-top: @padding;
+	padding-bottom: @padding;
+}
+.fw_topicactions_padding_vertical_only {
+	@padding: 0em + @fw_strand1_ratio_down_1 / @fw_basefont;
+	padding-top: @padding;
+	padding-bottom: @padding;
+}
+
+// Twitter Bootstrap styles
+
+// Centered container element
+.fw_container-fixed() {
+	margin-left: auto;
+	margin-right: auto;
+	.fw_clearfix();
+}
+
+.makeColumn(@columns: 1) {
+	float: left;
+	margin-left: @fw_gridGutterWidth;
+	width: (@fw_gridColumnWidth * @columns) + (@fw_gridGutterWidth * (@columns - 1));
+}
+
+.fw_offset(@columnOffset: 1) {
+	margin-left: (@fw_gridColumnWidth * @columnOffset) + (@fw_gridGutterWidth * (@columnOffset - 1)) + @fw_gridGutterWidth;
+}
+
+// Clearfix for clearing floats like a boss h5bp.com/q
+.fw_clearfix {
+	*zoom: 1;
+	&:before,
+	&:after {
+		display: table;
+		content: "";
+	}
+	&:after {
+		clear: both;
+	}
+}
+
+// Webkit-style focus
+// ------------------
+.fw_tab-focus() {
+  // Default
+  outline: thin dotted #333;
+  // Webkit
+  outline: 5px auto -webkit-focus-ring-color;
+  outline-offset: -2px;
+}
+
+// Centered container element
+.container-fixed() {
+    margin-left: auto;
+    margin-right: auto;
+    .clearfix();
+}
+
+// Clearfix
+// --------
+// For clearing floats like a boss h5bp.com/q
+.clearfix {
+  *zoom: 1;
+  &:before,
+  &:after {
+    display: table;
+    content: "";
+  }
+  &:after {
+    clear: both;
+  }
+}
+
+// IE7 inline-block
+// ----------------
+.fw_ie7-inline-block() {
+    *display: inline; /* IE7 inline-block hack */
+    *zoom: 1;
+}
+
+// IE7 likes to collapse whitespace on either side of the inline-block elements.
+// Ems because we're attempting to match the width of a space character. Left
+// version is for form buttons, which typically come after other elements, and
+// right version is for icons, which come before. Applying both is ok, but it will
+// mean that space between those elements will be .6em (~2 space characters) in IE7,
+// instead of the 1 space in other browsers.
+.fw_ie7-restore-left-whitespace() {
+    *margin-left: .3em;
+    
+    &:first-child {
+        *margin-left: 0;
+    }
+}
+
+.fw_ie7-restore-right-whitespace() {
+	*margin-right: .3em;
+
+	&:last-child {
+		*margin-left: 0;
+	}
+}
+
+// Dividers (basically an hr) within dropdowns and nav lists
+.fw_nav-divider() {
+	height: 1px;
+	margin: @fw_dropdown_extra_spacing 1px;
+	overflow: hidden;
+	border: none;
+	
+	// IE7 needs a set width since we gave a height. Restricting just
+	// to IE7 to keep the 1px left/right space in other browsers.
+	// It is unclear where IE is getting the extra space that we need
+	// to negative-margin away, but so it goes.
+	*width: 100%;
+	*margin: -5px 0 5px;
+}
+
+// Button backgrounds
+// ------------------
+.fw_buttonBackground(@startColor, @endColor) {
+	// fw_gradientBar will set the background to a pleasing blend of these, to support IE<=9
+	.fw_gradientBar(@startColor, @endColor);
+	.fw_reset-filter();
+	
+	// in these cases the gradient won't cover the background, so we override
+	&:hover, &:active, &.active, &.disabled, &[disabled] {
+		background-color: @endColor;
+	}
+	
+	// IE 7 + 8 can't handle box-shadow to show active, so we darken a bit ourselves
+	&:active,
+	&.active {
+		background-color: darken(@endColor, 10%) e("\9");
+	}
+}
+
+// Gradient Bar Colors for buttons and alerts
+.fw_gradientBar(@primaryColor, @secondaryColor) {
+  #fw_gradient > .vertical(@primaryColor, @secondaryColor);
+  border-color: @secondaryColor @secondaryColor darken(@secondaryColor, 15%);
+  border-color: rgba(0,0,0,.1) rgba(0,0,0,.1) fadein(rgba(0,0,0,.1), 15%);
+}
+
+// Gradients
+#fw_gradient {
+	.horizontal(@startColor: #555, @endColor: #333) {
+		background-color: @endColor;
+		background-image: -moz-linear-gradient(left, @startColor, @endColor); // FF 3.6+
+		background-image: -ms-linear-gradient(left, @startColor, @endColor); // IE10
+		background-image: -webkit-gradient(linear, 0 0, 100% 0, from(@startColor), to(@endColor)); // Safari 4+, Chrome 2+
+		background-image: -webkit-linear-gradient(left, @startColor, @endColor); // Safari 5.1+, Chrome 10+
+		background-image: -o-linear-gradient(left, @startColor, @endColor); // Opera 11.10
+		background-image: linear-gradient(left, @startColor, @endColor); // Le standard
+		background-repeat: repeat-x;
+		filter: e(%("progid:DXImageTransform.Microsoft.gradient(startColorstr='%d', endColorstr='%d', GradientType=1)",@startColor,@endColor)); // IE9 and down
+	}
+	.vertical(@startColor: #555, @endColor: #333) {
+		background-color: mix(@startColor, @endColor, 60%);
+		background-image: -moz-linear-gradient(top, @startColor, @endColor); // FF 3.6+
+		background-image: -ms-linear-gradient(top, @startColor, @endColor); // IE10
+		background-image: -webkit-gradient(linear, 0 0, 0 100%, from(@startColor), to(@endColor)); // Safari 4+, Chrome 2+
+		background-image: -webkit-linear-gradient(top, @startColor, @endColor); // Safari 5.1+, Chrome 10+
+		background-image: -o-linear-gradient(top, @startColor, @endColor); // Opera 11.10
+		background-image: linear-gradient(top, @startColor, @endColor); // The standard
+		background-repeat: repeat-x;
+		filter: e(%("progid:DXImageTransform.Microsoft.gradient(startColorstr='%d', endColorstr='%d', GradientType=0)",@startColor,@endColor)); // IE9 and down
+	}
+	.directional(@startColor: #555, @endColor: #333, @deg: 45deg) {
+		background-color: @endColor;
+		background-repeat: repeat-x;
+		background-image: -moz-linear-gradient(@deg, @startColor, @endColor); // FF 3.6+
+		background-image: -ms-linear-gradient(@deg, @startColor, @endColor); // IE10
+		background-image: -webkit-linear-gradient(@deg, @startColor, @endColor); // Safari 5.1+, Chrome 10+
+		background-image: -o-linear-gradient(@deg, @startColor, @endColor); // Opera 11.10
+		background-image: linear-gradient(@deg, @startColor, @endColor); // The standard
+	}
+	.vertical-three-colors(@startColor: #00b3ee, @midColor: #7a43b6, @colorStop: 50%, @endColor: #c3325f) {
+		background-color: mix(@midColor, @endColor, 80%);
+		background-image: -webkit-gradient(linear, 0 0, 0 100%, from(@startColor), color-stop(@colorStop, @midColor), to(@endColor));
+		background-image: -webkit-linear-gradient(@startColor, @midColor @colorStop, @endColor);
+		background-image: -moz-linear-gradient(top, @startColor, @midColor @colorStop, @endColor);
+		background-image: -ms-linear-gradient(@startColor, @midColor @colorStop, @endColor);
+		background-image: -o-linear-gradient(@startColor, @midColor @colorStop, @endColor);
+		background-image: linear-gradient(@startColor, @midColor @colorStop, @endColor);
+		background-repeat: no-repeat;
+		filter: e(%("progid:DXImageTransform.Microsoft.gradient(startColorstr='%d', endColorstr='%d', GradientType=0)",@startColor,@endColor)); // IE9 and down, gets no color-stop at all for proper fallback
+	}
+	.radial(@innerColor: #555, @outerColor: #333)  {
+		background-color: @outerColor;
+		background-image: -webkit-gradient(radial, center center, 0, center center, 460, from(@innerColor), to(@outerColor));
+		background-image: -webkit-radial-gradient(circle, @innerColor, @outerColor);
+		background-image: -moz-radial-gradient(circle, @innerColor, @outerColor);
+		background-image: -ms-radial-gradient(circle, @innerColor, @outerColor);
+		background-image: -o-radial-gradient(circle, @innerColor, @outerColor);
+		background-repeat: no-repeat;
+	}
+	.striped(@color, @angle: -45deg) {
+		background-color: @color;
+		background-image: -webkit-gradient(linear, 0 100%, 100% 0, color-stop(.25, rgba(255,255,255,.15)), color-stop(.25, transparent), color-stop(.5, transparent), color-stop(.5, rgba(255,255,255,.15)), color-stop(.75, rgba(255,255,255,.15)), color-stop(.75, transparent), to(transparent));
+		background-image: -webkit-linear-gradient(@angle, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent);
+		background-image: -moz-linear-gradient(@angle, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent);
+		background-image: -ms-linear-gradient(@angle, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent);
+		background-image: -o-linear-gradient(@angle, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent);
+		background-image: linear-gradient(@angle, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent);
+	}
+}
+
+// Reset filters for IE
+.fw_reset-filter() {
+	filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
+}
+
+
+// CSS3 PROPERTIES
+// --------------------------------------------------
+
+// Border Radius
+.fw_border-radius(@radius: 5px) {
+  -webkit-border-radius: @radius;
+     -moz-border-radius: @radius;
+          border-radius: @radius;
+}
+
+// Drop shadows
+.fw_box-shadow(@shadow: 0 1px 2px rgba(0,0,0,.25)) {
+  -webkit-box-shadow: @shadow;
+     -moz-box-shadow: @shadow;
+          box-shadow: @shadow;
+}
+
+// Transitions
+.fw_transition(@transition) {
+  -webkit-transition: @transition;
+     -moz-transition: @transition;
+      -ms-transition: @transition;
+       -o-transition: @transition;
+          transition: @transition;
+}
+.fw_transition_delay(@delay) {
+  -webkit-transition-delay: @delay;
+     -moz-transition-delay: @delay;
+      -ms-transition-delay: @delay;
+       -o-transition-delay: @delay;
+          transition-delay: @delay;
+}
+
+// Opacity
+.fw_opacity(@opacity: 100) {
+	opacity: @opacity / 100;
+	filter: ~"alpha(opacity=@{opacity})";
+}
+
+.fw_border-radius-left(@radius: 5px) {
+	-webkit-border-top-left-radius: @radius;
+	-webkit-border-bottom-left-radius: @radius;
+	
+	-moz-border-top-left-radius: @radius;
+	-moz-border-bottom-left-radius: @radius;
+	
+	border-top-left-radius: @radius;
+	border-bottom-left-radius: @radius;
+}
+.fw_border-radius-right(@radius: 5px) {
+	-webkit-border-top-right-radius: @radius;
+	-webkit-border-bottom-right-radius: @radius;
+	
+	-moz-border-top-right-radius: @radius;
+	-moz-border-bottom-right-radius: @radius;
+	
+	border-top-right-radius: @radius;
+	border-bottom-right-radius: @radius;
+}
+
+// HTML5 box model
+// See:
+// https://developer.mozilla.org/en/CSS/box-orient
+// https://developer.mozilla.org/en/CSS/box-pack
+// https://developer.mozilla.org/en/CSS/box-align
+
+.fw_box(@orient: horizontal, @pack: start, @align: stretch, @direction: normal) {
+	display: -webkit-box;
+	-webkit-box-orient: @orient;
+	-webkit-box-pack: @pack;
+	-webkit-box-align: @align;
+		
+	display: -moz-box;
+	-moz-box-orient: @orient;
+	-moz-box-pack: @pack;
+	-moz-box-align: @align;
+	
+	display: box;
+	box-orient: @orient;
+	box-pack: @pack;
+	box-align: @align;
+	
+	box-direction: @direction;
+	-moz-box-direction: @direction;
+	-webkit-box-direction: @direction;
+} 
+
+.fw_box_flex(@number: 1) {
+	-webkit-box-flex: @number;
+	-moz-box-flex: @number;
+	box-flex: @number;
+}
+
+.fw_box_sizing(@sizing: border-box) {
+	-webkit-box-sizing: @sizing;
+	-moz-box-sizing: @sizing;
+	box-sizing: @sizing;
+}
+
+.fw_tab_ul () {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	position: relative;
+	bottom: 0;
+	
+	li {
+	
+		&,
+		&.foswikiActiveTab,
+		&.current {
+			display: inline;
+			border: none;
+			background: none;
+			margin: 0;
+		}
+		
+		& {
+			a,
+			a:hover,
+			span {
+				display: block;
+				float: left;
+				margin: 0 @fw_button_spacing 0 0;
+				padding: @fw_button_padding;
+				border-style: solid;
+				border-width: 1px;
+				text-decoration: none;
+			}
+		}
+		
+		img {
+			vertical-align: text-top;
+		}
+	}
+}

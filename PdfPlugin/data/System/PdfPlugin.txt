@@ -1,0 +1,103 @@
+%META:TOPICPARENT{name="Plugins"}%
+---+!! PDF Plugin
+%SHORTDESCRIPTION%.
+
+%TOC%
+
+---++ Introduction
+The PDF generator of PDF Plugin is [[http://code.google.com/p/wkhtmltopdf/][wkhtmltopdf]], which uses the !WebKit browser engine. It creates PDF files that look similar as they would look in browsers using the same engine (Apple Safari or Google Chrome). It has support for CSS3.
+
+Some examples of generated PDFs:
+   * %ICON{pdf}% [[%ATTACHURL%/macros.pdf][Macros]] - see original at [[%SYSTEMWEB%.Macros][Macros]]
+   * %ICON{pdf}% [[%ATTACHURL%/examplesites.pdf][foswiki.org/About/ExampleSites]] - (dd.19 May 2012)
+   * %ICON{pdf}% [[%ATTACHURL%/apple_com.pdf][apple.com homepage]]
+
+
+---++ Usage
+View the PDF version of a topic by adding =contenttype=application/pdf= to the  url like this:
+<verbatim class="tml">
+%SCRIPTURL{"view"}/%WEB%/%TOPIC%?contenttype=application/pdf
+</verbatim>
+
+Test this: %SCRIPTURL{"view"}%/%WEB%/%TOPIC%?contenttype=application/pdf
+
+
+---++ Limitations
+   * Currently you can only create one page at a time.
+   * Additional format parameters are not supported.
+
+
+---++ Adding PDF buttons to the page
+Add =pdf= to the skin path, for example:
+<pre>
+   * Set <nop>SKIN = pdf,pattern
+</pre>
+or to put the 'pdf skin' in front of any skin:
+<pre>
+   * Set <nop>COVER = pdf
+</pre>
+
+The button label is configurable. Re-define module =pdf:text= in your own skin, and put it in front of the skin path:
+<pre>
+   * Set <nop>SKIN = myskin,pdf,pattern
+</pre>
+
+For more help see %SYSTEMWEB%.SkinTemplates.
+
+
+---++ Installation instructions
+%$INSTALL_INSTRUCTIONS%
+
+
+---+++ Installing wkhtmltopdf
+This plugin depends on [[http://code.google.com/p/wkhtmltopdf/][wkhtmltopdf]], a converter from html to pdf using webkit (qtwebkit).
+
+=wkhtmltopdf= is available on Linux, Windows and Mac OSX. See [[https://github.com/blueheadpublishing/bookshop/wiki/Installing-wkhtmltopdf][Installing WKHTMLTOPDF]] for instructions for your platform.
+
+
+---++++ Known issues
+=wkhtmltopdf= version =0.9.1=:
+   * anchors still don't work: acroread throws a security exception
+
+=wkhtmltopdf= version =0.8.3=:
+   * links don't work even local #anchors don't do it; they are only drawn viually; [[http://code.google.com/p/wkhtmltopdf/issues/detail?id=39][bug report]]
+   * the =&lt;base href="... />= html header must occur _before_ any other js or css files in the html source;
+     relative urls before are not resolved correctly (this is a general webkit problem &ndash; not a wkhtmltopdf issue)
+   * there's no way to provide a base url on the command-line if a =&lt;base ...>= tag is missing in the html source
+   * a couple of important css3 features are not implemented yet, e.g. =::after=, =::before=, =leader()=, =target-counter()=, =@page=, =string-set=, =title=, =chapter=, =hyphens=
+
+
+---+++ Configuration settings
+In Configure you can set these settings:
+
+%TABLE{columnwidths="20%,50%,30%"}%
+| *Setting* | *Explanation* | * Default value* |
+| =wkhtmltopdf= | Location of the =wkhtmltopdf= executable. | =/usr/local/bin/wkhtmltopdf= |
+| =pdfparams= | Parameters passed to <code>wkhtmltopdf</code>. | =-q --enable-plugins --outline --print-media-type= |
+| =Debug= | Writes debugging output to =debug.log=. | =0= |
+
+
+<!--
+   * Set SHORTDESCRIPTION = <noautolink>%$SHORTDESCRIPTION%</noautolink>
+-->
+
+
+---++ Plugin Info
+|  Author: | Foswiki:Main/ArthurClemens |
+|  Copyright &copy;: | Arthur Clemens |
+|  License: | GPL |
+|  License: | wkhtmltopdf: [[http://www.gnu.org/licenses/lgpl.html][GNU Lesser GPL]]  |
+|  Version: | %$VERSION% |
+|  Release: | %$RELEASE% |
+| Change History: | |
+|  21 May 2012 | 1.1.0 Adoption of 'best practice' from !GenPDFWebkitPlugin, using =completePageHandler=. |
+|  19 May 2012 | 1.0.0 First release. |
+|  Dependencies: | %$DEPENDENCIES% |
+|  Home: | http://foswiki.org/Extensions/%TOPIC% |
+|  Support: | http://foswiki.org/Support/%TOPIC% |
+
+
+
+%META:FILEATTACHMENT{name="examplesites.pdf" attachment="examplesites.pdf" attr="" comment="PDF version of http://foswiki.org/About/ExampleSites (dd.19 May 2012)" date="1337454655" path="examplesites.pdf" size="156010" user="BaseUserMapping_333" version="1"}%
+%META:FILEATTACHMENT{name="apple_com.pdf" attachment="apple_com.pdf" attr="" comment="PDF of Apple.com homepage" date="1337456166" path="apple_com.pdf" size="806240" user="BaseUserMapping_333" version="1"}%
+%META:FILEATTACHMENT{name="macros.pdf" attachment="macros.pdf" attr="" comment="PDF of System.Macros" date="1337456166" path="macros.pdf" size="878521" user="BaseUserMapping_333" version="1"}%

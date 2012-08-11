@@ -10,12 +10,20 @@
   text="<literal>
 %IF{"defined NATSKIN_SIDEBARWIDTH" 
   then="<style>
-  .natTopRight, .natSideBarHeader, .natSideBar { 
+  .natSideBarHeader, .natSideBar { 
     width:%NATSKIN_SIDEBARWIDTH%; 
   }
   .natBodyLeft .natWebMenu,
   .natBodyBoth .natWebMenu {
     padding-left:%NATSKIN_SIDEBARWIDTH%;
+  }
+  .natBodyBoth .natMain,
+  .natBodyRight .natMain {
+    margin-right:%NATSKIN_SIDEBARWIDTH%;
+  }
+  .natBodyBoth .natMain,
+  .natBodyLeft .natMain {
+    margin-left:%NATSKIN_SIDEBARWIDTH%;
   }
 </style>"
   else="<!-- -->"

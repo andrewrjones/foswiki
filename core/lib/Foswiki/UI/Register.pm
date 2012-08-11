@@ -1316,6 +1316,17 @@ sub _buildConfirmationEmail {
 sub _validateRegistration {
     my ( $session, $data, $requireForm ) = @_;
 
+    # Expire stale registrations, but if email addresses are being
+    # checked for duplicate registrations, then let that code
+    # read all the pending registration files. Don't do it twice.
+    # Also don't do it if ExpireAfter is negative.  Use tick_foswiki instead.
+    unless ( $Foswiki::cfg{Register}{UniqueEmail} ) {
+        if ( $Foswiki::cfg{Sessions}{ExpireAfter} > 1 ) {
+            _checkPendingRegistrations( undef,
+                $Foswiki::cfg{Sessions}{ExpireAfter} );
+        }
+    }
+
     if ( !defined( $data->{LoginName} )
         && $Foswiki::cfg{Register}{AllowLoginName} )
     {
@@ -1502,10 +1513,16 @@ sub _validateRegistration {
     # Optional check if email address is already registered
     if ( $Foswiki::cfg{Register}{UniqueEmail} ) {
         my @existingNames = Foswiki::Func::emailToWikiNames( $data->{Email} );
+        if ( $Foswiki::cfg{Register}{NeedVerification} ) {
+            my @pending =
+              _checkPendingRegistrations( $data->{Email},
+                $Foswiki::cfg{Sessions}{ExpireAfter} );
+            push @existingNames, @pending if scalar @pending;
+        }
         if ( scalar(@existingNames) ) {
             $session->logger->log( 'warning',
                 "Registration rejected: $data->{Email} already registered by: "
-                  . join( ',', @existingNames ) );
+                  . join( ', ', @existingNames ) );
             throw Foswiki::OopsException(
                 'attention',
                 web    => $data->{webName},
@@ -1566,7 +1583,7 @@ sub _validateRegistration {
             'attention',
             web    => $data->{webName},
             topic  => $session->{topicName},
-            def    => 'registration_disabled',
+            def    => 'registration_invalid',
             params => [ $e->stringify ]
         );
 
@@ -1667,6 +1684,8 @@ sub _loadPendingRegistration {
         );
     }
 
+    $data = undef;
+    $form = undef;
     do $file;
     $data->{form} = $form if $form;
     throw Foswiki::OopsException(
@@ -1751,11 +1770,67 @@ sub _deleteKey {
     }
 }
 
+# Check pending registrations for duplicate email, or expiration
+sub _checkPendingRegistrations {
+    my $check = shift;
+    my $exp   = shift;
+
+    my $time;
+    if ( defined $exp && $exp > 1 ) {
+        $time = time();
+        $time = $time - $exp;
+    }
+
+    my $dir     = "$Foswiki::cfg{WorkingDir}/registration_approvals/";
+    my @pending = ();
+
+    if ( defined $time || $check ) {
+        if ( opendir( my $d, "$dir" ) ) {
+            foreach my $f ( grep { /^.*\.[0-9]{1,8}$/ } readdir $d ) {
+                my $regFile = Foswiki::Sandbox::untaintUnchecked("$dir$f");
+
+                if ( defined $time ) {
+                    if ( ( stat($regFile) )[9] < $time ) {
+                        unlink $regFile;
+                        next;
+                    }
+                }
+                if ($check) {
+                    local $data;
+                    local $form;
+                    eval 'do $regFile';
+                    next unless defined $data;
+                    push @pending, $data->{WikiName} . '(pending)'
+                      if ( $check eq $data->{Email} );
+                }
+            }
+            closedir($d);
+        }
+    }
+    return @pending;
+}
+
+=begin TML
+
+---++ StaticMethod expirePendingRegistrations()
+
+This routine expires registration files.  This is called by
+tick_foswiki to expire stale registrations.
+
+=cut
+
+sub expirePendingRegistrations {
+    my $exp = $Foswiki::cfg{Sessions}{ExpireAfter} || 36000;    # 10 hours
+
+    $exp = -$exp if $exp < 0;
+    _checkPendingRegistrations( undef, $exp );
+}
+
 1;
 __END__
 Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 
-Copyright (C) 2008-2010 Foswiki Contributors. Foswiki Contributors
+Copyright (C) 2008-2012 Foswiki Contributors. Foswiki Contributors
 are listed in the AUTHORS file in the root of this distribution.
 NOTE: Please extend that file, not this notice.
 

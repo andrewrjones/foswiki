@@ -74,11 +74,12 @@ in the database is protected against view.
 sub new {
     my ( $class, $session, $web, $form, $def ) = @_;
 
-    my $this = $session->{forms}->{"$web.$form"};
+    my ( $vweb, $vtopic ) = $session->normalizeWebTopicName( $web, $form );
+    my $this = $session->{forms}->{"$vweb.$vtopic"};
+
     unless ($this) {
 
         # A form name has to be a valid topic name after normalisation
-        my ( $vweb, $vtopic ) = $session->normalizeWebTopicName( $web, $form );
         $vweb = Foswiki::Sandbox::untaint( $vweb,
             \&Foswiki::Sandbox::validateWebName );
         $vtopic = Foswiki::Sandbox::untaint( $vtopic,
@@ -105,18 +106,16 @@ sub new {
         }
 
         $this = $class->SUPER::new( $session, $vweb, $vtopic );
-        $session->{forms}->{"$web.$form"} = $this;
 
         unless ( $def || $this->haveAccess('VIEW') ) {
             throw Foswiki::AccessControlException( 'VIEW', $session->{user},
-                $web, $form, $Foswiki::Meta::reason );
+                $vweb, $vtopic, $Foswiki::Meta::reason );
         }
 
         if ( ref($this) ne 'Foswiki::Form' ) {
 
             #recast if we have to - allowing the cache to work its magic
             $this = bless( $this, 'Foswiki::Form' );
-            $session->{forms}->{"$web.$form"} = $this;
         }
 
         unless ($def) {
@@ -130,6 +129,9 @@ sub new {
             # Foswiki::Meta object
             $this->{fields} = $this->_extractPseudoFieldDefs($def);
         }
+
+        # cache the  object when properly build
+        $session->{forms}->{"$vweb.$vtopic"} = $this;
     }
 
     return $this;
@@ -214,50 +216,70 @@ sub fieldTitle2FieldName {
 sub _parseFormDefinition {
     my $this = shift;
 
-    my @fields  = ();
-    my $inBlock = 0;
-    my $text    = $this->text();
+    require Foswiki::Tables::Parser;
+    ASSERT( !$@ ) if DEBUG;
+
+    my @fields = ();
+    my $text   = $this->text();
     $text = '' unless defined $text;
 
-    $text =~ s/\\\n//g;    # remove trailing '\' and join continuation lines
+    {
 
-# | *Name:* | *Type:* | *Size:* | *Value:*  | *Tooltip message:* | *Attributes:* |
-# Tooltip and attributes are optional
-    foreach my $line ( split( /\n/, $text ) ) {
-        if ( $line =~ /^\s*\|.*Name[^|]*\|.*Type[^|]*\|.*Size[^|]*\|/ ) {
-            $inBlock = 1;
-            next;
+        package Foswiki::Form::ParseFinished;
+        our @ISA = ('Error');
+    }
+
+    # Support column reordering
+    my %indices = (
+        name       => 0,
+        type       => 1,
+        size       => 2,
+        value      => 3,
+        tooltip    => 4,
+        attributes => 5,
+    );
+    my $col       = 0;
+    my $have_head = 0;
+    my @field     = ();
+    my $handler   = sub {
+        my $event = shift;
+        if ( $event eq 'close_table' ) {
+
+            # Abort the parse after the first table has been read
+            throw Foswiki::Form::ParseFinished;
         }
+        elsif ( $event eq 'th' ) {
+            my ( $pre, $data, $post ) = @_;
+            $data = lc($data);
+            $data =~ s/[\s:]//g;
+            $data = 'tooltip' if $data eq 'tooltipmessage';
+            $indices{$data} = $col++;
+        }
+        elsif ( $event eq 'close_tr' ) {
+            unless ($have_head) {
+                $have_head = 1;
+                return;
+            }
+            my $title = $field[ $indices{name} ] || '';
+            my $type = lc( $field[ $indices{type} ] || 'text' );
+            my $size       = $field[ $indices{size} ]       || '';
+            my $vals       = $field[ $indices{value} ]      || '';
+            my $tooltip    = $field[ $indices{tooltip} ]    || '';
+            my $attributes = $field[ $indices{attributes} ] || '';
+            @field = ();
 
-       # Only insist on first field being present FIXME - use oops page instead?
-        if ( $inBlock && $line =~ s/^\s*\|\s*// ) {
-            $line =~ s/\\\|/\007/g;    # protect \| from split
-            my ( $title, $type, $size, $vals, $tooltip, $attributes ) =
-              map { s/\007/|/g; $_ } split( /\s*\|\s*/, $line );
+            if ( $vals =~ /%/ ) {
+                $vals = $this->expandMacros($vals);
+            }
+            $vals =~ s/<\/?(!|nop|noautolink)\/?>//g;
 
-            $title ||= '';
-
-            $type ||= '';
-            $type = lc($type);
-            $type =~ s/^\s*//go;
-            $type =~ s/\s*$//go;
-            $type = 'text' if ( !$type );
-
-            $size ||= '';
-
-            $vals ||= '';
-            $vals = $this->expandMacros($vals);
-            $vals =~ s/<\/?(!|nop|noautolink)\/?>//go;
+            # Trim again in case macro expansion has added spaces
             $vals =~ s/^\s+//g;
             $vals =~ s/\s+$//g;
 
-            $tooltip ||= '';
+            $attributes =~ s/\s*//g;
 
-            $attributes ||= '';
-            $attributes =~ s/\s*//go;
-            $attributes = '' if ( !$attributes );
-
-            my $definingTopic = "";
+            my $definingTopic = '';
             if ( $title =~ /\[\[(.+)\]\[(.+)\]\]/ ) {
 
                 # use common defining topics with different field titles
@@ -287,10 +309,19 @@ sub _parseFormDefinition {
 
             $this->{mandatoryFieldsPresent} ||= $fieldDef->isMandatory();
         }
-        else {
-            $inBlock = 0;
+        elsif ( $event eq 'td' ) {
+            my ( $pre, $data, $post ) = @_;
+            push( @field, $data );
         }
+    };
+
+    try {
+        Foswiki::Tables::Parser::parse( $text, $handler );
     }
+    catch Foswiki::Form::ParseFinished with {
+
+        # clean exit, fired when first table has been parsed
+    };
 
     return \@fields;
 }
@@ -314,6 +345,8 @@ sub createField {
     );
     eval 'require ' . $class;
     if ($@) {
+        $this->session->logger->log( 'error',
+            "error compiling class $class: $@" );
 
         # Type not available; use base type
         require Foswiki::Form::FieldDefinition;

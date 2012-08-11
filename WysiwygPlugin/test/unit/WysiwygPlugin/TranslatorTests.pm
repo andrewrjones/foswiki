@@ -279,6 +279,25 @@ BLAH
     },
     {
         exec => $TML2HTML | $ROUNDTRIP,
+        name => 'Item11925_spuriousTT3',
+        tml  => <<'HERE',
+   * %IF{"%CALC{"$EXISTS(%TOPIC%Checklist)"}% " then= '[[%TOPIC%Checklist][Checklist]]' else= ' <form name="new" action="%SCRIPTURLPATH{"edit"}%/%WEB%/">
+<input type="hidden" name="topic" value="%TOPIC%Checklist"  />
+<input type="hidden" name="templatetopic" value="BracketTestTopicTemplate" />
+<input type="hidden" name="onlywikiname" value="on" />
+<input type="hidden" name="onlynewtopic" value="on" /> 
+<input type="submit"  class="foswikiSubmit"  value="Create" />
+</form> Checklist' "}%
+HERE
+        html => <<'HERE',
+<ul>
+<li> <span class="WYSIWYG_PROTECTED">%IF{&#34;%CALC{&#34;$EXISTS(%TOPIC%Checklist)&#34;}%&nbsp;&#34;&nbsp;then=&nbsp;&#39;[[%TOPIC%Checklist][Checklist]]&#39;&nbsp;else=&nbsp;&#39;&nbsp;&#60;form&nbsp;name=&#34;new&#34;&nbsp;action=&#34;%SCRIPTURLPATH{&#34;edit&#34;}%/%WEB%/&#34;&#62;<br />&#60;input&nbsp;type=&#34;hidden&#34;&nbsp;name=&#34;topic&#34;&nbsp;value=&#34;%TOPIC%Checklist&#34;&nbsp;&nbsp;/&#62;<br />&#60;input&nbsp;type=&#34;hidden&#34;&nbsp;name=&#34;templatetopic&#34;&nbsp;value=&#34;BracketTestTopicTemplate&#34;&nbsp;/&#62;<br />&#60;input&nbsp;type=&#34;hidden&#34;&nbsp;name=&#34;onlywikiname&#34;&nbsp;value=&#34;on&#34;&nbsp;/&#62;<br />&#60;input&nbsp;type=&#34;hidden&#34;&nbsp;name=&#34;onlynewtopic&#34;&nbsp;value=&#34;on&#34;&nbsp;/&#62;&nbsp;<br />&#60;input&nbsp;type=&#34;submit&#34;&nbsp;&nbsp;class=&#34;foswikiSubmit&#34;&nbsp;&nbsp;value=&#34;Create&#34;&nbsp;/&#62;<br />&#60;/form&#62;&nbsp;Checklist&#39;&nbsp;&#34;}%</span>
+</li>
+</ul>
+HERE
+    },
+    {
+        exec => $TML2HTML | $ROUNDTRIP,
         name => 'tmlInTable',
         html => <<"BLAH",
 $deleteme<table cellspacing="1" cellpadding="0" border="1">
@@ -353,14 +372,30 @@ HERE
     },
     {
         exec => $TML2HTML | $HTML2TML | $ROUNDTRIP,
+        name => 'embeddedBR_Item11859',
+        tml  => <<'HERE',
+Line 1<br>Line 2<br />
+Line 3
+HERE
+        finaltml => <<'HERE',
+Line 1<br />Line 2<br />
+Line 3
+HERE
+        html => <<'HERE',
+<p>Line 1<br>Line 2<br /><span style="{encoded:'n'}" class="WYSIWYG_HIDDENWHITESPACE">&nbsp;</span>Line 3
+</p>
+HERE
+    },
+    {
+        exec => $TML2HTML | $HTML2TML | $ROUNDTRIP,
         name => 'hiddenVerbatim',
         tml  => <<'HERE',
 <verbatim class="foswikiHidden">
 hidden verbatim
 </verbatim>
 HERE
-        html => <<'HERE',
-<p><pre class="foswikiHidden TMLverbatim"><br />hidden&nbsp;verbatim<br /></pre>
+        html => <<"HERE",
+$deleteme<p><pre class=\"foswikiHidden TMLverbatim\"><br />hidden&nbsp;verbatim<br /></pre>
 </p>
 HERE
     },
@@ -380,18 +415,18 @@ verbatim 1
 verbatim 2
 </verbatim>
 HERE
-        html => <<'HERE',
-<p><pre class="TMLverbatim"><br />verbatim&nbsp;1<br /></pre>
+        html => <<"HERE",
+$deleteme<p><pre class=\"TMLverbatim\"><br />verbatim&nbsp;1<br /></pre>
 </p>
-<p><pre class="TMLverbatim"><br />verbatim&nbsp;2<br /></pre>
+<p><pre class=\"TMLverbatim\"><br />verbatim&nbsp;2<br /></pre>
 </p>
 HERE
     },
     {
         exec => $ROUNDTRIP | $TML2HTML | $HTML2TML,
         name => 'preserveClass',
-        html => <<'HERE',
-<p><pre class="foswikiHidden TMLverbatim"><br />Verbatim&nbsp;1<br />Line&nbsp;2<br />Line&nbsp;3</pre> <pre class="html tml TMLverbatim"><br />Verbatim&nbsp;2<br /><br /></pre><span style="{encoded:'n'}" class="WYSIWYG_HIDDENWHITESPACE">&nbsp;</span><pre class="tml html TMLverbatim"><br /><br />Verbatim&nbsp;3</pre>
+        html => <<"HERE",
+$deleteme<p><pre class=\"foswikiHidden TMLverbatim\"><br />Verbatim&nbsp;1<br />Line&nbsp;2<br />Line&nbsp;3</pre> <pre class=\"html tml TMLverbatim\"><br />Verbatim&nbsp;2<br /><br /></pre><span style=\"{encoded:'n'}\" class=\"WYSIWYG_HIDDENWHITESPACE\">&nbsp;</span><pre class=\"tml html TMLverbatim\"><br /><br />Verbatim&nbsp;3</pre>
 </p>
 HERE
         tml => <<'HERE',
@@ -859,6 +894,76 @@ RedHat & SuSE
 HERE
     },
     {
+        exec => $ROUNDTRIP | $TML2HTML | $HTML2TML,
+        name => 'nestedDiv_Item11872',
+        tml  => <<HERE,
+<div class="foswikiHelp">
+<div class="jqTreeview">
+   * list
+      * item
+      * item
+      * item
+</div>
+</div>
+HERE
+        html => <<HERE,
+$deleteme<div class="foswikiHelp TMLhtml">
+<span style="{encoded:'n'}" class="WYSIWYG_HIDDENWHITESPACE">&nbsp;</span><div class="jqTreeview TMLhtml">
+<ul>
+<li> list
+<ul>
+<li> item
+</li>
+<li> item
+</li>
+<li> item
+</li>
+</ul>
+</li>
+</ul><span style="{encoded:'n'}" class="WYSIWYG_HIDDENWHITESPACE">&nbsp;</span></div><span style="{encoded:'n'}" class="WYSIWYG_HIDDENWHITESPACE">&nbsp;</span></div>
+HERE
+    },
+    {
+        exec => $ROUNDTRIP | $TML2HTML | $HTML2TML,
+        name => 'jqTreeview_Item11872',
+        tml  => <<HERE,
+<div class="jqTreeview">
+   * list
+      * item
+      * item
+      * item
+</div>
+blah
+HERE
+        html => <<HERE,
+$deleteme<div class="jqTreeview TMLhtml">
+<ul>
+<li> list
+<ul>
+<li> item
+</li>
+<li> item
+</li>
+<li> item
+</li>
+</ul>
+</li>
+</ul><span style="{encoded:'n'}" class="WYSIWYG_HIDDENWHITESPACE">&nbsp;</span></div>
+<p>blah
+</p>
+HERE
+        finaltml => <<'HERE',
+<div class="jqTreeview">
+   * list
+      * item
+      * item
+      * item
+</div>
+
+blah
+HERE
+    },
+    {
         exec => $ROUNDTRIP,
         name => 'mailtoLink',
         html => <<HERE,
@@ -869,6 +974,67 @@ HERE
 [[mailto:a@z.com][Mail]] [[mailto:?subject=Hi][Hi]]
 HERE
     },
+
+    {
+        exec => $ROUNDTRIP | $TML2HTML,
+        name => 'corruptedTable_Item11915',
+        tml  => <<'HERE',
+|  A | B |
+|  A1 | B1 %BR%\
+        C1  |
+|  A2 | B2 |
+HERE
+        html => <<'HERE',
+<p class="foswikiDeleteMe">&nbsp;</p><table cellspacing="1" cellpadding="0" border="1">
+<tr><td style="text-align: right" class="align-right"> A </td><td> B </td></tr>
+<tr><td style="text-align: right" class="align-right"> A1 </td><td style="text-align: left" class="align-left"> B1 <span class="WYSIWYG_PROTECTED">%BR%</span><span style="{encoded:'bn'}" class="WYSIWYG_HIDDENWHITESPACE">&nbsp;</span>        C1 </td></tr>
+<tr><td style="text-align: right" class="align-right"> A2 </td><td> B2 </td></tr>
+</table>
+HERE
+        finaltml => <<'HERE',
+|  A | B |
+|  A1 | B1 %BR%\
+C1  |
+|  A2 | B2 |
+HERE
+    },
+
+    {
+        exec => $ROUNDTRIP | $TML2HTML,
+        name => 'corruptedLinks_Item11906',
+        tml  => <<'HERE',
+   * [[%WIKIUSERNAME%][My home page]]
+   * [[%SCRIPTURL{search}%/%BASEWEB%/?search=%WIKINAME%;order=modified;limit=50;reverse=on][My %BASEWEB% activities]]
+
+<a class="foswikiSmallish" href="%SCRIPTURLPATH{"edit"}%/%WEB%/%TOPIC%?t=%GM%NOP%TIME{"$epoch"}%">edit</a>
+HERE
+        html => <<'HERE',
+<ul>
+<li> <a href="%WIKIUSERNAME%">My home page</a>
+</li>
+<li> <a href="%SCRIPTURL{search}%/%BASEWEB%/?search=%WIKINAME%;order=modified;limit=50;reverse=on">My <span class="WYSIWYG_PROTECTED WYSIWYG_PROTECTED">%BASEWEB%</span> activities</a>
+</li>
+</ul>
+<p class='WYSIWYG_NBNL'><span class="WYSIWYG_PROTECTED">&#60;a&nbsp;class=&#34;foswikiSmallish&#34;&nbsp;href=&#34;%SCRIPTURLPATH{&#34;edit&#34;}%/%WEB%/%TOPIC%?t=%GM%NOP%TIME{&#34;$epoch&#34;}%&#34;&#62;edit&#60;/a&#62;</span>
+</p>
+HERE
+    },
+
+    # SMELL: No idea why we decode links,  but verify that it works anyway.
+    #    {
+    #        exec => $ROUNDTRIP | $TML2HTML | $HTML2TML,
+    #        name => 'decodeWebTopic_Item11814',
+    #        tml  => <<'HERE',
+    #<a href="Main.WebHom%65">hi</a>
+    #HERE
+    #        html => <<'HERE',
+    #<p><a href="Main.WebHom%65">hi</a>
+    #</p>
+    #HERE
+    #        finaltml => <<'HERE',
+    #[[Main.WebHome][hi]]
+    #HERE
+    #    },
     {
         exec => $ROUNDTRIP | $TML2HTML | $HTML2TML,
         name => 'mailtoLink_Item11814',
@@ -1229,7 +1395,7 @@ THERE
     {
         exec => $TML2HTML | $ROUNDTRIP,
         name => 'verbatimWithNbsp1554',
-        html => '<p><pre class="TMLverbatim">&amp;nbsp;</pre></p>',
+        html => $deleteme . '<p><pre class="TMLverbatim">&amp;nbsp;</pre></p>',
         tml  => "<verbatim>&nbsp;</verbatim>"
     },
     {
@@ -1242,8 +1408,8 @@ test
 test
 </pre>
 HERE
-        html => <<'HERE',
-<p>
+        html => <<"HERE",
+$deleteme<p>
 <pre>
 test
 test
@@ -1915,10 +2081,45 @@ pilf<br />flip
 </p>',
     },
     {
+        name => 'advBlockquote',
+        exec => $TML2HTML | $ROUNDTRIP,
+        tml  => <<HERE,
+<blockquote style="margin-top: 0px; margin-right: 0px; margin-bottom: 0px; margin-left: 40px; border-width: initial; border-color: initial; border-image: initial; border-style: none; padding: 0px">
+blah
+blah
+
+blah
+</blockquote>
+HERE
+        html => <<HERE,
+<p class="foswikiDeleteMe">&nbsp;</p><blockquote style="margin-top: 0px; margin-right: 0px; margin-bottom: 0px; margin-left: 40px; border-width: initial; border-color: initial; border-image: initial; border-style: none; padding: 0px"><p class="foswikiDeleteMe"><span style="{encoded:'n'}" class="WYSIWYG_HIDDENWHITESPACE">&nbsp;</span>blah<span style="{encoded:'n'}" class="WYSIWYG_HIDDENWHITESPACE">&nbsp;</span>blah
+<p class='WYSIWYG_NBNL'>blah
+</p></p></blockquote>
+HERE
+    },
+    {
         name => 'Item4481',
         exec => $TML2HTML | $ROUNDTRIP,
         tml  => '<blockquote>pilf<br />flip</blockquote>',
-        html => '<p><blockquote>pilf<br />flip</blockquote></p>',
+        html =>
+"$deleteme<blockquote><p class=\"foswikiDeleteMe\">pilf<br />flip</p></blockquote>",
+    },
+    {
+
+# If Wysiwyg user "splits" a foswikiDeleteMe paragraph, then only the first
+# paragraph should actually be deleted.  Subsequent paragraphs should be preserved.
+        name => 'blockquoteSplitPara',
+        exec => $HTML2TML,
+        tml  => <<HERE,
+<blockquote>para1
+
+para2
+
+para3
+</blockquote>
+HERE
+        html =>
+"$deleteme<blockquote><p class=\"foswikiDeleteMe\">para1</p><p class=\"foswikiDeleteMe\">para2</p><p class=\"foswikiDeleteMe\">para3</p></blockquote>",
     },
     {
         exec => $ROUNDTRIP,
@@ -1953,21 +2154,25 @@ HERE
    * The =<noautolink>...</noautolink>= syntax
 ',
     },
-    {
-        exec => $HTML2TML,
-        name => 'losethatdamnBR',
-        html => <<'JUNK',
-TinyMCE sticks in a BR where it isn't wanted before a P<br>
-<p>
-We should only have a P.
-</p>
-JUNK
-        tml => <<JUNX,
-TinyMCE sticks in a BR where it isn't wanted before a P
-
-We should only have a P.
-JUNX
-    },
+#<<<
+# SMELL:  Removed by Item11859.  This issue does not appear to happen
+# in recent TInyMCE releases  (Tested 3.4.9)
+#    {
+#        exec => $HTML2TML,
+#        name => 'losethatdamnBR',
+#        html => <<'JUNK',
+#TinyMCE sticks in a BR where it isn't wanted before a P<br>
+#<p>
+#We should only have a P.
+#</p>
+#JUNK
+#        tml => <<JUNX,
+#TinyMCE sticks in a BR where it isn't wanted before a P
+#
+#We should only have a P.
+#JUNX
+#    },
+#>>>
     {
         exec => $HTML2TML,
         name => 'tableInnaBun',
@@ -2327,7 +2532,7 @@ nested <sticky> block </sticky>
  456
 </pre></sticky>
 GLUED
-        html => '<p>'
+        html => $deleteme . '<p>'
           . '<div class="WYSIWYG_STICKY">&#60;font&nbsp;color="blue"&#62;&nbsp;*|B|*&nbsp;&#60;/font&#62;<br />'
           . '<br />'
           . '&lt;!--&nbsp;hidden&nbsp;--&gt;<br />'
@@ -2370,7 +2575,7 @@ nested <verbatim class="tml">%H%<!--?--></verbatim>
  456
 </pre></verbatim>
 GLUED
-        html => '<p>'
+        html => "$deleteme<p>"
           . '<pre class="TMLverbatim">&#60;font&nbsp;color="blue"&#62;&nbsp;*|B|*&nbsp;&#60;/font&#62;<br />'
           . '<br />'
           . '&lt;!--&nbsp;hidden&nbsp;--&gt;<br />'
@@ -2456,7 +2661,7 @@ http://google.com/#q=foswiki WikiWord [[some link]]
 </literal>
 HERE
         html => <<"HERE",
-<p>
+$deleteme<p>
 <div class="WYSIWYG_LITERAL">
 <font color="blue"> *|B|* </font>
 http://google.com/#q=foswiki WikiWord [[some link]]
@@ -2521,7 +2726,7 @@ GLUED
         exec => $TML2HTML | $HTML2TML | $ROUNDTRIP,
         name => 'selfClosingTagsInsideLiteral',
         html => <<HTML,
-<p>
+$deleteme<p>
 <div class="WYSIWYG_LITERAL">X<br />Y<img alt='' src='foo' /></div>
 </p>
 HTML
@@ -2547,9 +2752,9 @@ TML
         tml  => <<'GLUED',
 <sticky>&#9792;</sticky>
 GLUED
-        html => <<'STUCK'
-<p>
-<div class="WYSIWYG_STICKY">&#38;&#35;9792;</div>
+        html => <<"STUCK"
+$deleteme<p>
+<div class=\"WYSIWYG_STICKY\">&#38;&#35;9792;</div>
 </p>
 STUCK
     },
@@ -2666,8 +2871,41 @@ $deleteme<table cellspacing="1" cellpadding="0" border="1">
 THERE
     },
     {
+        name => 'Item11890',
+        exec => $TML2HTML | $ROUNDTRIP,
+        tml  => <<'BLAH',
+Blah
+<a href="%SCRIPTURLPATH{"edit"}%/%WEB%/%TOPIC%?t=%GM%NOP%TIME{"$epoch"}%">edit</a>
+Blah
+<a href="blah.com" qwerty='oops'>Unsupported attr</a>
+<a href='blah.com' target="_blank">Target supported</a>
+<a href=blah.com target=_blank>Space delimited</a>
+BLAH
+        html => '<p>
+Blah'
+          . encodedWhitespace('n')
+          . '<span class="WYSIWYG_PROTECTED">&#60;a&nbsp;href=&#34;%SCRIPTURLPATH{&#34;edit&#34;}%/%WEB%/%TOPIC%?t=%GM%NOP%TIME{&#34;$epoch&#34;}%&#34;&#62;edit&#60;/a&#62;</span>'
+          . encodedWhitespace('n') . 'Blah'
+          . encodedWhitespace('n')
+          . '<span class="WYSIWYG_PROTECTED">&#60;a&nbsp;href=&#34;blah.com&#34;&nbsp;qwerty=&#39;oops&#39;&#62;</span>Unsupported attr<span class="WYSIWYG_PROTECTED">&#60;/a&#62;</span>'
+          . encodedWhitespace('n')
+          . '<a href=\'blah.com\' target="_blank">Target supported</a>'
+          . encodedWhitespace('n')
+          . '<a href=blah.com target=_blank>Space delimited</a>' . '
+</p>
+',
+        finaltml => <<'HERE',
+Blah
+<a href="%SCRIPTURLPATH{"edit"}%/%WEB%/%TOPIC%?t=%GM%NOP%TIME{"$epoch"}%">edit</a>
+Blah
+<a href="blah.com" qwerty='oops'>Unsupported attr</a>
+<a href="blah.com" target="_blank">Target supported</a>
+<a href="blah.com" target="_blank">Space delimited</a>
+HERE
+    },
+    {
         name => 'Item4871',
-        exec => $TML2HTML,
+        exec => $TML2HTML | $ROUNDTRIP,
         tml  => <<'BLAH',
 Blah
 <a href="%SCRIPTURLPATH{"edit"}%/%WEB%/%TOPIC%?t=%GM%NOP%TIME{"$epoch"}%">edit</a>
@@ -2676,11 +2914,12 @@ BLAH
         html => '<p>
 Blah'
           . encodedWhitespace('n')
-          . '<a href="%SCRIPTURLPATH{"edit"}%/%WEB%/%TOPIC%?t=%GM%NOP%TIME{"$epoch"}%">edit</a>'
+          . '<span class="WYSIWYG_PROTECTED">&#60;a&nbsp;href=&#34;%SCRIPTURLPATH{&#34;edit&#34;}%/%WEB%/%TOPIC%?t=%GM%NOP%TIME{&#34;$epoch&#34;}%&#34;&#62;edit&#60;/a&#62;</span>'
           . encodedWhitespace('n') . 'Blah
 </p>
 ',
     },
+
     {
         name => 'Item1396_MacrosRemainSticky',
         exec => $TML2HTML | $HTML2TML | $ROUNDTRIP,
@@ -2965,7 +3204,7 @@ there
 </pre>
 HERE
         html => <<HERE,
-<p>
+$deleteme<p>
 <pre>
 hello
 there
@@ -2999,9 +3238,8 @@ line1\
 line2
 </verbatim>
 ZIS
-        html => <<'ZAT',
-<p>
-<pre class="TMLverbatim"><br />line1\<br />line2<br /></pre>
+        html => <<"ZAT",
+$deleteme<p><pre class=\"TMLverbatim\"><br />line1\\<br />line2<br /></pre>
 </p>
 ZAT
     },
@@ -3149,8 +3387,8 @@ leaving an empty pre-tag</pre></code>
 <pre><code>As will
 this.</code></pre>
 HERE
-        html => <<'HERE',
-<p>
+        html => <<"HERE",
+$deleteme<p>
 <pre><b>this will
 disappear.</b>
  and
@@ -3272,6 +3510,24 @@ HERE
 <tr> <td>
 ---+++ b
 </td> </tr> </tbody> </table>
+HERE
+    },
+    {
+
+# Unmatched ( in regex; marked by <-- HERE in m/\
+# .^V%N%^W^V%ICON{connections}%^W  ==I change text== ( <-- HERE == $/ at /usr/local/ww
+# w/foswiki/lib/Foswiki/Plugins/WysiwygPlugin/HTML2TML/Node.pm line 1456.
+#  at /usr/local/www/foswiki/lib/Foswiki/Plugins/WysiwygPlugin/HTML2TML/Node.pm line 1456
+        name => "regexQuotingProblem_Item12011",
+        exec => $TML2HTML | $HTML2TML | $ROUNDTRIP,
+        tml  => <<'HERE',
+%N%
+%ICON{connections}%
+  ==I change text== (
+HERE
+        html => <<'HERE',
+<p><span class="WYSIWYG_PROTECTED">%N%</span><span class="WYSIWYG_PROTECTED"><br />%ICON{connections}%</span><span style="{encoded:'ns2'}" class="WYSIWYG_HIDDENWHITESPACE">&nbsp;</span>==I change text== (
+</p>
 HERE
     },
 ];

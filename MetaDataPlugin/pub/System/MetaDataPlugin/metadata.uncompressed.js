@@ -50,6 +50,10 @@
       var $this = $(this), 
           $editAction = $this.find(".metaDataEditAction");
 
+      if (self.elem.is(".metaDataReadOnly")) {
+        return
+      }
+
       $this.children().effect("highlight");
 
       if ($(e.target).is("td")) {

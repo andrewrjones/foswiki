@@ -20,7 +20,7 @@ use Foswiki::Plugins    ();
 use Foswiki::Validation ();
 
 our $VERSION           = '$Rev$';
-our $RELEASE           = '6.04';
+our $RELEASE           = '6.10';
 our $NO_PREFS_IN_TOPIC = 1;
 our $SHORTDESCRIPTION  = 'A Wikiwyg Editor';
 our $baseWeb;
@@ -53,6 +53,16 @@ sub initPlugin {
         sub {
             require Foswiki::Plugins::NatEditPlugin::FormList;
             return Foswiki::Plugins::NatEditPlugin::FormList::handle(@_);
+        }
+    );
+
+    # SMELL: wrapper around normal save not being able to handle
+    # utf8->sitecharset conversion.
+    Foswiki::Func::registerRESTHandler(
+        'save',
+        sub {
+            require Foswiki::Plugins::NatEditPlugin::RestSave;
+            return Foswiki::Plugins::NatEditPlugin::RestSave::handle(@_);
         }
     );
 
@@ -161,10 +171,13 @@ sub beforeEditHandler {
     return if $doneNonce;
     $doneNonce = 1;
 
-    my $session  = $Foswiki::Plugins::SESSION;
+    my $session = $Foswiki::Plugins::SESSION;
+    my $cgis    = $session->getCGISession();
+    return unless $cgis;
+
     my $response = $session->{response};
     my $request  = $session->{request};
-    my $cgis     = $session->getCGISession();
+
     my $context = $request->url( -full => 1, -path => 1, -query => 1 ) . time();
     my $useStrikeOne = ( $Foswiki::cfg{Validation}{Method} eq 'strikeone' );
     my $nonce;

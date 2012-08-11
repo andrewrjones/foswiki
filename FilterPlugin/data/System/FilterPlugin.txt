@@ -1,23 +1,7 @@
 %META:TOPICINFO{author="ProjectContributor" comment="reprev" date="1275898567" format="1.1" reprev="3" version="3"}%
-<!--
-
-   PLEASE DO NOT EDIT THIS TOPIC
-
-   It is automatically generated from the subversion repository, and any changes
-   you make will simply be overwritten the next time a release is generated.
-
-   Instead, you could check your fix in, raise a bug in the Bugs web, or mail the author.
--->
----+!! <nop>%TOPIC%
+---+!! %TOPIC%
 %TOC%
-<table style="float:right">
-<tr>
-  <td><img src="%ATTACHURLPATH%/wikiringlogo40x40.png"></td>
-  <td><a href="http://wikiring.com" title="Make your Wiki ring!" style="text-decoration:none">
-      Powered by <br /> <nop>WikiRing Consultants </a>
-  </td>
-</tr>
-</table>
+
 ---++ Description
 This plugin allows to substitute and extract information from content by
 using regular expressions. There are three different types of new functions:
@@ -90,6 +74,7 @@ prepended with a header and appended with a footer in case the list is not empty
    * header="...": header string
    * footer="...": footer string
    * separator="...": string to be inserted between list items
+   * lastseparator="...": string separating the last item from the rest of the list
    * null="...": the format string to render the empty list
    * hideempty="on,off": when set to "on" then empty list items will not be added to the result (empty in the sense of ''); set this to "off" to still add them (default "on")
    * limit="...": max number of items to be taken out of the list (default "-1")
@@ -105,13 +90,14 @@ prepended with a header and appended with a footer in case the list is not empty
    * map="key1=value1,key2=value2, ...": this establishes a key-value hash available via the =$map()= variable. (see also the =replace= parameter for means
      to preprocess list items automatically.)
 
-The pattern string shall group matching substrings in the list item to which you can refer to by 
-using $1, $2, ... in the format string. Any format string (=format=, =header=, =footer=) may
-contain variables =$percnt$=, =$nop=, =$dollar= and =$n=. The variable
-=$index= referse to the position number within the list being formatted; using =$count= in the
-footer or header argument refers to the total number of list elements; =$marker= is set if
-the =selection= regular expression matches the current item. The =$map(key)= macro returns the value for "key"
-as specified in the =map= argument.
+The pattern string shall group matching substrings in the list item to which
+you can refer to by using $1, $2, ... in the format string. Any format string
+(=format=, =header=, =footer=) may contain variables =$percnt$=, =$nop=,
+=$dollar= and =$n=. The variable =$index= referse to the position number within
+the list being formatted; =$count= refers to the total number of matched list
+elementsr;=$marker= is set if the =selection= regular expression matches the
+current item. The =$map(key)= macro returns the value for "key" as specified in
+the =map= argument.
 
 ---+++ MAKEINDEX
 *Syntax*: =%<nop>MAKEINDEX{"&lt;list>" ...}%=
@@ -266,6 +252,9 @@ compare with [[http://en.wikipedia.org/wiki/Category:Philosophy_articles_needing
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|  19 Jun 2012: | added =lastseparator= (by Foswiki:Main/OliverKrueger);\
+                  fixed paging when using together with =include= and =exclude= parameters |
+|  15 May 2012: | fixed paging through lists in FORMATLIST |
 |  05 May 2012: | fixed lists not being processed properly before iterating over them in FORMATLIST and MAKEINDEX |
 |  19 Apr 2012: | modernized plugin by using a proper OO-core; \
                   fixed processing of =tokenize= properly;\
@@ -313,5 +302,3 @@ compare with [[http://en.wikipedia.org/wiki/Category:Philosophy_articles_needing
 |  Other Dependencies: | none |
 |  Plugin Home: | Foswiki:Extensions/%TOPIC% |
 |  Support: | Foswiki:Support/%TOPIC% |
-
-%META:FILEATTACHMENT{name="wikiringlogo40x40.png" attr="h" autoattached="1" comment="" date="1189788323" path="wikiringlogo40x40.png" size="2571" user="ProjectContributor" version="1"}%

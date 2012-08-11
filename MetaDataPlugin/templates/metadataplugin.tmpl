@@ -59,19 +59,3 @@
 %TMPL:DEF{"metadata::confirmdelete::details"}%<!-- -->
 <p class="foswikiCenter"><b>%URLPARAM{"metadata::title" default="%URLPARAM{"metadata::name"}%"}%</b></p>
 <!-- -->%TMPL:END%
-
-%TMPL:DEF{"metadata::init"}%
-%JQREQUIRE{"ui::dialog, ui::button"}%
-%ADDTOZONE{"script"
-  id="METADATAPLUGIN"
-  text="<script src='%PUBURLPATH%/%SYSTEMWEB%/MetaDataPlugin/metadata.js'></script>"
-  requires="JQUERYPLUGIN"
-}%
-%ADDTOZONE{"head"
-  id="METADATAPLUGIN"
-  text="<link rel='stylesheet' href='%PUBURLPATH%/%SYSTEMWEB%/MetaDataPlugin/metadata.css' media='all' />"
-  requires="JQUERYPLUGIN"
-}%
-%TMPL:END%
-
-%TMPL:P{"metadata::init"}%

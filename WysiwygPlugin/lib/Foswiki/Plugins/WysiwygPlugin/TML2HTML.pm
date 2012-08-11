@@ -29,6 +29,8 @@ use Foswiki::Plugins::WysiwygPlugin::Handlers;
 use strict;
 use warnings;
 
+# SMELL: If special characters are added here, they must also be accounted
+# for in the sub _protectVerbatimChars
 my $TT0 = chr(0);
 my $TT1 = chr(1);
 my $TT2 = chr(2);
@@ -182,6 +184,21 @@ sub _liftOut {
     }
     $options{class} = 'WYSIWYG_' . $type;
     return $this->_liftOutGeneral( $text, \%options );
+}
+
+sub _liftOutLink {
+    my ( $this, $text ) = @_;
+
+    my $options = {};
+
+    # If link has some embedded macros, just protect it
+    if ( $text =~ m/%[A-Z]+(\{.*?\})?%/ ) {
+        return $this->_liftOut( $text, 'PROTECTED' );
+    }
+    else {
+        return $this->_liftOutGeneral( $text,
+            { tag => 'NONE', protect => 0, tmltag => 0 } );
+    }
 }
 
 sub _liftOutGeneral {
@@ -395,7 +412,7 @@ sub _getRenderedVersion {
     $text = $this->_takeOutCustomTags($text);
 
     $text =~ s/\t/   /g;
-    $text =~ s/( +\\\n)/$this->_hideWhitespace($1)/ge;
+    $text =~ s/(\\\n)/$this->_hideWhitespace($1)/ge;
 
     # Remove PRE to prevent TML interpretation of text inside it
     $text = $this->_liftOutBlocks( $text, 'pre', {} );
@@ -426,8 +443,16 @@ s/<([A-Za-z]+[^>]*?)((?:\s+\/)?)>/"<" . $this->_appendClassToTag($1, 'TMLhtml') 
       _getNamedColour($1, $2)#oge;
 
     # let WYSIWYG-editable A tags untouched for the editor
-    $text =~
-s/(\<a(\s+(href|target|title|class)=("(?:[^"\\]++|\\.)*+"|'(?:[^'\\]++|\\.)*+'|\S+))+\s*\>.*?\<\/a\s*\>)/$this->_liftOutGeneral($1, { tag => 'NONE', protect => 0, tmltag => 0 } )/gei;
+    $text =~ s/(\<a
+         (?:\s+
+           (?: href|target|title|class )=                 # Supported attribute
+           (?: \'[^\']*\' | \"[^\"]*\" | [^\'\"\s]+ )+    # One or more SQ, DQ or space delimited strings
+         )+                                               # One or more attributes - href is required
+         \s*\>
+         .*?                                              # the link text
+         \<\/a\s*\>                                       # closing tag
+         )/
+         $this->_liftOutLink($1, { tag => 'NONE', protect => 0, tmltag => 0 } )/geixo;
 
     $text =~
       s/\[\[([^]]*)\]\[([^]]*)\]\]/$this->_protectMacrosInSquab($1,$2)/ge;
@@ -557,8 +582,10 @@ s/((^|(?<=[-*\s(]))$Foswiki::regex{linkProtocolPattern}:[^\s<>"]+[^\s*.,!?;:)<])
     my $inHTMLTable = 0;    # True when within a native HTML table
     my %table       = ();
     my $inParagraph = 0;    # True when within a P
-    my $inDiv       = 0;    # True when within a foswikiTableAndMacros div
-    my @result      = ();
+
+    # SMELL This next one should probably be split
+    my $inDiv  = 0;         # True when within a div or blockquote
+    my @result = ();
     my $spi = Foswiki::Func::getContext->{SUPPORTS_PARA_INDENT};
 
     foreach my $line ( split( /\n/, $text ) ) {
@@ -736,29 +763,50 @@ s/((^|(?<=[-*\s(]))$Foswiki::regex{linkProtocolPattern}:[^\s<>"]+[^\s*.,!?;:)<])
             $inParagraph = 0;
             $this->_addListItem( \@result, '', '', '' ) if $inList;
             $inList = 0;
-            $inDiv  = 1;
+            $inDiv++;
         }
         elsif ( $line eq $tableAndMacrosDivEnd ) {
             $this->_addListItem( \@result, '', '', '' ) if $inList;
             $inList = 0;
-            $inDiv  = 0;
+            $inDiv--;
 
             # The comment was only needed for this test,
             # and it must be removed to prevent it ending up in TML
             $line = '</div>';
         }
+        elsif ( $line =~ m/<div|<blockquote/i ) {
+
+            # If open/close on same line,  then don't increment $inDiv
+            # SMELL:  This is really lame.
+            unless ( $line =~ m/<(div|blockquote).*<\/\1/ ) {
+                $inDiv++;
+            }
+            if ($inParagraph) {
+                push( @result, '</p>' );
+                $inParagraph = 0;
+            }
+            elsif (@result) {
+
+                # Don't double-up the whitespace.
+                unless ($result[-1] =~ m/$TT1(\d+)$TT2/
+                    and $this->{refs}->[$1]->{params} =~ /encoded:'n'/ )
+                {
+                    $line = $this->_hideWhitespace("\n") . $line;
+                }
+            }
+        }
         else {
 
+            #print STDERR "Fallthru processing $line\n";
             # Other line
             $this->_addListItem( \@result, '', '', '' ) if $inList;
             $inList = 0;
-            if (    ( $inParagraph or $inHTMLTable )
+            if (    ( $inParagraph or $inHTMLTable or $inDiv )
                 and @result
                 and $result[-1] !~ /<p(?: class='[^']+')?>$/ )
             {
 
                 # This is the second (or later) line of a paragraph
-
                 my $whitespace = "\n";
                 if (    $line =~ m/^$TT1(\d+)$TT2/
                     and $this->{refs}->[$1]->{text} =~ /^\n?%/ )
@@ -768,9 +816,14 @@ s/((^|(?<=[-*\s(]))$Foswiki::regex{linkProtocolPattern}:[^\s<>"]+[^\s*.,!?;:)<])
                     # The newline is already protected
                     $whitespace = "";
                 }
+
+                # Closing div or blockquote already had whitespace handled
+                $whitespace = '' if ( $line =~ m/<\/div|<\/blockquote/i );
                 if ( $line =~ s/^(\s+)// ) {
                     $whitespace .= $1;
                 }
+
+                #print STDERR "Hiding whitespace ($whitespace)\n";
                 $line = $this->_hideWhitespace($whitespace) . $line
                   if length($whitespace);
             }
@@ -781,6 +834,22 @@ s/((^|(?<=[-*\s(]))$Foswiki::regex{linkProtocolPattern}:[^\s<>"]+[^\s*.,!?;:)<])
                     push( @result, '<p>' );
                     $inParagraph = 1;
                 }
+            }
+            if ( $line =~ m/<\/div|<\/blockquote/i ) {
+                if ($inParagraph) {
+
+                    #print STDERR "Closing para before close blockquote/div\n";
+                    push( @result, '</p>' );
+                    $inParagraph = 0;
+                }
+
+                # Don't let the close div auto-wrap onto the prior line
+                elsif ( defined $result[-1]
+                    && $line =~ /^<\/div|<\/blockquote/i )
+                {
+                    $result[-1] .= $this->_hideWhitespace("\n");
+                }
+                $inDiv--;
             }
             $line =~ s/(\s\s+)/$this->_hideWhitespace($1)/ge;
             if ( defined $result[-1] ) {
@@ -799,9 +868,14 @@ s/((^|(?<=[-*\s(]))$Foswiki::regex{linkProtocolPattern}:[^\s<>"]+[^\s*.,!?;:)<])
         $this->_addListItem( \@result, '', '', '' );
     }
     elsif ($inParagraph) {
+
+        #print STDERR "autoClosing a p\n";
         push( @result, '</p>' );
     }
     elsif ($inDiv) {
+
+        # SMELL: This could also be an unclosed blockquote  :(
+        #print STDERR "autoClosing a div\n";
         push( @result, '</div>' );
     }
 
@@ -842,6 +916,10 @@ s/$startww(($Foswiki::regex{webNameRegex}\.)?$Foswiki::regex{wikiWordRegex}($Fos
     # Substitute back in protected elements
     $text = $this->_dropBack($text);
 
+    # Restore any missed protected % tags
+    # (They are only restored in outer level of nested tags)
+    $text =~ s/$TT3/%/g;
+
     # Item1417: Insert a paragraph at the start of the document if the first tag
     # is a table (possibly preceded one of several specific tags) so that it is
     # possible to place the cursor *above* the table.
@@ -850,6 +928,14 @@ s/$startww(($Foswiki::regex{webNameRegex}\.)?$Foswiki::regex{wikiWordRegex}($Fos
     if ( $text =~ /$tagsBeforeFirstTablePattern/o ) {
         $text = '<p class="foswikiDeleteMe">&nbsp;</p>' . $text;
     }
+    elsif ( $text =~ /^\s*(?:<p>)?\s*<(?:pre|blockquote|div)/o ) {
+        $text = '<p class="foswikiDeleteMe">&nbsp;</p>' . $text;
+    }
+
+# SMELL: "Enter" in TMCE will split a blockquote into multiple blockquote elements.
+# This wraps the contents in a paragraph, and avoids the split.  It will be removed on save.
+    $text =~
+s/(<blockquote.*?>)(.*?)(<\/blockquote)/$1<p class="foswikiDeleteMe">$2<\/p>$3/sgi;
 
     #print STDERR "DEBUG\n$text\n";
     return $text;
@@ -872,6 +958,14 @@ sub _liftOutSquab {
     # Treat as old style link if embedded spaces in the url
     return $this->_liftOut( '[[' . $url . ']]', 'LINK' )
       if ( $class eq 'TMLlink' && $url =~ m/\s/ );
+
+    # Treat as old link if embedded quotes, which will break href=
+    if ( $url =~ m/"/ ) {
+
+        #print STDERR "protecting due to embedded quotes - $url\n";
+        my $linktext = ($text) ? "[$text]" : '';
+        return $this->_liftOut( '[[' . $url . ']' . $linktext . ']', 'LINK' );
+    }
 
     # Handle colour tags specially (hack, hack, hackity-HACK!
     my $colourMatch = join( '|', grep( /^[A-Z]/, @WC::TML_COLOURS ) );
@@ -1195,9 +1289,9 @@ sub _addClass {
 sub _protectVerbatimChars {
     my $text = shift;
 
-    # $TT0, $TT1 and $TT2 are chr(0), chr(1) and chr(2), respectively.
-    # They are handled specially, elsewhere
-    $text =~ s/([\003-\011\013-\037<&>'"])/'&#'.ord($1).';'/ges;
+# $TT0, $TT1, $TT2 and $TT3 are chr(0), chr(1), chr(2) and chr(3), respectively.
+# They are used as markers during the conversion and are handled specially, elsewhere
+    $text =~ s/([\004-\011\013-\037<&>'"])/'&#'.ord($1).';'/ges;
     $text =~ s/ /&nbsp;/g;
     $text =~ s/\n/<br \/>/gs;
     return $text;

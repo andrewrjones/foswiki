@@ -1,0 +1,61 @@
+---+!! Web Top Navigation
+Include top navigation with:
+<verbatim class="tml">
+%IF{
+    "istopic '%USERSWEB%.WebTopNavigation'"
+    then="$percntINCLUDE{$quot%USERSWEB%.WebTopNavigation$quot section=$quotmain$quot}$percnt"
+    else="$percntINCLUDE{$quot%SYSTEMWEB%.WebTopNavigation$quot section=$quotmain$quot}$percnt"
+}%
+</verbatim>
+
+---++ Include sections
+<verbatim class="tml">
+%STARTSECTION{"main"}%%INCLUDE{
+    "%TOPIC%"
+    section="_topbarbutton"
+    ID=""
+    DESTWEB="Main"
+    DESTTOPIC="WebHome"
+    LABEL="Main"
+}%%INCLUDE{
+    "%TOPIC%"
+    section="_topbarbutton"
+    ID=""
+    DESTWEB="System"
+    DESTTOPIC="WebHome"
+    LABEL="Documentation"
+}%%INCLUDE{
+    "%TOPIC%"
+    section="_topbarbutton"
+    ID=""
+    DESTWEB="Sandbox"
+    DESTTOPIC="WebHome"
+    LABEL="Sandbox"
+}%%ENDSECTION{"main"}%
+
+
+%STARTSECTION{"_topbarbutton"}%<li%IF{
+    "'$ID' and '%ID%'!=''"
+    then=" id='%ID%'"
+}%%IF{
+    "'%DESTWEB%'='%BASEWEB%'"
+    then=" class='foswikiActive'"
+}%><a href="%SCRIPTURL{"view"}%/%DESTWEB%/%DESTTOPIC%">%LABEL%</a></li>%ENDSECTION{"_topbarbutton"}%
+
+
+%STARTSECTION{"meta"}%<li><form action='#'>
+    <input type='text' class='foswikiInputField' placeholder='%MAKETEXT{"Search"}%' /></form>
+</li>%IF{
+    "context authenticated"
+    then="<li>[[%WIKIUSERNAME%][%SPACEOUT{%WIKINAME%}%]]</li>"
+}%%IF{
+    "$ LOGOUT != ''"
+    then='<li>%LOGOUT%</li>'
+}%%IF{
+    "$ LOGIN != '' and not context authenticated"
+    then='<li>%LOGIN%</li>%IF{
+    "context registration_supported AND context registration_enabled"
+    then="<li>[[%SYSTEMWEB%.UserRegistration][%MAKETEXT{"Register"}%]]</li>"
+}%'
+}%%ENDSECTION{"meta"}%
+</verbatim>

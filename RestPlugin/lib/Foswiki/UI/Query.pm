@@ -25,6 +25,7 @@ use Foswiki::Validation ();
 use Time::HiRes ();
 use REST::Utils qw( :all );
 use Error qw( :try );
+use Scalar::Util qw(blessed);
 
 # Set to 1 for debug
 use constant MONITOR_ALL => 0;
@@ -299,7 +300,8 @@ sub query {
 
     if ( not $topicObject->haveAccess($accessType) ) {
         $res->header( -type => 'text/html', -status => '401' );
-        $err = "ERROR: (401) $accessType not permitted to ($web . $topic)";
+        $err = "ERROR: (401) $accessType not permitted to ($web . "
+          . ( defined $topic ? $topic : 'UNDEF' ) . ')';
         $res->print($err);
         throw Foswiki::EngineException( 401, $err, $res );
     }
@@ -706,8 +708,13 @@ sub query {
         if ( ref($result) eq 'ARRAY' ) {
             for ( my $i = 0 ; $i < scalar(@$result) ; $i++ ) {
 
-#writeDebug("------------------ ref(result->[$i]): " . ref($result->[$i]) . "\n" if MONITOR_ALL;
-                if ( ref( $result->[$i] )
+                #require Data::Dumper;
+                #print STDERR ( "------------------ ref(result->[$i]): "
+                #      . ref($result)
+                #      . Data::Dumper->Dump( [ $result ] )
+                #      . "\n" )
+                #  if MONITOR_ALL;
+                if ( blessed( $result->[$i] )
                     && $result->[$i]->isa('Foswiki::Meta') )
                 {
                     $result->[$i] =
@@ -716,7 +723,7 @@ sub query {
             }
         }
         else {
-            if ( ref($result) && $result->isa('Foswiki::Meta') ) {
+            if ( blessed($result) && $result->isa('Foswiki::Meta') ) {
                 Foswiki::Func::writeDebug("AAAAAA\n\n\n");
                 $result = Foswiki::Serialise::convertMeta($result);
             }
@@ -901,7 +908,7 @@ sub mergeFrom {
     my ( $meta, $other, $type, $filter ) = @_;
 
     if ($type) {
-        return if $type =~ /^_/;
+        return if $type =~ /^_/ || $type eq 'TOPICINFO';
         foreach my $item ( @{ $other->{$type} } ) {
             if ( !$filter
                 || ( $item->{name} && $item->{name} =~ /$filter/ ) )
@@ -912,7 +919,12 @@ sub mergeFrom {
 #Merge old element with new data - that way keys that are not in the payload still get used.
                 %hash = %$old if ( defined($old) );
                 @hash{ keys(%$item) } = values(%$item);
-                $meta->putKeyed( $type, \%hash );
+                if ( $Foswiki::Meta::VALIDATE{$type}{many} ) {
+                    $meta->putKeyed( $type, \%hash );
+                }
+                else {
+                    $meta->put( $type, \%hash );
+                }
             }
         }
     }

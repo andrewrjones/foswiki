@@ -4,10 +4,10 @@
 	
 	The webtopbar template defines the page top bar. It INCLUDEs the BaseSkinWebTopBar topic of the current web, or if it doesn't exist, the BaseSkinWebTopBarExample topic.
 ===================================================
-}%%TMPL:DEF{"topbar"}%<header>%IF{
+}%%TMPL:DEF{"topbar"}%%IF{
 	"istopic '%SYSTEMWEB%.WebTopBar'"
 	then="$percntINCLUDE{$quot%SYSTEMWEB%.BaseSkinWebTopBar$quot}$percnt" 	
 	else="$percntINCLUDE{$quot%SYSTEMWEB%.BaseSkinWebTopBarExample$quot}$percnt"
-}%</header>%TMPL:END%%{
+}%%TMPL:END%%{
 ===================================================
 </verbatim>}%

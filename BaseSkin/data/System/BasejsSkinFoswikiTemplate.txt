@@ -22,32 +22,32 @@
 	"LIBJS"
 	name="base"
 	id="BaseSkinJs/base"
-	requires="JavascriptFiles/foswikilib,JavascriptFiles/foswikiPref,JQUERYPLUGIN"
+	requires="JavascriptFiles/foswikilib,JavascriptFiles/foswikiPref,JQUERYPLUGIN::FOSWIKI"
 }%%TMPL:P{
 	"LIBJS"
 	id="BaseSkinJs/bootstrap-modal"
 	name="bootstrap-modal"
-	requires="JQUERYPLUGIN::FOSWIKI"
+	requires="base"
 }%%TMPL:P{
 	"LIBJS"
-	name="bootstrap-dropdown"
-	id="BaseSkinJs/bootstrap-dropdown"
-	requires="JQUERYPLUGIN::FOSWIKI"
+	name="bootstrap-tab"
+	id="BaseSkinJs/bootstrap-tab"
+	requires="base"
 }%%TMPL:P{
 	"LIBJS"
 	name="sticky"
 	id="BaseSkinJs/jquery.sticky"
-	requires="JQUERYPLUGIN::FOSWIKI"
+	requires="base"
 }%%TMPL:P{
 	"LIBJS"
 	name="page-scroll"
 	id="BaseSkinJs/jquery.page-scroll"
-	requires="JQUERYPLUGIN::FOSWIKI"
+	requires="base"
 }%%TMPL:P{
 	"LIBJS"
 	name="easing"
 	id="BaseSkinJs/jquery.easing.1.3"
-	requires="JQUERYPLUGIN::FOSWIKI"
+	requires="base"
 }%%TMPL:END%%{
 ===================================================
 </verbatim>}%

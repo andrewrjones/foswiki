@@ -13,7 +13,7 @@ use Error qw( :try );
 use Assert;
 
 our $VERSION = '$Rev$';
-our $RELEASE = '2.3.2';
+our $RELEASE = '2.4.0';
 our $SHORTDESCRIPTION =
 'Generate static output (HTML, PDF) optionally upload (FTP) the output to a publishing site.';
 
@@ -41,7 +41,9 @@ sub initPlugin {
 
     Foswiki::Func::registerRESTHandler( 'publish', \&_publishRESTHandler );
     Foswiki::Func::registerTagHandler( 'PUBLISHERS_CONTROL_CENTRE',
-        \&_publishControlCentre );
+        \&_PUBLISHERS_CONTROL_CENTRE );
+    Foswiki::Func::registerTagHandler( 'PUBLISHING_GENERATORS',
+        \&_PUBLISHING_GENERATORS );
     return 1;    # coupersetique
 }
 
@@ -83,12 +85,58 @@ sub _display {
         $Foswiki::Plugins::SESSION->{response}->print($msg);
     }
     else {
-        print $msg;
+        if ( $msg =~ /foswikiAlert/ ) {
+            $msg = "*** $msg";
+        }
+
+        # Strip HTML tags from command-line output
+        $msg =~ s/<[a-z]+[^>]*>/ /g;
+        print "$msg\n";
     }
 }
 
 # Allow manipulation of $Foswiki::cfg{PublishPlugin}{Dir}
-sub _publishControlCentre {
+sub _PUBLISHING_GENERATORS {
+    my ( $session, $params, $topic, $web, $topicObject ) = @_;
+
+    my $format = defined $params->{format} ? $params->{format} : '$item';
+    my $separator = defined $params->{separator} ? $params->{separator} : ',';
+
+    # Get a list of available generators
+    my @list;
+    foreach my $place (@INC) {
+        my $d;
+        if ( opendir( $d, "$place/Foswiki/Plugins/PublishPlugin/BackEnd" ) ) {
+            foreach my $gen ( sort readdir $d ) {
+                next unless ( $gen =~ /^(\w+)\.pm$/ );
+                my $name  = $1;
+                my $entry = $format;
+                $entry =~ s/\$name/$name/g;
+                if ( $entry =~ /\$help/ ) {
+                    my $help;
+                    my $class =
+                      "Foswiki::Plugins::PublishPlugin::BackEnd::$name";
+                    eval "require $class";
+                    if ($@) {
+                        $help = $@;
+                    }
+                    elsif ( !$class->can('DESCRIPTION') ) {
+                        $help = 'no description';
+                    }
+                    else {
+                        $help = $class->DESCRIPTION;
+                    }
+                    $entry =~ s/\$help/$help/g;
+                }
+                push( @list, $entry );
+            }
+        }
+    }
+    return Foswiki::Func::decodeFormatTokens( join( $separator, @list ) );
+}
+
+# Allow manipulation of $Foswiki::cfg{PublishPlugin}{Dir}
+sub _PUBLISHERS_CONTROL_CENTRE {
     my ( $session, $params, $topic, $web, $topicObject ) = @_;
 
     my $query = Foswiki::Func::getCgiQuery();
@@ -125,7 +173,7 @@ HERE
         }
     }
     if ( opendir( D, $Foswiki::cfg{PublishPlugin}{Dir} ) ) {
-        my @files = grep( !/^\./, readdir(D) );
+        my @files = sort grep( !/^\./, readdir(D) );
         if ( scalar(@files) ) {
             $output .= CGI::start_table();
             foreach $file (@files) {

@@ -8,17 +8,19 @@ Single-file implementation of =Foswiki::Store= that uses normal
 files in a standard directory structure to store versions.
 
    * Webs map to directories; webs only "exist" if they contain a preferences topic.
-   * Topics are in topic.txt. If there is no .txt for a topic, the topics does not exist, even if there is a history.
-   * Topic histories are in web/topic,pfv/
-   * Attachments are in web/topic/attachment
-   * Attachment histories are in web/topic/attachment,pfv/
-   * Histories consist of files numbered for the revision they store
-   * The latest rev also has a history file (note: this means that large attachments are stored twice; same as in the RCS stores)
-   * META:TOPICINFO date and version fields are retrieved from file
-     modification dates; the =$meta= is ignored for these two fields.
-
-Note that this store is well-behaved; there is no confusion about
-the TOPICINFO, which is always up-to-date.
+   * Topics are in data/.../topic.txt. If there is no .txt for a topic, the topic
+     does not exist, even if there is a history.
+   * Topic histories are in data/.../topic,pfv/
+      * Each rev of the topic has a numbered file containing the text of that
+        rev (1 2 3 etc) each with a corresponding metafile 1.m 2.m etc.
+   * Attachment histories are in data/.../topic,pfv/ATTACHMENTS/attachmentname/
+      * Each rev of an attachment has a numbered file containing the data for
+        that rev (same as a topic), each with a corresponding metafile (same as a topic)
+   * The latest rev always has a history file (note: this means that large attachments are
+     stored twice; same as in the RCS stores)
+   * 'date' always comes from the file modification date
+   * 'author' and 'comment' come from the metafile
+   * 'version' comes from the name of the version file
 
 =cut
 
@@ -95,11 +97,26 @@ sub readTopic {
 
     $version = $isLatest ? $nr : $version;
 
-    # Patch up the revision info
-    $meta->setRevisionInfo(
-        version => $version,
-        date    => ( stat( _latestFile($meta) ) )[9]
-    );
+    # Patch up the revision info with defaults. If the latest
+    # file is more recent than the youngest history file, then
+    # use these defaults too.
+    my %ri;
+    unless ( $isLatest && _latestIsNewer($meta) ) {
+
+        # The history metafile
+        my $mf = _metaFile( $meta, undef, $version );
+        ( $ri{author}, $ri{comment} ) = _readMetaFile($mf);
+        $ri{date} = ( stat _historyFile( $meta, undef, $version ) )[9];
+    }
+    $ri{author} ||= $Foswiki::Users::BaseUserMapping::UNKNOWN_USER_CUID,
+      $ri{version} ||= $version;
+    $ri{date} ||= ( stat( _latestFile($meta) ) )[9];
+
+    $meta->setRevisionInfo(%ri);
+
+    # If there is a history, but the latest version of the topic
+    # is out-of-date, then the author must be unknown to reflect
+    # what happens on checking
 
     return ( $version, $isLatest );
 }
@@ -258,9 +275,9 @@ sub getRevisionHistory {
         }
         return Foswiki::ListIterator->new( \@list );
     }
+    my $n = _numRevisions( $meta, $attachment );
 
-    return Foswiki::Iterator::NumberRangeIterator->new(
-        _numRevisions( $meta, $attachment ), 1 );
+    return Foswiki::Iterator::NumberRangeIterator->new( $n, 1 );
 }
 
 # Implement Foswiki::Store
@@ -297,29 +314,33 @@ sub getVersionInfo {
     my $info = $this->askListenersVersionInfo( $meta, $rev, $attachment );
     unless ($info) {
 
-        $info = {};
         my $df;
         my $nr = _numRevisions( $meta, $attachment );
+        my $is_latest = 0;
         if ( $rev && $rev > 0 && $rev < $nr ) {
             $df = _historyFile( $meta, $attachment, $rev );
             unless ( -e $df ) {
 
                 # May arise if the history is not continuous, or if
                 # there is no history
-                $df = _latestFile( $meta, $attachment );
-                $rev = $nr;
+                $df        = _latestFile( $meta, $attachment );
+                $rev       = $nr;
+                $is_latest = 1;
             }
         }
         else {
-            $df = _latestFile( $meta, $attachment );
-            $rev = $nr;
+            $df        = _latestFile( $meta, $attachment );
+            $rev       = $nr;
+            $is_latest = 1;
         }
-        unless ($attachment) {
+        $info = {};
+        unless ( $is_latest && _latestIsNewer($meta) ) {
 
-            # if it's a topic, try and retrieve TOPICINFO
-            _getTOPICINFO( $df, $info );
+            # We can trust the history metafile
+            my $mf = _metaFile( $meta, $attachment, $rev );
+            ( $info->{author}, $info->{comment} ) = _readMetaFile($mf);
         }
-        $info->{date}    = _getTimestamp($df);
+        $info->{date} ||= _getTimestamp($df);
         $info->{version} = $rev;
         $info->{comment} = '' unless defined $info->{comment};
         $info->{author} ||= $Foswiki::Users::BaseUserMapping::UNKNOWN_USER_CUID;
@@ -330,7 +351,9 @@ sub getVersionInfo {
 
 # Implement Foswiki::Store
 sub saveAttachment {
-    my ( $this, $meta, $name, $stream, $cUID, $comment ) = @_;
+
+    # SMELL: $options not currently supported by the core
+    my ( $this, $meta, $name, $stream, $cUID, $options ) = @_;
 
     _saveDamage( $meta, $name );
 
@@ -344,7 +367,28 @@ sub saveAttachment {
     File::Copy::copy( $latest, $hf )
       or die "PlainFile: failed to copy $latest to $hf: $!";
 
-    _recordChange( $meta, $cUID, $rn );
+    my $comment;
+    if ( ref $options ) {
+        if ( $options->{forcedate} ) {
+            utime( $options->{forcedate}, $options->{forcedate},
+                $latest )    # touch
+              or die "PlainFile: could not touch $latest: $!";
+            utime( $options->{forcedate}, $options->{forcedate}, $hf )
+              or die "PlainFile: could not touch $hf: $!";
+        }
+        $comment = $options->{comment};
+    }
+    else {
+
+        # Compatibility with old signature
+        $comment = $options;
+        $options = {};
+    }
+
+    my $mf = _metaFile( $meta, $name, $rn );
+    _writeMetaFile( $mf, $cUID, $comment );
+
+    _recordChange( $meta, $cUID, $rn, $options->{minor} ? 'minor' : undef );
 
     $this->tellListeners(
         verb          => $verb,
@@ -373,10 +417,6 @@ sub saveTopic {
     # Create new latest
     my $latest = _latestFile($meta);
     _saveFile( $latest, $meta->getEmbeddedStoreForm() );
-    if ( $options->{forcedate} ) {
-        utime( $options->{forcedate}, $options->{forcedate}, $latest )   # touch
-          or die "PlainFile: could not touch $latest: $!";
-    }
 
     # Create history file by copying latest (modification date
     # doesn't matter, so long as it's >= $latest)
@@ -384,6 +424,15 @@ sub saveTopic {
     _mkPathTo($hf);
     File::Copy::copy( $latest, $hf )
       or die "PlainFile: failed to copy $latest to $hf: $!";
+    if ( $options->{forcedate} ) {
+        utime( $options->{forcedate}, $options->{forcedate}, $latest )   # touch
+          or die "PlainFile: could not touch $latest: $!";
+        utime( $options->{forcedate}, $options->{forcedate}, $hf )       # touch
+          or die "PlainFile: could not touch $hf: $!";
+    }
+
+    my $mf = _metaFile( $meta, undef, $rn );
+    _writeMetaFile( $mf, $cUID, $options->{comment} );
 
     my $extra = $options->{minor} ? 'minor' : '';
     _recordChange( $meta, $cUID, $rn, $extra );
@@ -412,18 +461,21 @@ sub repRev {
     $ti->{author}  = $cUID;
 
     _saveFile( $latest, $meta->getEmbeddedStoreForm() );
+
+    _mkPathTo($hf);
+    File::Copy::copy( $latest, $hf )
+      or die "PlainFile: failed to copy $latest to $hf: $!";
+    my $mf = _metaFile( $meta, undef, $rn );
+    _writeMetaFile( $mf, $cUID, $options{comment} );
+
     if ( $options{forcedate} ) {
         utime( $options{forcedate}, $options{forcedate}, $latest )    # touch
           or die "PlainFile: could not touch $latest: $!";
+        utime( $options{forcedate}, $options{forcedate}, $hf )
+          or die "PlainFile: could not touch $hf: $!";
     }
 
-    # Date on the history file doesn't matter so long as it's
-    # >= $latest
-    File::Copy::copy( $latest, $hf )
-      or die "PlainFile: failed to copy $latest to $hf: $!";
-
-    my @log = ( 'minor', 'reprev' );
-    unshift( @log, $options{operation} ) if $options{operation};
+    my @log = ( 'minor', 'reprev', $options{operation} || 'save' );
     _recordChange( $meta, $cUID, $rn, join( ', ', @log ) );
 
     $this->tellListeners( verb => 'update', newmeta => $meta );
@@ -574,11 +626,13 @@ sub eachChange {
 }
 
 # Implement Foswiki::Store
+# An attachment is only an attachment if it has a presence in the meta-data
 sub eachAttachment {
     my ( $this, $meta ) = @_;
 
     my $dh;
-    opendir( $dh, _getPub($meta) ) or return ();
+    opendir( $dh, _attachmentsDir($meta) )
+      or return new Foswiki::ListIterator( [] );
     my @list = grep { !/^[.*_]/ && !/,pfv$/ } readdir($dh);
     closedir($dh);
 
@@ -724,10 +778,14 @@ sub getRevisionAtTime {
     my $d;
     unless ( opendir( $d, $hd ) ) {
         return 1 if ( $time >= ( stat( _latestFile($meta) ) )[9] );
-        return 0;
+        return undef;
     }
     my @revs = reverse sort grep { /^[0-9]+$/ } readdir($d);
     closedir($d);
+
+    if ( _latestIsNewer($meta) ) {
+        return $revs[0] + 1 if ( $time >= ( stat( _latestFile($meta) ) )[9] );
+    }
 
     foreach my $rev (@revs) {
         return $rev if ( $time >= ( stat("$hd/$rev") )[9] );
@@ -820,6 +878,11 @@ sub _latestFile {
     return _getData($p1) . ".txt";
 }
 
+# Get the absolute file path to the attachments metadir for a topic
+sub _attachmentsDir {
+    return _getData( $_[0] ) . ',pfv/ATTACHMENTS';
+}
+
 # Get the absolute file path to the history dir for a topic or attachment
 # _historyDir($meta [, $attachment])
 #    - $meta is a Foswiki::Meta
@@ -833,8 +896,22 @@ sub _historyDir {
         $p1 = "$p1/$p2";
         $p2 = shift;
     }
-    return _getPub($p1) . "/${p2},pfv" if $p2;
-    return _getData($p1) . ",pfv";
+
+    # $p1 is web/topic
+    # $p2 is attachment name (if any)
+    if ($p2) {
+
+        # It's an attachment. The history is stored in the web data dir, in
+        # a subdir with the same name as the topic and "extension" ,pfm
+        # This keeps the pub directory "clean"; a requirement when these
+        # files are visible via a web interface.
+        return _attachmentsDir($p1) . "/${p2}";
+    }
+    else {
+
+        # It's a topic. The history is stored in the web data dir.
+        return _getData($p1) . ",pfv";
+    }
 }
 
 # Get the absolute file path to the history for a topic or attachment
@@ -845,6 +922,15 @@ sub _historyDir {
 sub _historyFile {
     my $ver = pop;
     return _historyDir(@_) . "/$ver";
+}
+
+# Get the absolute file path to the metafile for a topic or attachment
+# _metaFile($meta, $attachment, $version)
+#    - $meta is a Foswiki::Meta
+# _metaFile( $web, $topic, $attachment, $version)
+#    - web and topic are strings
+sub _metaFile {
+    return _historyFile(@_) . '.m';
 }
 
 # Get the number of revisions for a topic or attachment
@@ -861,33 +947,17 @@ sub _numRevisions {
 
     my $d;
     opendir( $d, $dir ) or die "PlainFile: '$dir': $!";
-    my @revs = sort grep { /^[0-9]+$/ } readdir($d);
+    my @revs = sort { $b <=> $a } grep { /^[0-9]+$/ } readdir($d);
     closedir($d);
 
-    return 0 unless scalar @revs;
-    return pop @revs;
-}
-
-# Read the TOPICINFO in a file and populate a record with it
-sub _getTOPICINFO {
-    my ( $fn, $info ) = @_;
-    my $f;
-    open( $f, '<', $fn ) or return;
-    local $/ = "\n";
-    my $ti = <$f>;
-    close($f);
-    if ( defined $ti && $ti =~ /^%META:TOPICINFO{(.*)}%/ ) {
-        require Foswiki::Attrs;
-        my $a = Foswiki::Attrs->new($1);
-
-        # Default bad revs to 1, not 0, because this is coming from
-        # a topic on disk, so we know it's a "real" rev.
-        $info->{version} = Foswiki::Store::cleanUpRevID( $a->{version} )
-          || 1;
-        $info->{date}    = $a->{date};
-        $info->{author}  = $a->{author};
-        $info->{comment} = $a->{comment};
+    return 1 unless scalar @revs;    # one implicit revision
+         # If the head revision is inconsistent with the history,
+         # then there's another implicit revision
+    if ( _latestIsNewer( $meta, $attachment ) ) {
+        unshift( @revs, $revs[0] + 1 );
     }
+
+    return $revs[0];
 }
 
 # If a latest file has a more recent file date than the corresponding
@@ -909,27 +979,8 @@ sub _saveDamage {
     my $latest = _latestFile( $meta, $attachment );
     return unless ( -e $latest );
 
-    my $rev = 1;
-    my $hd = _historyDir( $meta, $attachment );
-
-    if ( -e $hd ) {
-
-        # Is there a history?
-        opendir( $d, $hd ) or die $!;
-        my @revs = sort grep { /^[0-9]+$/ } readdir($d);
-        closedir($d);
-        my $topRev = 0;
-        if ( scalar(@revs) ) {
-            my $topRev = $revs[$#revs];
-            my $hf     = "$hd/$topRev";
-
-            # Check the time on the history file; is the .txt newer?
-            my $ht = ( stat($hf) )[9] || time;
-            my $lt = ( stat($latest) )[9];
-            return if ( $ht >= $lt );    # up to date
-            $rev = $topRev + 1;          # we must create this
-        }
-    }
+    my $rev = _latestIsNewer( $meta, $attachment, $latest );
+    return unless $rev;
 
     # No existing revs; create
     # If this is a topic, correct the TOPICINFO
@@ -956,39 +1007,79 @@ sub _saveDamage {
       or die "PlainFile: failed to copy to $hf: $!";
 }
 
+# Return 0 if the latest is consistent with the history or
+# there is no history. If there is a history and the working
+# file is newer, then return the rev that would be created
+# if we checked in.
+sub _latestIsNewer {
+    my ( $meta, $attachment, $latest ) = @_;
+
+    $latest ||= _latestFile( $meta, $attachment );
+
+    my $hd = _historyDir( $meta, $attachment );
+
+    return 1 unless ( -e $hd );
+
+    # Is there a history?
+    my $d;
+    opendir( $d, $hd ) or die $!;
+    my @revs = sort grep { /^[0-9]+$/ } readdir($d);
+    closedir($d);
+    return 0 unless scalar(@revs);    # no history
+
+    my $topRev = $revs[$#revs];
+    my $hf     = "$hd/$topRev";
+
+    # Check the time on the history file; is the .txt newer?
+    my $ht = ( stat($hf) )[9] || time;
+    my $lt = ( stat($latest) )[9];
+    return 0 if ( $ht >= $lt );       # up to date
+    return $topRev + 1;               # we must create this
+}
+
+sub _readMetaFile {
+    my $mf = shift;
+    return () unless -e $mf;
+    return split( "\n", _readFile($mf), 2 );
+}
+
+sub _writeMetaFile {
+    my $mf = shift;
+    _mkPathTo($mf);
+    _saveFile( $mf, join( "\n", map { defined $_ ? $_ : '' } @_ ) );
+}
+
 # Record a change in the web history
 sub _recordChange {
     my ( $meta, $cUID, $rev, $more ) = @_;
     $more ||= '';
 
     my $file = _getData( $meta->web ) . '/.changes';
+    my @changes;
+    my $text = '';
+    my $t    = time;
 
-    my @changes = ();
     if ( -e $file ) {
-        @changes =
-          map {
-            my @row = split( /\t/, $_, 5 );
-            \@row
-          }
-          split( /[\r\n]+/, _readFile($file) );
-
-        # Forget old stuff
-        my $cutoff = time() - $Foswiki::cfg{Store}{RememberChangesFor};
-        while ( scalar(@changes) && $changes[0]->[2] < $cutoff ) {
-            shift(@changes);
+        my $cutoff = $t - $Foswiki::cfg{Store}{RememberChangesFor};
+        my $fh;
+        open( $fh, '<', $file ) or die "PlainFile: failed to read $file: $!";
+        local $/ = "\n";
+        my $head = 1;
+        while ( my $line = <$fh> ) {
+            chomp($line);
+            if ($head) {
+                my @row = split( /\t/, $line, 4 );
+                next if ( $row[2] < $cutoff );
+                $head = 0;
+            }
+            $text .= "$line\n";
         }
+        close($fh);
     }
 
     # Add the new change to the end of the file
-    push( @changes, [ $meta->topic || '.', $cUID, time(), $rev, $more ] );
-
-    # Doing this using a Schwartzian transform sometimes causes a mysterious
-    # undefined value, so had to unwrap it to a for loop.
-    for ( my $i = 0 ; $i <= $#changes ; $i++ ) {
-        $changes[$i] = join( "\t", @{ $changes[$i] } );
-    }
-
-    my $text = join( "\n", @changes );
+    $text .= $meta->topic || '.';
+    $text .= "\t$cUID\t$t\t$rev\t$more\n";
 
     _saveFile( $file, $text );
 }

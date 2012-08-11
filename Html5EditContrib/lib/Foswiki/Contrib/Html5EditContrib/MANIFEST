@@ -1,0 +1,7 @@
+!noci
+data/System/Html5EditContrib.txt 0644 Documentation page
+lib/Foswiki/Contrib/Html5EditContrib.pm  Perl module 
+lib/Foswiki/Contrib/Html5EditContrib/Hallojs.pm  Perl module 
+lib/Foswiki/Contrib/Html5EditContrib/Config.spec 0444 Configuration
+pub/System/Html5EditContrib/hallo.js
+pub/System/Html5EditContrib/hallo.css

@@ -1,0 +1,49 @@
+
+// BASE FORMS
+// -----------------
+
+.foswikiInputForm legend {
+	.fw_heading_5();
+}
+
+.foswikiFormSteps {
+    border-width: 1px;
+    border-style: none none solid none;
+}
+.foswikiFormStep {
+    border-width: 1px;
+    border-style: solid none none none;
+    clear: both;
+    
+    input {
+       	.fw_em_margin_bottom(@fw_size_p);
+    }
+}
+
+.foswikiInputForm {
+    .foswikiFormStep {
+        legend {
+            margin: 0;
+        }
+    }
+}
+
+.foswikiFormInputGroup {
+	margin: 0;
+}
+
+.foswikiLogin {
+	margin: 0 0 @fw_tool_padding_em 0;
+	.makeColumn(8);
+	margin-left: 0;
+	
+	label {
+	    float: left;
+	    width: 150px;
+	}
+	
+	.foswikiFormInputGroup {
+	    float: left;
+	    width: 300px;
+	}
+}

@@ -831,13 +831,15 @@ sub groupAllowsChange {
     my $user  = shift;
     ASSERT( defined $user ) if DEBUG;
 
-    return 1 if $this->{session}->{users}->isAdmin($user);
-
     $Group = Foswiki::Sandbox::untaint( $Group,
         \&Foswiki::Sandbox::validateTopicName );
     my ( $groupWeb, $groupName ) =
       $this->{session}
       ->normalizeWebTopicName( $Foswiki::cfg{UsersWebName}, $Group );
+
+    # SMELL: Should NobodyGroup be configurable?
+    return 0 if $groupName eq 'NobodyGroup';
+    return 1 if $this->{session}->{users}->isAdmin($user);
 
 # If a Group or User topic normalized somewhere else,  doesn't make sense, so ignore the Webname
     $groupWeb = $Foswiki::cfg{UsersWebName};
@@ -960,6 +962,9 @@ sub addUserToGroup {
         $membersString .= $wikiName;
     }
 
+    Foswiki::Func::writeEvent( 'addUserToGroup',
+        "$groupName: $wikiName added by $user" );
+
     $this->_clearGroupCache($groupName);
 
     $this->_writeGroupTopic(
@@ -1051,7 +1056,9 @@ sub _writeGroupTopic {
     $groupTopicObject->saveAs(
         $groupWeb, $groupName,
         author           => $user,
-        forcenewrevision => 0
+        forcenewrevision => ( $groupName eq $Foswiki::cfg{SuperAdminGroup} )
+        ? 1
+        : 0
     );
 
 }
@@ -1130,6 +1137,9 @@ sub removeUserFromGroup {
             push( @l, $ident );
         }
         $membersString = join( ', ', @l );
+
+        Foswiki::Func::writeEvent( 'removeUserFromGroup',
+            "$groupTopic: $WikiName removed by $user" );
 
         $this->_writeGroupTopic( $groupTopicObject, $groupWeb, $groupTopic,
             $membersString );

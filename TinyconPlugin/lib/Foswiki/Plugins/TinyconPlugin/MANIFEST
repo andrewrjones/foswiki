@@ -1,0 +1,13 @@
+!noci
+data/System/TinyconPlugin.txt 0644 Documentation page
+data/System/VarTINYCON.txt 0644 Tag documentation
+data/Sandbox/PluginTestTinyconPlugin.txt 0644 Examples
+lib/Foswiki/Plugins/TinyconPlugin.pm 0444 Perl module
+lib/Foswiki/Plugins/TinyconPlugin/Config.spec 0444 Configuration
+
+lib/Foswiki/Plugin/TinyconPlugin/Tinycon.pm
+
+pub/System/TinyconPlugin/tinycon.min.js
+pub/System/TinyconPlugin/README.md
+pub/System/TinyconPlugin/tinycon.js
+

@@ -873,6 +873,7 @@ sub test_renameTopic_same_web_new_topic_name {
 # that it is more important to rename those quoted topics than to be 100% correct
 # and renaming only references that result in a link, and missing the references used on
 # line 22 and 23.
+    # SMELL: Line 37 - Slash separated Web/Topic is not renamed.  Item11555
     #
     $this->check( $this->{test_web}, 'NewTopic', undef, <<"THIS", 1 );
 1 $this->{test_web}.NewTopic
@@ -1046,6 +1047,7 @@ THIS
 }
 
 # Test rename with slash delim
+# SMELL: Item11555 - slash delimititers only work as part of an url but not as part of a bracket link
 sub test_renameTopic_same_web_new_topic_name_slash_delim {
     my $this = shift;
 
@@ -1053,7 +1055,7 @@ sub test_renameTopic_same_web_new_topic_name_slash_delim {
     # in test_renameTopic_same_web_new_topic_name.
 
     $this->expect_failure();
-    $this->annotate("[[Web/Topic]] fails");
+    $this->annotate("[[Web/Topic]] fails due to Item11555");
 
     $this->_reset_session(
         {
@@ -1134,7 +1136,7 @@ OldTopic 4
 11 [[OldTopic][the text]]
 12 $this->{test_web}.NewTopic
 13 $this->{new_web}.OldTopic
-14 $this->{test_web}.OtherTopic
+14 OtherTopic
 15 $this->{test_web}.OtherTopic
 16 $this->{new_web}.OtherTopic
 17 MeMeOldTopicpick$this->{test_web}.OldTopicme
@@ -1930,6 +1932,149 @@ sub test_rename_attachment {
     $this->assert(
         Foswiki::Func::attachmentExists(
             $this->{test_web}, 'NewTopic', 'dis.dat'
+        )
+    );
+
+    return;
+}
+
+sub test_move_attachment_RENAME_Topic_denied {
+    my $this = shift;
+
+    my ($to) = Foswiki::Func::readTopic( $this->{test_web}, 'NewTopic' );
+    $to->text('Wibble');
+    $to->save();
+    $to->finish();
+
+    # returns undef on OSX with 3.15 version of CGI module (works on 3.42)
+    my $stream = File::Temp->new( UNLINK => 0 );
+    print $stream "Blah Blah";
+    $this->assert( $stream->close() );
+    $stream->unlink_on_destroy(1);
+
+    ($to) = Foswiki::Func::readTopic( $this->{test_web}, $this->{test_topic} );
+    $to->text("Wibble\n   * Set ALLOWTOPICRENAME = NotMe\n");
+    $to->attach( name => 'dis.dat', file => $stream->filename );
+    $to->save();
+    $to->finish();
+
+    $this->_reset_session(
+        {
+            attachment    => ['dis.dat'],
+            newattachment => ['dis.dat'],
+            newtopic      => ['NewTopic'],
+            newweb        => $this->{test_web},
+            path_info     => "/$this->{test_web}/$this->{test_topic}"
+        }
+    );
+
+    my ($text) = $this->captureWithKey( rename => $UI_FN, $this->{session} );
+    $this->assert_matches( qr/Status: 302/,                 $text );
+    $this->assert_matches( qr#/$this->{test_web}/NewTopic#, $text );
+    $this->assert(
+        !Foswiki::Func::attachmentExists(
+            $this->{test_web}, $this->{test_topic}, 'dis.dat'
+        )
+    );
+    $this->assert(
+        Foswiki::Func::attachmentExists(
+            $this->{test_web}, 'NewTopic', 'dis.dat'
+        )
+    );
+
+    # Make sure rename back fails if change of target is denied
+    ($to) = Foswiki::Func::readTopic( $this->{test_web}, $this->{test_topic} );
+    $to->text("Wibble\n   * Set ALLOWTOPICCHANGE = NotMe\n");
+    $to->save();
+    $to->finish();
+
+    $this->_reset_session(
+        {
+            attachment    => ['dis.dat'],
+            newattachment => ['dis.dat'],
+            newtopic      => [ $this->{test_topic} ],
+            newweb        => $this->{test_web},
+            path_info     => "/$this->{test_web}/NewTopic"
+        }
+    );
+
+    try {
+        ($text) = $this->captureWithKey( rename => $UI_FN, $this->{session} );
+        $this->assert( 0, $text );
+    }
+    catch Foswiki::AccessControlException with {
+        my $e = shift;
+        $this->assert_equals( $this->{test_topic},           $e->{topic} );
+        $this->assert_equals( 'CHANGE',                      $e->{mode} );
+        $this->assert_equals( 'access not allowed on topic', $e->{reason} );
+    }
+    otherwise {
+        $this->assert( 0, shift );
+    };
+
+    $this->assert_matches( qr/Status: 302/,                 $text );
+    $this->assert_matches( qr#/$this->{test_web}/NewTopic#, $text );
+    $this->assert(
+        !Foswiki::Func::attachmentExists(
+            $this->{test_web}, $this->{test_topic}, 'dis.dat'
+        )
+    );
+    $this->assert(
+        Foswiki::Func::attachmentExists(
+            $this->{test_web}, 'NewTopic', 'dis.dat'
+        )
+    );
+
+    return;
+}
+
+sub test_move_attachment_RENAME_Web_denied {
+    my $this = shift;
+
+    my ($m) = Foswiki::Func::readTopic( "$this->{test_web}", 'WebPreferences' );
+    $m->text("   * Set ALLOWWEBRENAME = NotMe\n");
+    $m->save();
+    $m->finish();
+
+    my ($to) = Foswiki::Func::readTopic( $this->{new_web}, 'NewTopic' );
+    $to->text('Wibble');
+    $to->save();
+    $to->finish();
+
+    # returns undef on OSX with 3.15 version of CGI module (works on 3.42)
+    my $stream = File::Temp->new( UNLINK => 0 );
+    print $stream "Blah Blah";
+    $this->assert( $stream->close() );
+    $stream->unlink_on_destroy(1);
+
+    ($to) = Foswiki::Func::readTopic( $this->{test_web}, $this->{test_topic} );
+    $to->text("Wibble\n");
+    $to->attach( name => 'dis.dat', file => $stream->filename );
+    $to->finish();
+
+    $this->_reset_session(
+        {
+            attachment    => ['dis.dat'],
+            newattachment => ['dis.dat'],
+            newtopic      => ['NewTopic'],
+            newweb        => $this->{new_web},
+            path_info     => "/$this->{test_web}/$this->{test_topic}"
+        }
+    );
+
+    my ($text) = $this->captureWithKey( rename => $UI_FN, $this->{session} );
+    $this->assert_matches( qr/Status: 302/,                $text );
+    $this->assert_matches( qr#/$this->{new_web}/NewTopic#, $text );
+    $this->assert(
+        Foswiki::Func::topicExists( $this->{test_web}, $this->{test_topic} ) );
+    $this->assert(
+        !Foswiki::Func::attachmentExists(
+            $this->{test_web}, $this->{test_topic}, 'dis.dat'
+        )
+    );
+    $this->assert(
+        Foswiki::Func::attachmentExists(
+            $this->{new_web}, 'NewTopic', 'dis.dat'
         )
     );
 

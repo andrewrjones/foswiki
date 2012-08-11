@@ -51,7 +51,8 @@ use Digest::MD5              ();  # For passthru and validation
 use Foswiki::Configure::Load ();
 use Foswiki::Engine          ();
 
-require 5.005;                    # For regex objects and internationalisation
+use 5.006;         # First version to accept v-numbers.
+require v5.8.8;    # see http://foswiki.org/Development/RequirePerl588
 
 # Site configuration constants
 our %cfg;
@@ -737,18 +738,10 @@ sub writeCompletePage {
           unless ( $this->{request}->action() eq 'login'
             or ( $ENV{REDIRECT_STATUS} || 0 ) >= 400 );
 
-        my $usingStrikeOne = 0;
-        if (
-            $Foswiki::cfg{Validation}{Method} eq 'strikeone'
+        my $usingStrikeOne = $Foswiki::cfg{Validation}{Method} eq 'strikeone';
+        if ($usingStrikeOne) {
 
-            # Add the onsubmit handler to the form
-            && $text =~ s/(<form[^>]*method=['"]POST['"][^>]*>)/
-                Foswiki::Validation::addOnSubmit($1)/gei
-          )
-        {
-
-            # At least one form has been touched; add the validation
-            # cookie
+            # add the validation cookie
             my $valCookie = Foswiki::Validation::getCookie($cgis);
             $valCookie->secure( $this->{request}->secure );
             $this->{response}
@@ -762,15 +755,27 @@ sub writeCompletePage {
             $this->addToZone( 'script', 'JavascriptFiles/strikeone', <<JS );
 <script type="text/javascript" src="$Foswiki::cfg{PubUrlPath}/$Foswiki::cfg{SystemWebName}/JavascriptFiles/strikeone$src.js"></script>
 JS
-            $usingStrikeOne = 1;
+
+            # Add the onsubmit handler to the form
+            $text =~ s/(<form[^>]*method=['"]POST['"][^>]*>)/
+                Foswiki::Validation::addOnSubmit($1)/gei;
         }
 
-        # Inject validation key in HTML forms
         my $context =
           $this->{request}->url( -full => 1, -path => 1, -query => 1 ) . time();
+
+        # Inject validation key in HTML forms
         $text =~ s/(<form[^>]*method=['"]POST['"][^>]*>)/
           $1 . Foswiki::Validation::addValidationKey(
               $cgis, $context, $usingStrikeOne )/gei;
+
+        #add validation key to HTTP header so we can update it for ajax use
+        $this->{response}->pushHeader(
+            'X-Foswiki-Validation',
+            Foswiki::Validation::generateValidationKey(
+                $cgis, $context, $usingStrikeOne
+            )
+        );
     }
 
     if ( $contentType ne 'text/plain' ) {
@@ -832,6 +837,9 @@ BOGUS
             }
         }
     }
+
+    $this->{response}->pushHeader( 'X-Foswiki-Monitor-renderTime',
+        $this->{request}->getTime() );
 
     $this->generateHTTPHeaders( $pageType, $contentType, $text, $cachedPage );
 
@@ -1657,8 +1665,9 @@ sub new {
     # Set command_line context if there is no query
     $initialContext ||= defined($query) ? {} : { command_line => 1 };
 
-    # This foswiki supports : paragraph indent
-    $initialContext->{SUPPORTS_PARA_INDENT} = 1;
+    # This foswiki supports:
+    $initialContext->{SUPPORTS_PARA_INDENT}   = 1;    #  paragraph indent
+    $initialContext->{SUPPORTS_PREF_SET_URLS} = 1;    # ?Set+, ?Local+ etc URLs
 
     $query ||= new Foswiki::Request();
     my $this = bless( { sandbox => 'Foswiki::Sandbox' }, $class );
@@ -1714,7 +1723,10 @@ sub new {
 
     #{urlHost}  is needed by loadSession..
     my $url = $query->url();
-    if ( $url && $url =~ m{^([^:]*://[^/]*).*$} ) {
+    if (   $url
+        && !$Foswiki::cfg{ForceDefaultUrlHost}
+        && $url =~ m{^([^:]*://[^/]*).*$} )
+    {
         $this->{urlHost} = $1;
 
         if ( $Foswiki::cfg{RemovePortNumber} ) {
@@ -1821,6 +1833,10 @@ sub new {
         # implicit untaint OK - validated later
         $web = $1 unless $web;
     }
+
+#Development.AddWebParamToAllCgiScripts: enables bin/script?topic=WebPreferences;defaultweb=Sandbox
+    $web = $query->param('defaultweb') unless $web;
+
     my $topicNameTemp = $this->UTF82SiteCharSet($topic);
     if ($topicNameTemp) {
         $topic = $topicNameTemp;
@@ -2145,6 +2161,7 @@ sub finish {
     undef $this->{_addedToHEAD};
     undef $this->{sandbox};
     undef $this->{evaluatingEval};
+    undef $this->{_ffCache};
 
     undef $this->{DebugVerificationCode};    # from Foswiki::UI::Register
     if (SINGLE_SINGLETONS_TRACE) {

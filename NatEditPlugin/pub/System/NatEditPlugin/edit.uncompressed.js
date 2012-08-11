@@ -70,7 +70,7 @@ function fixHeightOfPane () { }
         switchOffDetails("change");
         setPermission("change", {
           allow: 'AdminUser',
-          deny: undefined
+          deny: 'undefined'
         });
         break;
       case 'registered_users_change':
@@ -104,7 +104,7 @@ function fixHeightOfPane () { }
         switchOffDetails("view");
         setPermission("view", {
           allow: 'AdminUser',
-          deny: undefined
+          deny: 'undefined'
         });
         break;
       case 'registered_users_view':
@@ -173,10 +173,9 @@ function fixHeightOfPane () { }
           foswikiStrikeOne($editForm[0]);
         }
 
-        if ((typeof(tinyMCE) === 'object') && 
-          (typeof(tinyMCE.activeEditor) === 'object') &&
-          (tinyMCE.activeEditor !== null)) {
-          tinyMCE.activeEditor.onSubmit.dispatch();
+        if ((typeof(tinyMCE) === 'object') && (typeof(tinyMCE.editors) === 'object')) {
+          $.each(tinyMCE.editors, function(index, editor) {
+              editor.onSubmit.dispatch();});
         }
 
         return true;
@@ -192,7 +191,7 @@ function fixHeightOfPane () { }
 
       /* remove the second Summary */
       $("input[name='Summary']:eq(1)").parents(".foswikiFormStep").remove();
-    
+
       /* add click handler */
       $("#save").click(function() {
         editAction = "save";
@@ -204,19 +203,20 @@ function fixHeightOfPane () { }
         }
         return false;
       });
-      $("#checkpoint").click(function() {
+    
+      $("#checkpoint").click(function(el) {
         var topicName = foswiki.getPreference("TOPIC") || '';
-        editAction = "checkpoint";
+        editAction = el.currentTarget.id;
         if ($editForm.validate().form()) {
           if (!submitHandler()) {
             return false;
           }
-          if (topicName.match(/AUTOINC|XXXXXXXXXX/) || (typeof(tinyMCE) === 'object' && typeof(tinyMCE.activeEditor === 'object'))) {
-            // don't ajax using wysiwyg 
+          if (topicName.match(/AUTOINC|XXXXXXXXXX/)) {// || (typeof(tinyMCE) !== 'object')) {
+            // don't ajax when we don't know the resultant URL (can change this if the server tells it to us..)
             $editForm.submit();
           } else {
-            // only ajax using raw 
             $editForm.ajaxSubmit({
+              url: foswiki.getPreference('SCRIPTURL')+'/rest/NatEditPlugin/save', // SMELL: use this one for REST as long as the normal save can't cope with REST
               beforeSubmit: function() {
                 hideErrorMessage();
                 $.blockUI({message:'<h1> Saving ... </h1>'});
@@ -284,6 +284,9 @@ function fixHeightOfPane () { }
         }
         return false;
       });
+
+
+      // TODO: only use this for foswiki engines < 1.20
       $("#cancel").click(function() {
         editAction = "cancel";
         hideErrorMessage();
@@ -294,6 +297,7 @@ function fixHeightOfPane () { }
         $editForm.submit();
         return false;
       });
+
       $("#replaceform").click(function() {
         editAction = "replaceform";
         submitHandler();

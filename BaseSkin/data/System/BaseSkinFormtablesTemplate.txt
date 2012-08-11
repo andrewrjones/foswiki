@@ -18,6 +18,7 @@
 	"not context preview"
 	then="%TMPL:P{FORM:display:header:titlelink}%"
 }%
+<div class='foswikiClear'></div>
 </div>
 <table class='foswikiTable foswikiFormTable' border='1' summary='%MAKETEXT{"Form data"}%'>%TMPL:END%%{
 ---------------------------------------------------
@@ -31,10 +32,12 @@
 ---------------------------------------------------
 	Title link in header
 ---------------------------------------------------
-}%%TMPL:DEF{FORM:display:header:titlelink}%<div class='xxx'><a href='%SCRIPTURL{edit}%/%WEB%/%TOPIC%?t=%GMTIME{$epoch}%;action=form' class='foswikiButton'>%MAKETEXT{"Edit form data"}%</a></div>%TMPL:END%%{
+}%%TMPL:DEF{FORM:display:header:titlelink}%<ul class='foswikiNavigationSecondary'>
+<li><a href='%SCRIPTURL{edit}%/%WEB%/%TOPIC%?t=%GMTIME{$epoch}%;action=form' class='foswikiButton'>%MAKETEXT{"Edit form data"}%</a>
+</li></ul>%TMPL:END%%{
 ---------------------------------------------------
 	Title name in header
 ---------------------------------------------------
-}%%TMPL:DEF{FORM:display:header:titlename}%<noautolink><div class='foswikiToolbarHeader'>%A_TITLE%</div></noautolink>%TMPL:END%%{
+}%%TMPL:DEF{FORM:display:header:titlename}%<noautolink><span>%A_TITLE%</span></noautolink>%TMPL:END%%{
 ===================================================
 </verbatim>}%

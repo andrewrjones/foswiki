@@ -41,7 +41,7 @@ $VERSION = '$Rev$';
 # This is a free-form string you can use to "name" your own plugin version.
 # It is *not* used by the build automation tools, but is reported as part
 # of the version number in PLUGINDESCRIPTIONS.
-$RELEASE = 'v3.0';
+$RELEASE = '3.1';
 
 BEGIN {
 
@@ -144,7 +144,9 @@ sub update_info {
     else {
 
         # Dakar
-        ( $meta, $dummy ) = Foswiki::Func::readTopic( $web, $topic );
+	eval {
+	  ( $meta, $dummy ) = Foswiki::Func::readTopic( $web, $topic );
+	};
         if ($meta) {
             $match = 1;
 
