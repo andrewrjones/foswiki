@@ -202,6 +202,57 @@ sub test_new_psgi {
     $this->assert_num_equals( 1, $req->secure, 'Wrong secure flag' );
 }
 
+sub test_new_psgi_no_cookies {
+    my $this = shift;
+
+    my $env = {
+        'psgi.multiprocess'    => '',
+        'SCRIPT_NAME'          => '',
+        'SERVER_NAME'          => 0,
+        'HTTP_ACCEPT_ENCODING' => 'gzip,deflate,sdch',
+        'HTTP_CONNECTION'      => 'keep-alive',
+        'PATH_INFO'            => '/bin/view',
+        'HTTP_ACCEPT' =>
+          'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'REQUEST_METHOD'      => 'GET',
+        'psgi.multithread'    => '',
+        'HTTP_ACCEPT_CHARSET' => 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
+        'HTTP_USER_AGENT' =>
+'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.7 (KHTML, like Gecko) Chrome/16.0.91
+2.75 Safari/535.7',
+        'QUERY_STRING'         => 'foo=bar',
+        'SERVER_PORT'          => 5000,
+        'HTTP_CACHE_CONTROL'   => 'max-age=0',
+        'psgix.input.buffered' => 1,
+        'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.8',
+        'REMOTE_ADDR'          => '127.0.0.1',
+        'SERVER_PROTOCOL'      => 'HTTP/1.1',
+        'psgi.streaming'       => 1,
+        'psgi.errors'          => *::STDERR,
+        'REQUEST_URI'          => '/bin/view?foo=bar',
+        'psgi.version'         => [ 1, 1 ],
+        'psgi.nonblocking'     => '',
+        'psgix.io'             => bless( \*Symbol::GEN7, 'IO::Socket::INET' ),
+        'psgi.url_scheme'      => 'http',
+        'psgi.run_once'        => '',
+        'HTTP_HOST'            => 'localhost:5000',
+
+        #'psgi.input' => \*{'HTTP::Server::PSGI::$input'} # FIXME
+    };
+
+    my $req = Foswiki::Request->new_psgi($env);
+
+    $this->assert( $req->is_psgi, '$req->is_psgi' );
+
+    # test cookies
+    my @cookies = $req->cookie();
+    $this->assert_deep_equals(
+        [()],
+        [ @cookies ],
+        'wrong returned cookie names'
+    );
+}
+
 sub test__prepareQueryParameters {
     my $this = shift;
 

@@ -140,7 +140,7 @@ sub new_psgi {
 
     # save cookies
     my %cookies = ();
-    my @pairs = grep /=/, split "[;,] ?", $env->{'HTTP_COOKIE'};
+    my @pairs = grep /=/, split "[;,] ?", $env->{'HTTP_COOKIE'} if $env->{'HTTP_COOKIE'};
     for my $pair ( @pairs ) {
         # trim leading trailing whitespace
         $pair =~ s/^\s+//; $pair =~ s/\s+$//;
