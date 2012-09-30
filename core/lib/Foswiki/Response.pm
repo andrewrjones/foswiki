@@ -456,7 +456,7 @@ Returns the status code, headers, and body of this response as a PSGI response a
 
 sub psgi_finalize {
     my $this = shift;
-    
+
     # PSGI specifies that the HTTP status code is an integer and must be greater than or equal to 100
     # See https://metacpan.org/module/PSGI#Status
     # SMELL: Should we be giving this a default of 200?
@@ -469,20 +469,27 @@ sub psgi_finalize {
     #'Status'         => '200 OK',
     delete $headers->{'Status'};
     
+    my @headers = map {
+        my $k = $_;
+        map {
+            my $v = $_;
+            $v =~ s/\015\012[\040|\011]+/chr(32)/ge; # replace LWS with a single SP
+            $v =~ s/\015|\012//g; # remove CR and LF since the char is invalid here
+            ( $k => $v )
+        } $this->getHeader($_);
+
+    } keys %{ $headers };
+
+    # write the cookies
+    for ($this->cookies) {
+        my $cs = UNIVERSAL::isa($_,'CGI::Cookie') ? $_->as_string : $_;
+        push(@headers,"Set-Cookie", $cs) if $cs ne '';
+    }
+
     return [
         $status,
         +[
-            map {
-                my $k = $_;
-                map {
-                    my $v = $_;
-                    $v =~ s/\015\012[\040|\011]+/chr(32)/ge; # replace LWS with a single SP
-                    $v =~ s/\015|\012//g; # remove CR and LF since the char is invalid here
- 
-                    ( $k => $v )
-                } $this->getHeader($_);
- 
-            } keys %{ $headers }
+            @headers
         ],
         [ $this->{body} ],
     ];

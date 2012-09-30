@@ -366,6 +366,36 @@ sub test_psgi_finalize {
     );
 }
 
+sub test_psgi_finalize_cookies {
+    my $this = shift;
+    my $res  = Foswiki::Response->new();
+
+    $res->status(200);
+    $res->body('hello');
+
+    my $c1 = CGI::Cookie->new(
+        -name   => 'FOSWIKISID',
+        -value  => '80eaee753351a6d4d050320ce4d60822',
+        -domain => 'localhost'
+    );
+    my $c2 = 'FOO=BAR';
+    $res->cookies([$c1, $c2]);
+
+    $this->assert_deep_equals(
+        [
+            200,
+            +[
+                'Content-Length' => 5,
+                'Set-Cookie', 'FOSWIKISID=80eaee753351a6d4d050320ce4d60822; domain=localhost; path=/',
+                'Set-Cookie', 'FOO=BAR'
+            ],
+            ['hello']
+        ],
+        $res->psgi_finalize,
+        'wrong headers from psgi_finalize'
+    );
+}
+
 sub test_psgi_finalize_default_status {
     my $this = shift;
     my $res  = Foswiki::Response->new();
