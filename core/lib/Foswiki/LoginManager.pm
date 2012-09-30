@@ -303,7 +303,7 @@ sub loadSession {
         && !$session->inContext('command_line') )
     {
 
-        $this->{_haveCookie} = $session->{request}->header('Cookie');
+        $this->{_haveCookie} = $session->{request}->cookie();
 
         _trace( $this,
             $this->{_haveCookie}
@@ -369,6 +369,7 @@ sub loadSession {
             }
         }
         else {
+            _trace( $this, "IP mapping is off; use the request cookie" );
 
             # IP mapping is off; use the request cookie
 
