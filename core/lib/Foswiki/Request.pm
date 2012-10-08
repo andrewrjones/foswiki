@@ -41,6 +41,8 @@ use HTTP::Body 1.11;
 use Plack::TempBuffer;
 use Time::HiRes ();
 
+use Foswiki::Request::Upload;
+
 sub getTime {
     my $this     = shift;
     my $endTime  = [Time::HiRes::gettimeofday];
@@ -136,8 +138,8 @@ sub new_psgi {
     bless $this, $class;
  
     $this->_prepareQueryParameters( $env->{QUERY_STRING} );
-    $this->_prepareBodyParameters;
-
+    $this->_parseRequestBody;
+    
     # save cookies
     my %cookies = ();
     my @pairs = grep /=/, split "[;,] ?", $env->{'HTTP_COOKIE'} if $env->{'HTTP_COOKIE'};
@@ -181,7 +183,7 @@ sub _prepareQueryParameters {
 }
 
 # very similar to Plack::Request::_parse_request_body
-sub _prepareBodyParameters {
+sub _parseRequestBody {
     my $self = shift;
 
     my $ct = $self->env->{CONTENT_TYPE};
@@ -220,7 +222,8 @@ sub _prepareBodyParameters {
         $buffer->print($chunk) if $buffer;
 
         if ($read == 0 && $spin++ > 2000) {
-            # TODO: should I be carping?
+            # FIXME: should I be carping?
+            # prob not
             Carp::croak "Bad Content-Length: maybe client disconnect? ($cl bytes remaining)";
         }
     }
@@ -232,22 +235,25 @@ sub _prepareBodyParameters {
         $input->seek(0, 0);
     }
 
-    #$self->env->{'plack.request.body'}   = Hash::MultiValue->from_mixed($body->param);
+    # save the params from the upload, in order
     for my $key (@{$body->param_order}){
         $self->bodyParam( -name => $key, -value => $body->param->{$key} );
     }
 
-    # TODO: uplaods
-    #my @uploads = Hash::MultiValue->from_mixed($body->upload)->flatten;
-    #my @obj;
-    #while (my($k, $v) = splice @uploads, 0, 2) {
-    #    push @obj, $k, $self->_make_upload($v);
-    #}
-
-    # TODO
-    #$self->env->{'plack.request.upload'} = Hash::MultiValue->new(@obj);
-
-    1;
+    # save the uploads
+    my %uploads;
+    foreach my $key ( keys %{ $body->upload } ) {
+        my $upload = $body->upload->{$key};
+        my $fname = $body->param($key)->{filename} || $upload->{filename};
+        # FIXME: review
+        $self->param( filename => $fname );
+        $self->param( filepath => $fname );
+        $uploads{"$fname"} = Foswiki::Request::Upload->new(
+            headers => $upload->{headers},
+            tmpname => $upload->{tempname},
+        );
+    }
+    $self->uploads( \%uploads );
 }
 
 =begin TML
